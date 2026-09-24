@@ -95,9 +95,9 @@ export function Sidebar() {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
-  const [accountingOpen, setAccountingOpen] = useState(true);
-  const [maintenanceOpen, setMaintenanceOpen] = useState(true);
-  const [hrOpen, setHrOpen] = useState(true);
+  const [accountingOpen, setAccountingOpen] = useState(false);
+  const [maintenanceOpen, setMaintenanceOpen] = useState(false);
+  const [hrOpen, setHrOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isActive = (href: string) => {
