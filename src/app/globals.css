@@ -1,64 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --crm-font-sans: "Manrope", "Inter", "Segoe UI", sans-serif;
+
+  --crm-brand-50: #f8f0e8;
+  --crm-brand-100: #f0dfce;
+  --crm-brand-200: #dec0a1;
+  --crm-brand-300: #c99c70;
+  --crm-brand-400: #b67f48;
+  --crm-brand-500: #a96b34;
+  --crm-brand-600: #8f5228;
+  --crm-brand-700: #75401f;
+  --crm-brand-800: #5f3218;
+  --crm-brand-900: #442313;
+
+  --crm-bg-app: #fbf8f3;
+  --crm-bg-sidebar: #fffdfc;
+  --crm-surface-card: #ffffff;
+  --crm-surface-subtle: #f5efe7;
+  --crm-text-primary: #211b17;
+  --crm-text-secondary: #70665f;
+  --crm-text-tertiary: #8d827a;
+  --crm-text-inverse: #ffffff;
+  --crm-border-default: #e7ded5;
+  --crm-border-strong: #d5cac0;
+
+  --crm-status-info: #0e91b2;
+  --crm-status-info-soft: #ddf5fa;
+  --crm-status-success: #169b62;
+  --crm-status-success-soft: #dff6ea;
+  --crm-status-warning: #d68a22;
+  --crm-status-warning-soft: #fff0d8;
+  --crm-status-danger: #d94c64;
+  --crm-status-danger-soft: #fde5ea;
+  --crm-status-inspection: #a43d8f;
+  --crm-status-inspection-soft: #f6e2f2;
+
+  --crm-space-1: 4px;
+  --crm-space-2: 8px;
+  --crm-space-3: 12px;
+  --crm-space-4: 16px;
+  --crm-space-5: 20px;
+  --crm-space-6: 24px;
+  --crm-space-8: 32px;
+
+  --crm-radius-sm: 6px;
+  --crm-radius-md: 8px;
+  --crm-radius-lg: 12px;
+  --crm-radius-xl: 16px;
+  --crm-radius-pill: 999px;
+
+  --crm-shadow-subtle: 0 1px 2px rgb(33 27 23 / 5%);
+  --crm-shadow-card: 0 4px 16px rgb(77 50 32 / 7%);
+
+  /* Backward Compatibility Variables */
+  --color-primary: var(--crm-brand-700);
+  --color-primary-hover: var(--crm-brand-800);
+  --color-primary-light: var(--crm-brand-100);
+  --color-primary-contrast: var(--crm-text-inverse);
+  --color-accent: var(--crm-brand-500);
+  --color-accent-bg: var(--crm-brand-50);
+  --color-info: var(--crm-status-info);
+  --color-info-bg: var(--crm-status-info-soft);
+  --color-info-text: var(--crm-status-info);
+  --color-success: var(--crm-status-success);
+  --color-success-bg: var(--crm-status-success-soft);
+  --color-success-text: var(--crm-status-success);
+  --color-danger: var(--crm-status-danger);
+  --color-danger-bg: var(--crm-status-danger-soft);
+  --color-danger-text: var(--crm-status-danger);
+  --color-purple: var(--crm-status-inspection);
+  --color-purple-bg: var(--crm-status-inspection-soft);
+  --color-purple-text: var(--crm-status-inspection);
+  --color-bg-app: var(--crm-bg-app);
+  --color-bg-surface: var(--crm-surface-card);
+  --color-bg-sidebar: var(--crm-bg-sidebar);
+  --color-border: var(--crm-border-default);
+  --color-text-primary: var(--crm-text-primary);
+  --color-text-secondary: var(--crm-text-secondary);
+  --color-text-muted: var(--crm-text-tertiary);
+  --gradient-progress: linear-gradient(90deg, #0e91b2, #169b62);
 }
 
-.dark {
-  --background: #070b14;
-  --foreground: #f8fafc;
+/* Client overrides should replace primitives only; semantic usage stays stable. */
+[data-crm-theme="client"] {
+  --crm-brand-500: var(--client-brand-accent, #a96b34);
+  --crm-brand-700: var(--client-brand-primary, #75401f);
+  --crm-brand-800: var(--client-brand-hover, #5f3218);
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+body, .crm-app {
+  color: var(--crm-text-primary);
+  background: var(--crm-bg-app);
+  font-family: var(--crm-font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glassmorphism & Enterprise Glow */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+.crm-card {
+  background: var(--crm-surface-card);
+  border: 1px solid var(--crm-border-default);
+  border-radius: var(--crm-radius-lg);
+  box-shadow: var(--crm-shadow-subtle);
 }
 
-.dark .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.crm-primary-button,
+.crm-nav-item[aria-current="page"] {
+  color: var(--crm-text-inverse);
+  background: var(--crm-brand-700);
 }
 
-.ambient-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.15), transparent 70%);
+.crm-primary-button:hover {
+  background: var(--crm-brand-800);
 }
 
-.dark .ambient-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.22), transparent 75%);
+.crm-focusable:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--crm-brand-500), transparent 60%);
+  outline-offset: 2px;
 }
 
-/* Industrial Grid Pattern */
-.bg-grid-pattern {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-}
-
-.bg-grid-pattern-light {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-}
-
-/* Dense ERP Scrollbars */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
@@ -69,20 +134,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(141, 130, 122, 0.35);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.8);
-}
-
-/* Subtle Card Hover Glow */
-.hover-card-glow {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.hover-card-glow:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(37, 99, 235, 0.2);
+  background: rgba(112, 102, 95, 0.6);
 }

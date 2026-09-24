@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ERPProvider } from '@/context/ERPContext';
+import { ClientThemeProvider } from '@/components/theme/ClientThemeProvider';
 import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
@@ -19,14 +20,16 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="h-full overflow-hidden bg-slate-100 dark:bg-slate-950 font-sans">
-        <ERPProvider>
-          <AppShell>{children}</AppShell>
-        </ERPProvider>
+      <body className="h-full overflow-hidden crm-app font-sans">
+        <ClientThemeProvider clientThemeId="umaTechnoFab">
+          <ERPProvider>
+            <AppShell>{children}</AppShell>
+          </ERPProvider>
+        </ClientThemeProvider>
       </body>
     </html>
   );

@@ -13,14 +13,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isAuthPage) {
     return (
-      <div className="min-h-screen w-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 font-sans antialiased">
+      <div className="min-h-screen w-screen bg-bg-app text-text-primary flex items-center justify-center p-4 font-sans antialiased">
         {children}
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-bg-app text-text-primary font-sans antialiased">
       {/* Sidebar Navigation */}
       <Sidebar />
 
@@ -28,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <Topbar />
 
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 scrollbar-thin">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 scrollbar-thin bg-bg-app">
           {children}
         </main>
       </div>

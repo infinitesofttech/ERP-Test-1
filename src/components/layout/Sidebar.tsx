@@ -115,47 +115,44 @@ export function Sidebar() {
 
   const navItemClass = (href: string) =>
     cn(
-      'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all group relative',
+      'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all group relative crm-nav-item',
       isActive(href)
-        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
-        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+        ? 'bg-crm-brand-700 text-crm-text-inverse font-semibold shadow-xs'
+        : 'text-crm-text-secondary hover:text-crm-text-primary hover:bg-crm-surface-subtle'
     );
 
   return (
     <aside
       className={cn(
-        'bg-[#090D1A] text-slate-300 border-r border-slate-800/80 flex flex-col transition-all duration-300 select-none z-30 shadow-2xl relative',
-        sidebarCollapsed ? 'w-16' : 'w-64'
+        'bg-crm-bg-sidebar text-crm-text-primary border-r border-crm-border-default flex flex-col transition-all duration-300 select-none z-30 shadow-xs relative',
+        sidebarCollapsed ? 'w-20' : 'w-64'
       )}
     >
       {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-3.5 border-b border-slate-800/80 bg-[#070A14] flex-shrink-0">
+      <div className="h-16 flex items-center justify-between px-3.5 border-b border-crm-border-default bg-crm-bg-sidebar flex-shrink-0">
         {!sidebarCollapsed ? (
           <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/30 flex-shrink-0 border border-white/10">
-              U
+            <div className="w-8 h-8 rounded-xl bg-crm-brand-700 flex items-center justify-center text-crm-text-inverse font-black text-sm shadow-xs flex-shrink-0">
+              <Settings className="w-4 h-4 animate-spin-slow" />
             </div>
             <div className="leading-tight truncate">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-white tracking-wide text-xs">UMA TECHNO FAB</span>
-                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold">
-                  MTO
-                </span>
+                <span className="font-extrabold text-crm-text-primary tracking-wide text-xs">UMA TECHNO FAB</span>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium tracking-tight block">
+              <span className="text-[10px] text-crm-text-tertiary font-medium tracking-tight block">
                 Manufacturing ERP
               </span>
             </div>
           </Link>
         ) : (
-          <Link href="/" className="mx-auto w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-blue-500/20">
-            U
+          <Link href="/" className="mx-auto w-8 h-8 rounded-xl bg-crm-brand-700 flex items-center justify-center text-crm-text-inverse font-black text-sm shadow-xs">
+            <Settings className="w-4 h-4" />
           </Link>
         )}
 
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 hidden sm:flex transition"
+          className="p-1.5 rounded-lg text-crm-text-tertiary hover:text-crm-text-primary hover:bg-crm-surface-subtle hidden sm:flex transition"
         >
           {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -165,7 +162,7 @@ export function Sidebar() {
       <div className="flex-1 overflow-y-auto py-3 px-2 space-y-1.5 scrollbar-thin">
         {/* Executive Dashboard */}
         <Link href="/" className={navItemClass('/')}>
-          <LayoutDashboard className="w-4 h-4 flex-shrink-0 text-blue-400" />
+          <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
           {!sidebarCollapsed && <span>Executive Command</span>}
         </Link>
 
@@ -174,13 +171,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setCrmOpen(!crmOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#0284C7] hover:bg-[#0284C7]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                <span>CRM & Sales Engine</span>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#0284C7] flex-shrink-0" />
+                <span>CRM & SALES ENGINE</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !crmOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#0284C7] transition-transform duration-200', !crmOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -210,7 +207,7 @@ export function Sidebar() {
                 {!sidebarCollapsed && <span>Customers Master</span>}
               </Link>
               <Link href="/crm/opportunities" className={navItemClass('/crm/opportunities')}>
-                <Sparkles className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                <Sparkles className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && <span>Opportunities</span>}
               </Link>
               <Link href="/crm/follow-ups" className={navItemClass('/crm/follow-ups')}>
@@ -226,33 +223,33 @@ export function Sidebar() {
                 {!sidebarCollapsed && <span>Exhibitions / Expo</span>}
               </Link>
               <Link href="/crm/quotations" className={navItemClass('/crm/quotations')}>
-                <FileCheck2 className="w-4 h-4 flex-shrink-0 text-purple-400" />
+                <FileCheck2 className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && (
                   <div className="flex items-center justify-between w-full">
                     <span>Quotations & Rev</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300 font-mono text-[9px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-crm-brand-100 text-crm-brand-800 font-mono text-[9px] font-bold">
                       {quotations.length}
                     </span>
                   </div>
                 )}
               </Link>
               <Link href="/crm/customer-po" className={navItemClass('/crm/customer-po')}>
-                <Briefcase className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                <Briefcase className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && <span>Customer POs</span>}
               </Link>
               <Link href="/crm/sales-orders" className={navItemClass('/crm/sales-orders')}>
-                <Layers className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                <Layers className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && (
                   <div className="flex items-center justify-between w-full">
                     <span>Sales Orders</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[9px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-crm-brand-100 text-crm-brand-800 font-mono text-[9px] font-bold">
                       {salesOrders.length}
                     </span>
                   </div>
                 )}
               </Link>
               <Link href="/crm/reports" className={navItemClass('/crm/reports')}>
-                <TrendingUp className="w-4 h-4 flex-shrink-0 text-cyan-400" />
+                <TrendingUp className="w-4 h-4 flex-shrink-0" />
                 {!sidebarCollapsed && <span>Commercial Reports</span>}
               </Link>
             </div>
@@ -264,13 +261,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setProjectOpen(!projectOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#D97706] hover:bg-[#D97706]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5" />
-                <span>Project & Job Mgmt</span>
+              <div className="flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-[#D97706] flex-shrink-0" />
+                <span>PROJECT & JOB MGMT</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !projectOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#D97706] transition-transform duration-200', !projectOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -352,13 +349,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setDesignerOpen(!designerOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-cyan-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#06B6D4] hover:bg-[#06B6D4]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Palette className="w-3.5 h-3.5" />
-                <span>Designer & Engineering</span>
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-[#06B6D4] flex-shrink-0" />
+                <span>DESIGNER & ENGINEERING</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !designerOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#06B6D4] transition-transform duration-200', !designerOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -440,13 +437,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setPurchaseOpen(!purchaseOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#10B981] hover:bg-[#10B981]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <ShoppingCart className="w-3.5 h-3.5" />
-                <span>Purchase Management</span>
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-[#10B981] flex-shrink-0" />
+                <span>PURCHASE MANAGEMENT</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !purchaseOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#10B981] transition-transform duration-200', !purchaseOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -531,13 +528,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setStoreOpen(!storeOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-sky-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#3B82F6] hover:bg-[#3B82F6]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5" />
-                <span>Store & Warehouse</span>
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />
+                <span>STORE & WAREHOUSE</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !storeOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#3B82F6] transition-transform duration-200', !storeOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -646,13 +643,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setProductionOpen(!productionOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-orange-400 uppercase tracking-wider hover:text-orange-300 transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#F97316] hover:bg-[#F97316]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Factory className="w-3.5 h-3.5 text-orange-400" />
-                <span>Production & Shop Floor</span>
+              <div className="flex items-center gap-2">
+                <Factory className="w-4 h-4 text-[#F97316] flex-shrink-0" />
+                <span>PRODUCTION & SHOP FLOOR</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !productionOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#F97316] transition-transform duration-200', !productionOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -765,13 +762,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setAccountingOpen(!accountingOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider hover:text-emerald-300 transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#0D9488] hover:bg-[#0D9488]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Landmark className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Accounting & Finance</span>
+              <div className="flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-[#0D9488] flex-shrink-0" />
+                <span>ACCOUNTING & FINANCE</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !accountingOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#0D9488] transition-transform duration-200', !accountingOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -898,13 +895,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setMaintenanceOpen(!maintenanceOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#8B5CF6] hover:bg-[#8B5CF6]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-amber-400" />
-                <span>Maintenance & Services</span>
+              <div className="flex items-center gap-2">
+                <Wrench className="w-4 h-4 text-[#8B5CF6] flex-shrink-0" />
+                <span>MAINTENANCE & SERVICES</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !maintenanceOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#8B5CF6] transition-transform duration-200', !maintenanceOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -1011,13 +1008,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setHrOpen(!hrOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#EC4899] hover:bg-[#EC4899]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-pink-400" />
-                <span>HR & Payroll</span>
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#EC4899] flex-shrink-0" />
+                <span>HR & PAYROLL</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !hrOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#EC4899] transition-transform duration-200', !hrOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -1202,13 +1199,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setIntegrationOpen(!integrationOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#38BDF8] hover:bg-[#38BDF8]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Workflow className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Integration & 360°</span>
+              <div className="flex items-center gap-2">
+                <Workflow className="w-4 h-4 text-[#38BDF8] flex-shrink-0" />
+                <span>INTEGRATION & 360°</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !integrationOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#38BDF8] transition-transform duration-200', !integrationOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -1267,13 +1264,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setTestingOpen(!testingOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#22C55E] hover:bg-[#22C55E]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Testing & Security</span>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#22C55E] flex-shrink-0" />
+                <span>TESTING & SECURITY</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !testingOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#22C55E] transition-transform duration-200', !testingOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -1316,13 +1313,13 @@ export function Sidebar() {
           {!sidebarCollapsed && (
             <button
               onClick={() => setSettingsOpen(!settingsOpen)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-white transition"
+              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold tracking-wider uppercase text-[#64748B] hover:bg-[#64748B]/10 rounded-xl transition font-sans"
             >
-              <div className="flex items-center gap-1.5">
-                <Settings className="w-3.5 h-3.5" />
-                <span>Foundation & Admin</span>
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#64748B] flex-shrink-0" />
+                <span>FOUNDATION & ADMIN</span>
               </div>
-              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !settingsOpen && '-rotate-90')} />
+              <ChevronDown className={cn('w-4 h-4 text-[#64748B] transition-transform duration-200', !settingsOpen && '-rotate-90')} />
             </button>
           )}
 
@@ -1365,27 +1362,21 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* User Hierarchy & Quick Profile Footer */}
-      <div className="p-3 border-t border-slate-800/80 bg-[#070A14] flex-shrink-0">
+      {/* Quality | Innovation | Partnership Card Footer */}
+      <div className="p-3 border-t border-crm-border-default bg-crm-bg-sidebar flex-shrink-0">
         {!sidebarCollapsed ? (
-          <Link href="/profile" className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-800/60 transition group">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-md">
-              {currentUser.firstName.slice(0, 1)}
-              {currentUser.lastName.slice(0, 1)}
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-crm-border-default text-crm-text-primary shadow-xs">
+            <div className="w-6 h-6 rounded-lg bg-[#211B17] text-white flex items-center justify-center flex-shrink-0">
+              <Zap className="w-3.5 h-3.5" />
             </div>
-            <div className="truncate text-xs min-w-0 flex-1">
-              <div className="font-bold text-white truncate group-hover:text-blue-400 transition">
-                {currentUser.firstName} {currentUser.lastName}
-              </div>
-              <div className="text-[10px] text-amber-400 font-mono font-bold uppercase tracking-wider truncate">
-                {currentUser.roleName}
-              </div>
+            <div className="text-[10px] text-crm-text-secondary font-semibold truncate tracking-tight">
+              Quality | Innovation | Partnership
             </div>
-          </Link>
+          </div>
         ) : (
-          <Link href="/profile" className="w-8 h-8 mx-auto rounded-xl bg-amber-600 flex items-center justify-center text-white font-bold text-xs block text-center shadow-md">
-            {currentUser.firstName.slice(0, 1)}
-          </Link>
+          <div className="w-8 h-8 mx-auto rounded-xl bg-[#211B17] flex items-center justify-center text-white shadow-xs">
+            <Zap className="w-4 h-4" />
+          </div>
         )}
       </div>
     </aside>
