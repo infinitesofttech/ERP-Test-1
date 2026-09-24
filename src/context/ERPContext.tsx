@@ -2,6 +2,26 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
+  Job360Full,
+  ApprovalItem,
+  ERPAlertItem,
+  JobProfitabilityEntry,
+  Customer360Summary,
+  Supplier360Summary,
+  Item360Summary,
+  Employee360Summary,
+} from '../types/integration';
+import {
+  MOCK_JOB_360_FULL_LIST,
+  INITIAL_CENTRAL_APPROVALS,
+  INITIAL_CENTRAL_ALERTS,
+  MOCK_JOB_PROFITABILITY_LIST,
+  MOCK_CUSTOMER_360_LIST,
+  MOCK_SUPPLIER_360_LIST,
+  MOCK_ITEM_360_LIST,
+  MOCK_EMPLOYEE_360_LIST,
+} from '../data/mockIntegrationData';
+import {
   CompanySetting,
   NumberingSetting,
   Employee,
@@ -199,6 +219,24 @@ import {
   mockInterviewRecords,
   mockOfferLetters,
 } from '../data/mockHRData';
+
+import {
+  TestCaseItem,
+  BugTicket,
+  BackupRecord,
+  DataImportLog,
+  SecurityAuditCheck,
+  GoLiveChecklistItem,
+} from '../types/testing';
+
+import {
+  MOCK_TEST_CASES,
+  MOCK_BUG_TICKETS,
+  MOCK_BACKUP_RECORDS,
+  MOCK_IMPORT_LOGS,
+  MOCK_SECURITY_CHECKS,
+  MOCK_GOLIVE_CHECKLIST,
+} from '../data/mockTestingData';
 
 import {
   INITIAL_COMPANY,
@@ -807,6 +845,21 @@ interface ERPContextType {
   addOfferLetter: (offer: Omit<OfferLetter, 'id' | 'offerNumber' | 'status'>) => void;
   updateOfferLetterStatus: (id: string, status: OfferLetter['status']) => void;
 
+  // Module 10 - ERP Integration & 360 Views
+  job360List: Job360Full[];
+  centralApprovals: ApprovalItem[];
+  centralAlerts: ERPAlertItem[];
+  jobProfitabilityList: JobProfitabilityEntry[];
+  customer360List: Customer360Summary[];
+  supplier360List: Supplier360Summary[];
+  item360List: Item360Summary[];
+  employee360List: Employee360Summary[];
+  activeRoleView: string;
+  setActiveRoleView: (role: string) => void;
+  approveCentralItem: (id: string, approverName: string) => void;
+  rejectCentralItem: (id: string, remarks: string) => void;
+  dismissCentralAlert: (id: string) => void;
+
   // Logs & Notifications
   auditLogs: AuditLogEntry[];
   logAction: (action: AuditLogEntry['action'], module: string, page: string, recordId: string, notes?: string, oldValue?: string, newValue?: string) => void;
@@ -814,6 +867,21 @@ interface ERPContextType {
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
   sendNotification: (notif: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
+
+  // Module 11: Testing, Security & Production Deployment
+  testCases: TestCaseItem[];
+  updateTestCaseStatus: (id: string, status: TestCaseItem['status'], remarks?: string) => void;
+  bugTickets: BugTicket[];
+  addBugTicket: (ticket: Omit<BugTicket, 'id' | 'bugNo' | 'createdDate'>) => void;
+  updateBugTicketStatus: (id: string, status: BugTicket['status']) => void;
+  backupRecords: BackupRecord[];
+  createBackupRecord: (type: BackupRecord['type']) => void;
+  restoreBackupRecord: (id: string) => void;
+  dataImportLogs: DataImportLog[];
+  executeDataImport: (entityType: DataImportLog['entityType'], fileName: string, totalRecords: number) => void;
+  securityChecks: SecurityAuditCheck[];
+  goLiveChecklist: GoLiveChecklistItem[];
+  toggleGoLiveItem: (id: string) => void;
 }
 
 const ERPContext = createContext<ERPContextType | undefined>(undefined);
@@ -824,6 +892,99 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   const [numbering, setNumbering] = useState<NumberingSetting[]>(INITIAL_NUMBERING);
   const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
   const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
+
+  // Module 10 Integration States
+  const [job360List, setJob360List] = useState<Job360Full[]>(MOCK_JOB_360_FULL_LIST);
+  const [centralApprovals, setCentralApprovals] = useState<ApprovalItem[]>(INITIAL_CENTRAL_APPROVALS);
+  const [centralAlerts, setCentralAlerts] = useState<ERPAlertItem[]>(INITIAL_CENTRAL_ALERTS);
+  const [jobProfitabilityList, setJobProfitabilityList] = useState<JobProfitabilityEntry[]>(MOCK_JOB_PROFITABILITY_LIST);
+  const [customer360List, setCustomer360List] = useState<Customer360Summary[]>(MOCK_CUSTOMER_360_LIST);
+  const [supplier360List, setSupplier360List] = useState<Supplier360Summary[]>(MOCK_SUPPLIER_360_LIST);
+  const [item360List, setItem360List] = useState<Item360Summary[]>(MOCK_ITEM_360_LIST);
+  const [employee360List, setEmployee360List] = useState<Employee360Summary[]>(MOCK_EMPLOYEE_360_LIST);
+  const [activeRoleView, setActiveRoleView] = useState<string>('Super Admin');
+
+  // Module 11 Testing States & Handlers
+  const [testCases, setTestCases] = useState<TestCaseItem[]>(MOCK_TEST_CASES);
+  const [bugTickets, setBugTickets] = useState<BugTicket[]>(MOCK_BUG_TICKETS);
+  const [backupRecords, setBackupRecords] = useState<BackupRecord[]>(MOCK_BACKUP_RECORDS);
+  const [dataImportLogs, setDataImportLogs] = useState<DataImportLog[]>(MOCK_IMPORT_LOGS);
+  const [securityChecks, setSecurityChecks] = useState<SecurityAuditCheck[]>(MOCK_SECURITY_CHECKS);
+  const [goLiveChecklist, setGoLiveChecklist] = useState<GoLiveChecklistItem[]>(MOCK_GOLIVE_CHECKLIST);
+
+  const updateTestCaseStatus = (id: string, status: TestCaseItem['status'], remarks?: string) => {
+    setTestCases((prev) =>
+      prev.map((tc) =>
+        tc.id === id ? { ...tc, status, remarks: remarks || tc.remarks, executedDate: new Date().toISOString().split('T')[0] } : tc
+      )
+    );
+  };
+
+  const addBugTicket = (ticket: Omit<BugTicket, 'id' | 'bugNo' | 'createdDate'>) => {
+    const newBug: BugTicket = {
+      ...ticket,
+      id: `BUG-${String(bugTickets.length + 1).padStart(2, '0')}`,
+      bugNo: `BUG-2026-${String(bugTickets.length + 1).padStart(3, '0')}`,
+      createdDate: new Date().toISOString().split('T')[0],
+    };
+    setBugTickets((prev) => [newBug, ...prev]);
+  };
+
+  const updateBugTicketStatus = (id: string, status: BugTicket['status']) => {
+    setBugTickets((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, status, resolvedDate: status === 'Closed' || status === 'Fixed' ? new Date().toISOString().split('T')[0] : b.resolvedDate } : b
+      )
+    );
+  };
+
+  const createBackupRecord = (type: BackupRecord['type']) => {
+    const newBk: BackupRecord = {
+      id: `BK-${String(backupRecords.length + 1).padStart(2, '0')}`,
+      backupNo: `BK-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(backupRecords.length + 1).padStart(3, '0')}`,
+      type,
+      fileName: `UMA_ERP_${type}_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.bak`,
+      fileSize: '52.4 MB',
+      recordCount: 15120,
+      createdDate: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      createdBy: 'Rajesh Patel (Super Admin)',
+      status: 'Verified_Valid',
+      location: 'Encrypted AWS Cloud S3 Storage / Mumbai',
+    };
+    setBackupRecords((prev) => [newBk, ...prev]);
+  };
+
+  const restoreBackupRecord = (id: string) => {
+    setBackupRecords((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, status: 'Verified_Valid' } : b))
+    );
+  };
+
+  const executeDataImport = (entityType: DataImportLog['entityType'], fileName: string, totalRecords: number) => {
+    const newLog: DataImportLog = {
+      id: `IMP-${String(dataImportLogs.length + 1).padStart(2, '0')}`,
+      importNo: `IMP-2026-${String(dataImportLogs.length + 1).padStart(3, '0')}`,
+      entityType,
+      fileName,
+      totalRecords,
+      importedRecords: totalRecords,
+      failedRecords: 0,
+      importedDate: new Date().toISOString().split('T')[0],
+      importedBy: 'Rajesh Patel',
+      status: 'Success',
+    };
+    setDataImportLogs((prev) => [newLog, ...prev]);
+  };
+
+  const toggleGoLiveItem = (id: string) => {
+    setGoLiveChecklist((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, status: item.status === 'Pass' ? 'Pending' : 'Pass' }
+          : item
+      )
+    );
+  };
   
   const mappedInitialEmployees: Employee[] = INITIAL_EMPLOYEES.map((e) => ({
     ...e,
@@ -3368,6 +3529,19 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     setOfferLetters((prev) => prev.map((o) => (o.id === id || o.offerNumber === id ? { ...o, status } : o)));
     logAction('UPDATE', 'hr', 'offer-management', id, `Updated offer letter status to ${status}`);
   };
+  const approveCentralItem = (id: string, approverName: string) => {
+    setCentralApprovals((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'Approved' } : item)));
+    logAction('APPROVE', 'Integration', 'Approval Center', id, `Approved request ${id} by ${approverName}`);
+  };
+
+  const rejectCentralItem = (id: string, remarks: string) => {
+    setCentralApprovals((prev) => prev.map((item) => (item.id === id ? { ...item, status: 'Rejected', remarks } : item)));
+    logAction('REJECT', 'Integration', 'Approval Center', id, `Rejected request ${id}. Remarks: ${remarks}`);
+  };
+
+  const dismissCentralAlert = (id: string) => {
+    setCentralAlerts((prev) => prev.map((alt) => (alt.id === id ? { ...alt, isRead: true } : alt)));
+  };
 
   return (
     <ERPContext.Provider
@@ -3765,6 +3939,22 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         addOfferLetter,
         updateOfferLetterStatus,
 
+
+
+        job360List,
+        centralApprovals,
+        centralAlerts,
+        jobProfitabilityList,
+        customer360List,
+        supplier360List,
+        item360List,
+        employee360List,
+        activeRoleView,
+        setActiveRoleView,
+        approveCentralItem,
+        rejectCentralItem,
+        dismissCentralAlert,
+
         jobs,
         selectedJobForModal,
         openJobModal,
@@ -3776,6 +3966,20 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         markNotificationRead,
         markAllNotificationsRead,
         sendNotification,
+
+        testCases,
+        updateTestCaseStatus,
+        bugTickets,
+        addBugTicket,
+        updateBugTicketStatus,
+        backupRecords,
+        createBackupRecord,
+        restoreBackupRecord,
+        dataImportLogs,
+        executeDataImport,
+        securityChecks,
+        goLiveChecklist,
+        toggleGoLiveItem,
       }}
     >
       {children}

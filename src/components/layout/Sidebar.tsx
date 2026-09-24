@@ -67,6 +67,11 @@ import {
   Calculator,
   Wallet,
   Banknote,
+  Database,
+  UploadCloud,
+  Bug,
+  ShieldAlert,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -98,6 +103,8 @@ export function Sidebar() {
   const [accountingOpen, setAccountingOpen] = useState(false);
   const [maintenanceOpen, setMaintenanceOpen] = useState(false);
   const [hrOpen, setHrOpen] = useState(false);
+  const [integrationOpen, setIntegrationOpen] = useState(false);
+  const [testingOpen, setTestingOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const isActive = (href: string) => {
@@ -1185,6 +1192,120 @@ export function Sidebar() {
               <Link href="/hr/offers" className={navItemClass('/hr/offers')}>
                 <FileCheck className="w-4 h-4 flex-shrink-0 text-green-400" />
                 {!sidebarCollapsed && <span>39. Offer Management</span>}
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* MODULE 10: INTEGRATION & MANAGEMENT 360° */}
+        <div className="pt-2">
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setIntegrationOpen(!integrationOpen)}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-teal-400 uppercase tracking-wider hover:text-white transition"
+            >
+              <div className="flex items-center gap-1.5">
+                <Workflow className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Integration & 360°</span>
+              </div>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !integrationOpen && '-rotate-90')} />
+            </button>
+          )}
+
+          {(integrationOpen || sidebarCollapsed) && (
+            <div className="space-y-0.5 mt-1">
+              <Link href="/integration/job-360" className={navItemClass('/integration/job-360')}>
+                <Compass className="w-4 h-4 flex-shrink-0 text-cyan-400" />
+                {!sidebarCollapsed && <span>1. Job 360° Overview</span>}
+              </Link>
+              <Link href="/integration/management-dashboard" className={navItemClass('/integration/management-dashboard')}>
+                <BarChart3 className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+                {!sidebarCollapsed && <span>2. Executive Dashboard</span>}
+              </Link>
+              <Link href="/integration/alert-center" className={navItemClass('/integration/alert-center')}>
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                {!sidebarCollapsed && <span>3. Action & Alert Center</span>}
+              </Link>
+              <Link href="/integration/approval-center" className={navItemClass('/integration/approval-center')}>
+                <CheckSquare className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                {!sidebarCollapsed && <span>4. Approval Center</span>}
+              </Link>
+              <Link href="/integration/customer-360" className={navItemClass('/integration/customer-360')}>
+                <UserCheck className="w-4 h-4 flex-shrink-0 text-blue-400" />
+                {!sidebarCollapsed && <span>5. Customer 360°</span>}
+              </Link>
+              <Link href="/integration/supplier-360" className={navItemClass('/integration/supplier-360')}>
+                <Truck className="w-4 h-4 flex-shrink-0 text-purple-400" />
+                {!sidebarCollapsed && <span>6. Supplier 360°</span>}
+              </Link>
+              <Link href="/integration/item-360" className={navItemClass('/integration/item-360')}>
+                <Box className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                {!sidebarCollapsed && <span>7. Item / Material 360°</span>}
+              </Link>
+              <Link href="/integration/employee-360" className={navItemClass('/integration/employee-360')}>
+                <Users className="w-4 h-4 flex-shrink-0 text-pink-400" />
+                {!sidebarCollapsed && <span>8. Employee 360°</span>}
+              </Link>
+              <Link href="/integration/activity-log" className={navItemClass('/integration/activity-log')}>
+                <ActivityIcon className="w-4 h-4 flex-shrink-0 text-yellow-400" />
+                {!sidebarCollapsed && <span>9. Global Activity Trail</span>}
+              </Link>
+              <Link href="/reports/center" className={navItemClass('/reports/center')}>
+                <FileBarChart className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                {!sidebarCollapsed && <span>10. ERP Reports Center</span>}
+              </Link>
+              <Link href="/reports/job-profitability" className={navItemClass('/reports/job-profitability')}>
+                <Calculator className="w-4 h-4 flex-shrink-0 text-teal-400" />
+                {!sidebarCollapsed && <span>11. Job Profitability</span>}
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* MODULE 11: TESTING, SECURITY & PRODUCTION DEPLOYMENT */}
+        <div className="pt-2">
+          {!sidebarCollapsed && (
+            <button
+              onClick={() => setTestingOpen(!testingOpen)}
+              className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-white transition"
+            >
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Testing & Security</span>
+              </div>
+              <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !testingOpen && '-rotate-90')} />
+            </button>
+          )}
+
+          {(testingOpen || sidebarCollapsed) && (
+            <div className="space-y-0.5 mt-1">
+              <Link href="/testing/uat-hub" className={navItemClass('/testing/uat-hub')}>
+                <FileCheck className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+                {!sidebarCollapsed && <span>1. ERP UAT & Test Matrix</span>}
+              </Link>
+              <Link href="/testing/role-matrix" className={navItemClass('/testing/role-matrix')}>
+                <ShieldCheck className="w-4 h-4 flex-shrink-0 text-indigo-400" />
+                {!sidebarCollapsed && <span>2. Role & Scope Tester</span>}
+              </Link>
+              <Link href="/testing/bug-tracker" className={navItemClass('/testing/bug-tracker')}>
+                <Bug className="w-4 h-4 flex-shrink-0 text-red-400" />
+                {!sidebarCollapsed && <span>3. Internal Bug Tracker</span>}
+              </Link>
+              <Link href="/settings/backup-restore" className={navItemClass('/settings/backup-restore')}>
+                <Database className="w-4 h-4 flex-shrink-0 text-cyan-400" />
+                {!sidebarCollapsed && <span>4. Backup & Recovery</span>}
+              </Link>
+              <Link href="/settings/data-import" className={navItemClass('/settings/data-import')}>
+                <UploadCloud className="w-4 h-4 flex-shrink-0 text-amber-400" />
+                {!sidebarCollapsed && <span>5. Data Import Wizard</span>}
+              </Link>
+              <Link href="/settings/security-hub" className={navItemClass('/settings/security-hub')}>
+                <ShieldAlert className="w-4 h-4 flex-shrink-0 text-purple-400" />
+                {!sidebarCollapsed && <span>6. Security & Audit Hub</span>}
+              </Link>
+              <Link href="/settings/release-notes" className={navItemClass('/settings/release-notes')}>
+                <BookOpen className="w-4 h-4 flex-shrink-0 text-blue-400" />
+                {!sidebarCollapsed && <span>7. Go-Live & Release Notes</span>}
               </Link>
             </div>
           )}
