@@ -1,0 +1,381 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useERP } from '../../../context/ERPContext';
+import {
+  ClipboardList,
+  Plus,
+  Search,
+  Eye,
+  CheckCircle2,
+  Clock,
+  Send,
+  Building,
+  Calendar,
+  X,
+} from 'lucide-react';
+import { RequestForQuotations, RFQItem } from '../../../types/purchase';
+
+export default function RFQPage() {
+  const { rfqs, addRFQ, purchaseRequisitions, suppliers, projectJobs, currentUser } = useERP();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
+  // Modals
+  const [viewRFQ, setViewRFQ] = useState<RequestForQuotations | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // New RFQ Form
+  const [newPrId, setNewPrId] = useState(purchaseRequisitions[0]?.id || 'PR-001');
+  const [newDueDate, setNewDueDate] = useState('2026-10-10');
+  const [newSelectedSuppliers, setNewSelectedSuppliers] = useState<string[]>(['SUP-001', 'SUP-002']);
+  const [newTerms, setNewTerms] = useState('FOR Destination Price including GST 18%, Payment 30 Days Credit');
+
+  const filteredRFQs = rfqs.filter(r => {
+    if (statusFilter !== 'ALL' && r.status !== statusFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return (
+        r.rfqNumber.toLowerCase().includes(q) ||
+        r.jobId.toLowerCase().includes(q) ||
+        r.prNumber.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  const toggleSupplier = (supId: string) => {
+    setNewSelectedSuppliers(prev =>
+      prev.includes(supId) ? prev.filter(id => id !== supId) : [...prev, supId]
+    );
+  };
+
+  const handleCreateRFQ = (e: React.FormEvent) => {
+    e.preventDefault();
+    const prObj = purchaseRequisitions.find(p => p.id === newPrId);
+    if (!prObj) return;
+
+    const invitedList = suppliers
+      .filter(s => newSelectedSuppliers.includes(s.id))
+      .map(s => ({
+        supplierId: s.id,
+        supplierName: s.name,
+        email: s.email,
+        quotationReceived: false,
+      }));
+
+    const rfqItems: RFQItem[] = prObj.items.map((pi, idx) => ({
+      id: `RFQI-${Date.now()}-${idx}`,
+      rfqId: '',
+      itemCode: pi.itemCode,
+      itemName: pi.itemName,
+      specification: pi.specification,
+      category: pi.category,
+      unitOfMeasure: pi.unitOfMeasure,
+      requiredQuantity: pi.requiredQuantity,
+      drawingNumber: pi.drawingNumber,
+      targetPrice: pi.estimatedUnitPrice,
+    }));
+
+    const newRFQ: RequestForQuotations = {
+      id: `RFQ-${Date.now()}`,
+      rfqNumber: `RFQ-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      prId: prObj.id,
+      prNumber: prObj.prNumber,
+      projectId: prObj.projectId,
+      jobId: prObj.jobId,
+      rfqDate: new Date().toISOString().split('T')[0],
+      dueDate: newDueDate,
+      status: 'Sent to Suppliers',
+      invitedSuppliers: invitedList,
+      items: rfqItems,
+      termsAndConditions: newTerms,
+      issuedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    addRFQ(newRFQ);
+    setShowCreateModal(false);
+  };
+
+  return (
+    <div className="p-6 space-y-6 bg-slate-950 text-slate-100 min-h-screen">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-mono font-bold border border-cyan-500/30">
+              RFQ MANAGEMENT
+            </span>
+            <h1 className="text-2xl font-black text-white tracking-tight">Request for Quotation (RFQ) Register</h1>
+          </div>
+          <p className="text-slate-400 text-xs mt-1">
+            Issue digital RFQs to multiple verified suppliers for competitive quotation comparison.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-cyan-600/30 transition"
+        >
+          <Plus className="w-4 h-4" />
+          Create New RFQ
+        </button>
+      </div>
+
+      {/* Filter Toolbar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search RFQ No, PR No, Job ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500 w-64"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Sent to Suppliers">Sent to Suppliers</option>
+              <option value="Quotation Received">Quotation Received</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="text-xs text-slate-400">
+          Showing <span className="text-white font-bold">{filteredRFQs.length}</span> RFQs
+        </div>
+      </div>
+
+      {/* RFQ List Table */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left text-slate-300">
+            <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+              <tr>
+                <th className="p-3">RFQ Number</th>
+                <th className="p-3">PR & Job Reference</th>
+                <th className="p-3">Issue Date</th>
+                <th className="p-3">Due Date</th>
+                <th className="p-3">Invited Suppliers</th>
+                <th className="p-3 text-center">Quotes Recv</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {filteredRFQs.map(rfq => {
+                const receivedCount = rfq.invitedSuppliers.filter(s => s.quotationReceived).length;
+
+                return (
+                  <tr key={rfq.id} className="hover:bg-slate-800/40 transition">
+                    <td className="p-3 font-mono font-bold text-cyan-400">{rfq.rfqNumber}</td>
+                    <td className="p-3">
+                      <div className="font-bold text-amber-400">{rfq.jobId}</div>
+                      <div className="text-[10px] text-slate-400">PR Ref: {rfq.prNumber}</div>
+                    </td>
+                    <td className="p-3 text-slate-300 font-mono text-[11px]">{rfq.rfqDate}</td>
+                    <td className="p-3 font-mono text-amber-400 font-semibold text-[11px]">{rfq.dueDate}</td>
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        {rfq.invitedSuppliers.map((s, idx) => (
+                          <span
+                            key={idx}
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${
+                              s.quotationReceived
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {s.supplierName}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="p-3 text-center font-mono font-bold text-white">
+                      {receivedCount} / {rfq.invitedSuppliers.length}
+                    </td>
+                    <td className="p-3">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border ${
+                        rfq.status === 'Sent to Suppliers' ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' :
+                        rfq.status === 'Quotation Received' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        {rfq.status}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => setViewRFQ(rfq)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                        title="View RFQ"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* VIEW RFQ MODAL */}
+      {viewRFQ && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl">
+            <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded font-bold">
+                  RFQ DETAILS
+                </span>
+                <h2 className="text-xl font-black text-white mt-1">{viewRFQ.rfqNumber}</h2>
+              </div>
+              <button onClick={() => setViewRFQ(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-950 rounded-xl border border-slate-800">
+                <div>
+                  <div className="text-slate-500">Job Reference:</div>
+                  <div className="font-bold text-amber-400">{viewRFQ.jobId}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Due Date:</div>
+                  <div className="font-bold text-amber-400 font-mono">{viewRFQ.dueDate}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Issued By:</div>
+                  <div className="font-semibold text-white">{viewRFQ.issuedBy}</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-white mb-2">Requested Line Items</h4>
+                <div className="border border-slate-800 rounded-xl overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-slate-950 text-slate-400">
+                      <tr>
+                        <th className="p-2.5">Item Code</th>
+                        <th className="p-2.5">Item Name & Spec</th>
+                        <th className="p-2.5 text-right">Required Qty</th>
+                        <th className="p-2.5 text-right">Target Price</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800">
+                      {viewRFQ.items.map(it => (
+                        <tr key={it.id}>
+                          <td className="p-2.5 font-mono text-cyan-400">{it.itemCode}</td>
+                          <td className="p-2.5 font-semibold text-white">{it.itemName} ({it.specification})</td>
+                          <td className="p-2.5 text-right font-mono text-white">{it.requiredQuantity} {it.unitOfMeasure}</td>
+                          <td className="p-2.5 text-right font-mono text-emerald-400">₹{it.targetPrice}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
+              <button onClick={() => setViewRFQ(null)} className="px-4 py-2 bg-slate-800 text-white font-bold rounded-xl">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE RFQ MODAL */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+            <div className="p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <h2 className="text-lg font-black text-white">Create & Issue Request for Quotation (RFQ)</h2>
+              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRFQ} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-400 mb-1">Select Purchase Requisition</label>
+                  <select
+                    value={newPrId}
+                    onChange={(e) => setNewPrId(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 p-2 rounded-xl text-white"
+                  >
+                    {purchaseRequisitions.map(pr => (
+                      <option key={pr.id} value={pr.id}>{pr.prNumber} - {pr.jobId} ({pr.totalItems} items)</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">RFQ Response Due Date</label>
+                  <input
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 p-2 rounded-xl text-white font-mono"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-2 font-bold">Select Suppliers to Invite for Quote</label>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 bg-slate-950 border border-slate-800 rounded-xl">
+                  {suppliers.map(sup => (
+                    <label key={sup.id} className="flex items-center gap-2 p-1.5 hover:bg-slate-900 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newSelectedSuppliers.includes(sup.id)}
+                        onChange={() => toggleSupplier(sup.id)}
+                        className="rounded bg-slate-900 text-cyan-500"
+                      />
+                      <span className="text-white font-medium">{sup.name}</span>
+                      <span className="text-[10px] text-slate-500">({sup.category})</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1">Commercial Terms & Guidelines</label>
+                <textarea
+                  value={newTerms}
+                  onChange={(e) => setNewTerms(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 p-2 rounded-xl text-white h-20"
+                />
+              </div>
+
+              <div className="pt-4 flex justify-end gap-2 border-t border-slate-800">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="px-4 py-2 bg-slate-800 text-white rounded-xl">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl flex items-center gap-1.5">
+                  <Send className="w-3.5 h-3.5" /> Issue RFQ
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

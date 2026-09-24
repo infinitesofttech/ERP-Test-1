@@ -1,0 +1,282 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useERP } from '../../../context/ERPContext';
+import { PlayCircle, Plus, CheckCircle2, AlertTriangle, Clock, Activity } from 'lucide-react';
+
+export default function ProductionEntryPage() {
+  const { productionEntries, workOrders, workCenters, recordProductionEntry } = useERP();
+  const [showModal, setShowModal] = useState(false);
+
+  const [selectedWo, setSelectedWo] = useState('WO-2026-001-A');
+  const [opName, setOpName] = useState('SAW Welding Main Longitudinal Shell');
+  const [wcName, setWcName] = useState('Heavy Welding Bay (WC-WELD)');
+  const [operator, setOperator] = useState('Mahesh Bariya');
+  const [produced, setProduced] = useState(1);
+  const [rejected, setRejected] = useState(0);
+  const [rework, setRework] = useState(0);
+  const [scrap, setScrap] = useState(0);
+  const [downtime, setDowntime] = useState(0);
+  const [downtimeReason, setDowntimeReason] = useState('');
+
+  const computedGood = Math.max(0, produced - rejected - scrap);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const wo = workOrders.find((w) => w.workOrderNumber === selectedWo);
+
+    recordProductionEntry({
+      entryDate: new Date().toISOString().split('T')[0],
+      jobId: wo?.jobId || 'PRJ-2026-0001',
+      jobNumber: wo?.jobNumber || 'JOB-2026-001',
+      workOrderNumber: selectedWo,
+      productionOrderNumber: `PO-PROD-2026-001`,
+      operationName: opName,
+      workCenterName: wcName,
+      machineName: 'SAW Automatic Manipulator M/C-01',
+      operatorName: operator,
+      startTime: '08:00 AM',
+      endTime: '05:00 PM',
+      plannedQuantity: 1,
+      producedQuantity: produced,
+      rejectedQuantity: rejected,
+      reworkQuantity: rework,
+      scrapQuantity: scrap,
+      downtimeMinutes: downtime,
+      downtimeReason: downtimeReason || undefined,
+      remarks: 'Recorded on shift completion.',
+      createdBy: operator,
+    });
+
+    setShowModal(false);
+    alert(`Production Entry logged successfully! Calculated Good Qty = ${computedGood}`);
+  };
+
+  return (
+    <div className="p-6 space-y-6 bg-[#090D1A] min-h-screen text-slate-100">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-lime-500/10 text-lime-400 border border-lime-500/20">
+            <PlayCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              Operator Production Entry Form
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-lime-500/20 text-lime-300 font-medium border border-lime-500/30">
+                Formula Enforced
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400">
+              Formula: Good Qty = Produced Qty - Rejected Qty - Scrap Qty
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-lime-600 to-emerald-600 font-bold text-white text-xs shadow-lg hover:brightness-110 transition"
+        >
+          <Plus className="w-4 h-4" /> Log Shift Production Entry
+        </button>
+      </div>
+
+      {/* Production Entries Table */}
+      <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-800/80 text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-700">
+              <tr>
+                <th className="p-3">Entry #</th>
+                <th className="p-3">Job & WO #</th>
+                <th className="p-3">Operation & Bay</th>
+                <th className="p-3">Operator</th>
+                <th className="p-3 text-right">Produced Qty</th>
+                <th className="p-3 text-right">Rejected</th>
+                <th className="p-3 text-right">Scrap</th>
+                <th className="p-3 text-right">Good Qty</th>
+                <th className="p-3 text-right">Downtime</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {productionEntries.map((entry) => (
+                <tr key={entry.id} className="hover:bg-slate-800/40 transition">
+                  <td className="p-3 font-mono font-bold text-lime-400">{entry.productionEntryNumber}</td>
+                  <td className="p-3">
+                    <div className="font-mono font-bold text-sky-400">{entry.jobNumber}</div>
+                    <div className="font-mono text-indigo-300 text-[11px]">{entry.workOrderNumber}</div>
+                  </td>
+                  <td className="p-3 max-w-xs">
+                    <div className="font-semibold text-white">{entry.operationName}</div>
+                    <div className="text-[11px] text-purple-300 font-mono">{entry.workCenterName}</div>
+                  </td>
+                  <td className="p-3 font-medium text-slate-200">{entry.operatorName}</td>
+                  <td className="p-3 text-right font-bold text-slate-100">{entry.producedQuantity}</td>
+                  <td className="p-3 text-right font-mono text-rose-400">{entry.rejectedQuantity}</td>
+                  <td className="p-3 text-right font-mono text-amber-400">{entry.scrapQuantity}</td>
+                  <td className="p-3 text-right font-mono font-extrabold text-emerald-400 text-sm">
+                    {entry.goodQuantity}
+                  </td>
+                  <td className="p-3 text-right font-mono text-slate-400">
+                    {entry.downtimeMinutes > 0 ? `${entry.downtimeMinutes}m` : '0m'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Entry Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white">Log Shift Production Entry</h3>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-white font-bold text-lg">
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Target Work Order</label>
+                <select
+                  value={selectedWo}
+                  onChange={(e) => setSelectedWo(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                >
+                  {workOrders.map((w) => (
+                    <option key={w.id} value={w.workOrderNumber}>
+                      {w.workOrderNumber} — {w.jobNumber} ({w.productName.slice(0, 20)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Operation Name</label>
+                <input
+                  type="text"
+                  required
+                  value={opName}
+                  onChange={(e) => setOpName(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Work Center Bay</label>
+                  <select
+                    value={wcName}
+                    onChange={(e) => setWcName(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                  >
+                    {workCenters.map((w) => (
+                      <option key={w.id} value={w.workCenterName}>
+                        {w.workCenterCode} - {w.workCenterName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Operator Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={operator}
+                    onChange={(e) => setOperator(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                  />
+                </div>
+              </div>
+
+              {/* Quantities Grid with Auto Formula Calculation */}
+              <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 space-y-3">
+                <div className="text-xs font-bold text-amber-300 flex justify-between">
+                  <span>Quantity Breakdown</span>
+                  <span>Good Qty Formula Enforced</span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div>
+                    <label className="block text-[10px] text-slate-400 mb-1">Produced</label>
+                    <input
+                      type="number"
+                      value={produced}
+                      onChange={(e) => setProduced(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-100 text-center font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-rose-400 mb-1">Rejected</label>
+                    <input
+                      type="number"
+                      value={rejected}
+                      onChange={(e) => setRejected(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-rose-300 text-center font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-amber-400 mb-1">Scrap</label>
+                    <input
+                      type="number"
+                      value={scrap}
+                      onChange={(e) => setScrap(Number(e.target.value))}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-amber-300 text-center font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-emerald-400 mb-1">Calculated Good</label>
+                    <div className="w-full bg-emerald-500/20 border border-emerald-500/40 rounded-lg py-1 text-emerald-300 font-extrabold text-sm text-center">
+                      {computedGood}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Downtime Minutes</label>
+                  <input
+                    type="number"
+                    value={downtime}
+                    onChange={(e) => setDowntime(Number(e.target.value))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Downtime Reason (if any)</label>
+                  <input
+                    type="text"
+                    value={downtimeReason}
+                    onChange={(e) => setDowntimeReason(e.target.value)}
+                    placeholder="e.g. Plasma nozzle replacement"
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-lime-500"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-medium hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-lime-600 font-bold text-white hover:bg-lime-500 shadow-lg"
+                >
+                  Submit Production Entry
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

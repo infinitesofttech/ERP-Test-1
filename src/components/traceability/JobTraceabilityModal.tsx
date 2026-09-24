@@ -1,0 +1,516 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useERP } from '../../context/ERPContext';
+import { StatusBadge } from '../workflow/StatusBadge';
+import { WorkflowStepper } from '../workflow/WorkflowStepper';
+import { formatCurrency, formatDate } from '../../lib/utils';
+import {
+  X,
+  Printer,
+  Share2,
+  FileText,
+  Layers,
+  Wrench,
+  ShoppingCart,
+  ShieldCheck,
+  Truck,
+  IndianRupee,
+  CheckCircle,
+  Clock,
+  Building,
+  Calendar,
+  Tag,
+  AlertCircle,
+} from 'lucide-react';
+
+export function JobTraceabilityModal() {
+  const { selectedJobForModal, closeJobModal, updateJobStatus, stockReservations, materialIssues, goodsReceipts, salesInvoices, customerReceipts, purchaseInvoices, jobCostings } = useERP();
+  const [activeTab, setActiveTab] = useState<'overview' | 'crm' | 'design' | 'purchase' | 'store' | 'production' | 'qc' | 'dispatch' | 'accounts' | 'service'>('overview');
+
+  if (!selectedJobForModal) return null;
+
+  const job = selectedJobForModal;
+
+  const handlePrintJobCard = () => {
+    window.print();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
+        {/* Modal Top Header */}
+        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-blue-50/40 dark:from-slate-900 dark:to-blue-950/20 flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="px-2.5 py-1 rounded-md bg-blue-600 text-white font-mono font-bold text-sm shadow-sm">
+                {job.jobNumber}
+              </span>
+              <StatusBadge status={job.currentStatus} />
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <Building className="w-3.5 h-3.5 text-slate-400" />
+                {job.customerName}
+              </span>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
+              {job.productName}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={handlePrintJobCard}
+              title="Print Job Traveler"
+              className="p-2 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 transition shadow-sm text-xs flex items-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Print Job Card</span>
+            </button>
+            <button
+              onClick={closeJobModal}
+              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Workflow Stepper Banner */}
+        <div className="px-4 sm:px-6 py-3 bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Live MTO Workflow Lifecycle ({job.progressPercent}% Completed)
+            </span>
+            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+              Target Delivery: {formatDate(job.targetDeliveryDate)}
+            </span>
+          </div>
+          <WorkflowStepper
+            steps={job.steps}
+            interactive={true}
+            onStepClick={(step) => {
+              const nextStatus = step.status === 'completed' ? 'pending' : step.status === 'in_progress' ? 'completed' : 'in_progress';
+              updateJobStatus(job.jobNumber, step.id, nextStatus);
+            }}
+          />
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:px-6 overflow-x-auto scrollbar-none text-xs font-medium">
+          {[
+            { id: 'overview', label: '360° Summary', icon: Layers },
+            { id: 'crm', label: 'CRM & Order', icon: FileText },
+            { id: 'design', label: 'Design & BOM', icon: Tag },
+            { id: 'purchase', label: 'Procurement & GRN', icon: ShoppingCart },
+            { id: 'store', label: 'Store & Inventory', icon: Building },
+            { id: 'production', label: 'Shop Floor & WIP', icon: Wrench },
+            { id: 'qc', label: 'QC & Testing', icon: ShieldCheck },
+            { id: 'dispatch', label: 'Dispatch & Site', icon: Truck },
+            { id: 'accounts', label: 'Commercial & Invoicing', icon: IndianRupee },
+            { id: 'service', label: 'Service & Maintenance 360°', icon: Wrench },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 py-3 px-3 border-b-2 whitespace-nowrap transition-colors ${
+                  isActive
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content Body */}
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 text-xs space-y-4">
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Card 1: Key Metadata */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                  <FileText className="w-4 h-4 text-blue-500" /> Commercial Reference
+                </h4>
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Sales Order ID:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.salesOrderId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Quotation ID:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.quotationId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Customer PO #:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.customerPoNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Total Order Value:</span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(job.orderValue)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Technical Specifications */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                  <Wrench className="w-4 h-4 text-amber-500" /> Technical Specification
+                </h4>
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Product Code:</span>
+                    <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{job.productCode}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Batch / Quantity:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.quantity} {job.unit}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Project Lead:</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.projectManager}</span>
+                  </div>
+                  <div className="mt-2 text-[11px] text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-800">
+                    {job.specification}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Traceable Linked Records */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                <h4 className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 text-xs uppercase tracking-wider">
+                  <Layers className="w-4 h-4 text-purple-500" /> Connected Cross-Module Chain
+                </h4>
+                <div className="space-y-1 pt-1 text-[11px]">
+                  <div className="flex justify-between py-0.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">Design Revision:</span>
+                    <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{job.linkedRecords.designRev || 'REV-00'}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">Approved BOM ID:</span>
+                    <span className="font-mono font-semibold">{job.linkedRecords.bomId || 'Pending'}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">Supplier POs:</span>
+                    <span className="font-mono font-semibold">{job.linkedRecords.purchaseOrders?.join(', ') || 'None'}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5 border-b border-slate-100 dark:border-slate-800">
+                    <span className="text-slate-500">Shop Work Orders:</span>
+                    <span className="font-mono font-semibold">{job.linkedRecords.workOrderIds?.join(', ') || 'None'}</span>
+                  </div>
+                  <div className="flex justify-between py-0.5">
+                    <span className="text-slate-500">Tax Invoices:</span>
+                    <span className="font-mono font-semibold">{job.linkedRecords.invoiceNumbers?.join(', ') || 'None'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'crm' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">Customer Contract & Quotation Details</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-500 block">Customer Name</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{job.customerName}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Quotation No.</span>
+                    <span className="font-mono font-semibold text-blue-600">{job.quotationId}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">PO Date</span>
+                    <span className="font-semibold">{formatDate(job.startDate)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Payment Terms</span>
+                    <span className="font-semibold">30% Adv, 60% ag. Proforma, 10% ag. Handover</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'design' && (
+            <div className="space-y-3">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">Approved Drawings & Engineering BOM</h4>
+                  <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-mono font-bold text-xs">
+                    {job.linkedRecords.designRev || 'REV-01'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-600" />
+                      <div>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Fabrication General Assembly (GA) Drawing.dwg</span>
+                        <span className="block text-[10px] text-slate-400">Approved by Dharmesh Joshi on 2026-08-18</span>
+                      </div>
+                    </div>
+                    <button className="px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-700 text-xs hover:bg-slate-300 font-medium">
+                      Download PDF
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <div>
+                        <span className="font-medium text-slate-900 dark:text-slate-100">Bill of Materials (BOM-CRV-10K-R2) - 48 Line Items</span>
+                        <span className="block text-[10px] text-slate-400">Plates, Dish Ends, Nozzles, Baffles, Agitator Shaft</span>
+                      </div>
+                    </div>
+                    <button className="px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-700 text-xs hover:bg-slate-300 font-medium">
+                      View BOM Items
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'purchase' && (
+            <div className="space-y-3">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">Material Procurement & GRN Inward</h4>
+                <div className="space-y-2">
+                  {job.linkedRecords.purchaseOrders && job.linkedRecords.purchaseOrders.length > 0 ? (
+                    job.linkedRecords.purchaseOrders.map((po, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50/50">
+                        <div>
+                          <span className="font-mono font-bold text-blue-600">{po}</span>
+                          <span className="block text-slate-500 text-[11px]">Jindal Stainless Steel Ltd. • Material: SS 316L Plates (8mm & 12mm)</span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-medium text-[10px]">
+                          GRN Received ({job.linkedRecords.grnNumbers?.[idx] || 'GRN-2026-088'})
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-slate-400 text-center py-4">No Purchase Orders raised yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'store' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                  <span>Job-wise Stock Reservations & Material Slips</span>
+                  <span className="text-xs text-sky-600 font-mono font-bold">{job.jobNumber}</span>
+                </h4>
+
+                <div className="space-y-2">
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-300">Reserved Raw Materials & Bought-Outs:</div>
+                  {stockReservations.filter((r) => r.jobId === job.jobNumber).length > 0 ? (
+                    stockReservations
+                      .filter((r) => r.jobId === job.jobNumber)
+                      .map((res) => (
+                        <div key={res.id} className="flex justify-between items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                          <div>
+                            <span className="font-bold text-slate-900 dark:text-white">{res.itemCode} - {res.itemName}</span>
+                            <span className="block text-[10px] text-slate-400">Warehouse: {res.warehouseName} ({res.locationCode})</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-mono font-bold text-rose-500 block text-xs">{res.reservedQuantity} Locked</span>
+                            <span className="text-[10px] text-emerald-600 font-bold">{res.status}</span>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-400">
+                      Material reserved: 3200 Kg SS 316L 10mm Plate (Heat # HEAT-98421)
+                    </div>
+                  )}
+
+                  <div className="text-xs font-bold text-slate-700 dark:text-slate-300 pt-2">Material Issue Slips Issued to Shop Floor:</div>
+                  {materialIssues.filter((i) => i.jobId === job.jobNumber).length > 0 ? (
+                    materialIssues
+                      .filter((i) => i.jobId === job.jobNumber)
+                      .map((iss) => (
+                        <div key={iss.id} className="flex justify-between items-center p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+                          <div>
+                            <span className="font-mono font-bold text-emerald-600">{iss.issueNumber}</span>
+                            <span className="block text-[10px] text-slate-400">Stage: {iss.productionStage} • Requested By: {iss.requestedBy}</span>
+                          </div>
+                          <div className="text-right font-mono">
+                            <span className="font-bold text-emerald-600 block text-xs">₹{iss.totalIssueValue.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-slate-400">{iss.status}</span>
+                          </div>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-slate-400">
+                      Issue Slip ISS-2026-0041: 3200 Kg SS 316L Plates issued to Cutting Bay
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'production' && (
+            <div className="space-y-3">
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-2">Shop Floor Work Orders & Routing</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/30">
+                    <span className="font-bold text-blue-700 dark:text-blue-300">Bay 1: Shell Rolling & Longitudinal Welding</span>
+                    <p className="text-slate-500 mt-1">Operator: Jayesh Parmar • Machine: 4-Roll Hydraulic Plate Bending M/C</p>
+                    <div className="mt-2 flex justify-between items-center text-[10px] font-semibold">
+                      <span className="text-emerald-600">Status: Completed 100%</span>
+                      <span className="text-slate-400">WO-2026-064</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/30">
+                    <span className="font-bold text-amber-700 dark:text-amber-300">Bay 3: Nozzle Fitment & Agitator Assembly</span>
+                    <p className="text-slate-500 mt-1">Operator: Ramesh V. • Machine: Radial Drilling & TIG Welding Unit</p>
+                    <div className="mt-2 flex justify-between items-center text-[10px] font-semibold">
+                      <span className="text-blue-600">Status: In Progress (65%)</span>
+                      <span className="text-slate-400">WO-2026-065</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'qc' && (
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">Quality Inspection & Pressure Tests</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50">
+                  <span className="font-medium">100% Radiography (RT) / DP Test on Weld Joints</span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">PASSED</span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50">
+                  <span className="font-medium">Hydrostatic Pressure Test @ 12.5 Bar (Held for 4 Hours)</span>
+                  <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">SCHEDULED FOR TOMORROW</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'dispatch' && (
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">Dispatch, Transport & Site Commissioning</h4>
+              <p className="text-slate-500">Destination: Dahej Plant 2, Gujarat. Heavy trailer transport with wooden crating.</p>
+            </div>
+          )}
+
+          {activeTab === 'accounts' && (
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                <span>Job 360° Financial Control & Billing Summary</span>
+                <span className="font-mono text-xs text-emerald-600 font-bold">{job.jobNumber}</span>
+              </h4>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 font-mono">
+                  <span className="text-slate-500 font-sans block text-[10px]">Sales Contract Value</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(job.orderValue)}</span>
+                </div>
+                <div className="p-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 font-mono">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-sans block text-[10px]">Total Receipts Collected</span>
+                  <span className="text-sm font-bold text-emerald-600">{formatCurrency(job.orderValue * 0.35)}</span>
+                </div>
+                <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20 font-mono">
+                  <span className="text-amber-700 dark:text-amber-400 font-sans block text-[10px]">Actual Cost Incurred</span>
+                  <span className="text-sm font-bold text-amber-600">{formatCurrency(job.orderValue * 0.65)}</span>
+                </div>
+                <div className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20 font-mono">
+                  <span className="text-blue-700 dark:text-blue-400 font-sans block text-[10px]">Project Net Margin</span>
+                  <span className="text-sm font-bold text-blue-600">{formatCurrency(job.orderValue * 0.35)} (35%)</span>
+                </div>
+              </div>
+
+              {/* Linked Invoices & Receipts */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div className="font-bold text-slate-800 dark:text-slate-200">Linked Sales & Purchase Invoices</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <span className="font-mono font-bold text-emerald-600">SINV-2026-0001</span>
+                    <span className="block text-slate-500 text-[10px]">Sales GST Invoice • Grand Total: {formatCurrency(job.orderValue)}</span>
+                    <span className="text-[10px] text-emerald-600 font-bold font-mono mt-0.5 inline-block">Approved & Posted</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <span className="font-mono font-bold text-purple-600">PINV-2026-0001</span>
+                    <span className="block text-slate-500 text-[10px]">Jindal Steel Plate Purchase • Grand Total: ₹1,711,000</span>
+                    <span className="text-[10px] text-purple-600 font-bold font-mono mt-0.5 inline-block">Posted to General Ledger</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'service' && (
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
+              <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center justify-between">
+                <span>Job 360° Maintenance & Service History</span>
+                <span className="font-mono text-xs text-amber-600 font-bold">{job.jobNumber}</span>
+              </h4>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 font-mono">
+                  <span className="text-slate-500 font-sans block text-[10px]">Registered Machine Serial</span>
+                  <span className="text-sm font-bold text-indigo-600">UTF-CR-2026-0019</span>
+                </div>
+                <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/20 font-mono">
+                  <span className="text-amber-700 dark:text-amber-400 font-sans block text-[10px]">Warranty Status</span>
+                  <span className="text-sm font-bold text-amber-600">Active (In Warranty)</span>
+                </div>
+                <div className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/40 dark:bg-blue-950/20 font-mono">
+                  <span className="text-blue-700 dark:text-blue-400 font-sans block text-[10px]">AMC Status</span>
+                  <span className="text-sm font-bold text-blue-600">Active AMC Contract</span>
+                </div>
+                <div className="p-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-950/20 font-mono">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-sans block text-[10px]">Service Requests / Visits</span>
+                  <span className="text-sm font-bold text-emerald-600">2 Requests / 1 Completed</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div className="font-bold text-slate-800 dark:text-slate-200">Connected Field Service Records</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <span className="font-mono font-bold text-blue-600">SR-2026-001</span>
+                    <span className="block text-slate-500 text-[10px]">Hydraulic Agitation Pressure Checkup • Reliance Hazira</span>
+                    <span className="text-[10px] text-blue-600 font-bold font-mono mt-0.5 inline-block">Scheduled Visit</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+                    <span className="font-mono font-bold text-green-600">SREP-2026-001</span>
+                    <span className="block text-slate-500 text-[10px]">Signed Service Report • Viton Seal Kit Issued</span>
+                    <span className="text-[10px] text-green-600 font-bold font-mono mt-0.5 inline-block">Customer Signed & Approved</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between text-xs">
+          <span className="text-slate-500">
+            Tip: Click on any step in the MTO workflow banner above to toggle completion.
+          </span>
+          <button
+            onClick={closeJobModal}
+            className="px-4 py-2 bg-slate-800 dark:bg-slate-700 text-white rounded-lg hover:bg-slate-900 transition font-medium"
+          >
+            Close 360° View
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

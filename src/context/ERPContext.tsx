@@ -1,0 +1,3792 @@
+'use client';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  CompanySetting,
+  NumberingSetting,
+  Employee,
+  Department,
+  Role,
+  Lead,
+  Customer,
+  Contact,
+  Enquiry,
+  Opportunity,
+  FollowUp,
+  SiteVisit,
+  Exhibition,
+  Quotation,
+  CustomerPO,
+  SalesOrder,
+  ProjectJobMaster,
+  Activity,
+  QuotationRevision,
+  ProjectTask,
+  ProjectPlanningStage,
+  DepartmentAssignment,
+  ProjectMilestone,
+  ProjectIssue,
+  ProjectDelay,
+  CustomerChangeRequest,
+  ProjectDocument,
+  ProjectCostItem,
+  ProjectComment,
+  ProjectApproval,
+  ProjectActivityLog,
+} from '../types/crm';
+import {
+  DesignJob,
+  CustomerRequirement,
+  DesignTask,
+  Drawing2D,
+  Design3DModel,
+  AssemblyDrawing,
+  PartDrawing,
+  BOMHeader,
+  BOMRevision,
+  DesignRevisionLog,
+  DesignReviewChecklist,
+  TechnicalDocumentItem,
+} from '../types/designer';
+import {
+  Supplier,
+  SupplierContact,
+  MaterialRequirement,
+  PurchaseRequisition,
+  RequestForQuotation,
+  SupplierQuotation,
+  QuotationComparison,
+  PurchaseOrder,
+  PORevision,
+  PurchaseFollowUp,
+  PurchaseReturn,
+} from '../types/purchase';
+import {
+  ItemMaster,
+  ItemCategory,
+  UOMMaster,
+  Warehouse,
+  WarehouseLocation,
+  OpeningStock,
+  GoodsReceiptNote,
+  QCInspection,
+  StockBalance,
+  StockReservation,
+  MaterialIssue,
+  MaterialReturn,
+  StockTransfer,
+  StockAdjustment,
+  ScrapEntry,
+  PhysicalStockCount,
+  StockLedgerEntry,
+} from '../types/store';
+import {
+  UserProfile,
+  DepartmentType,
+  PermissionAction,
+  JobTraceabilityRecord,
+  AuditLogEntry,
+  NotificationItem,
+} from '../types/erp';
+import {
+  InternalAsset,
+  CustomerMachine,
+  ServiceRequest,
+  BreakdownRecord,
+  PreventiveMaintenancePlan,
+  ServicePlanningItem,
+  ServiceVisit,
+  ServiceWorkOrder,
+  ServicePartIssue,
+  ServicePartReturn,
+  ServiceReport,
+  WarrantyRecord,
+  AMCContract,
+  ServiceContract,
+  DowntimeRecord,
+  MaintenanceCostRecord,
+  ServiceChecklistTemplate,
+  TechnicianProfile,
+  ServiceRequestStatus,
+  ServiceVisitStatus,
+  WorkOrderStatus,
+} from '../types/maintenance';
+import {
+  mockInternalAssets,
+  mockCustomerMachines,
+  mockServiceRequests,
+  mockBreakdowns,
+  mockPreventiveMaintenancePlans,
+  mockServicePlanningItems,
+  mockServiceVisits,
+  mockServiceWorkOrders,
+  mockServicePartIssues,
+  mockServicePartReturns,
+  mockServiceReports,
+  mockWarranties,
+  mockAMCContracts,
+  mockServiceContracts,
+  mockDowntimeRecords,
+  mockMaintenanceCosts,
+  mockChecklistTemplates,
+  mockTechnicians,
+} from '../data/mockMaintenanceData';
+import {
+  Designation,
+  EmployeeDocumentItem,
+  EmployeeOnboardingItem,
+  EmployeeTransferItem,
+  EmployeePromotionItem,
+  EmployeeExitItem,
+  FullAndFinalSettlementItem,
+  ShiftMaster,
+  ShiftRosterItem,
+  HolidayItem,
+  AttendanceRecord,
+  LeaveType,
+  LeaveBalance,
+  LeaveRequest,
+  WFHRequest,
+  MissedPunchRequest,
+  AttendanceRegularization,
+  OvertimeRecord,
+  EarlyCheckoutRequest,
+  SalaryComponent,
+  SalaryStructure,
+  PayrollRecord,
+  EmployeeAdvanceLoan,
+  ReimbursementExpense,
+  KPIMaster,
+  EmployeeAppraisal,
+  TrainingProgram,
+  JobPosition,
+  CandidateProfile,
+  InterviewRecord,
+  OfferLetter,
+  LeaveApprovalStatus,
+  PayrollStatusType,
+} from '../types/hr';
+import {
+  mockDesignations,
+  mockEmployeeDocuments,
+  mockEmployeeOnboardings,
+  mockEmployeeTransfers,
+  mockEmployeePromotions,
+  mockEmployeeExits,
+  mockFullAndFinalSettlements,
+  mockShifts,
+  mockShiftRosters,
+  mockHolidays,
+  mockAttendanceRecords,
+  mockLeaveTypes,
+  mockLeaveBalances,
+  mockLeaveRequests,
+  mockWFHRequests,
+  mockMissedPunchRequests,
+  mockRegularizationRequests,
+  mockOvertimeRecords,
+  mockEarlyCheckoutRequests,
+  mockSalaryComponents,
+  mockSalaryStructures,
+  mockPayrollRecords,
+  mockEmployeeAdvances,
+  mockReimbursements,
+  mockKPIMasters,
+  mockEmployeeAppraisals,
+  mockTrainingPrograms,
+  mockJobPositions,
+  mockCandidateProfiles,
+  mockInterviewRecords,
+  mockOfferLetters,
+} from '../data/mockHRData';
+
+import {
+  INITIAL_COMPANY,
+  INITIAL_NUMBERING,
+  INITIAL_DEPARTMENTS,
+  INITIAL_ROLES,
+  INITIAL_EMPLOYEES,
+  INITIAL_CUSTOMERS,
+  INITIAL_LEADS,
+  INITIAL_FOLLOWUPS,
+  INITIAL_VISITS,
+  INITIAL_EXHIBITIONS,
+  INITIAL_ENQUIRIES,
+  INITIAL_OPPORTUNITIES,
+  INITIAL_QUOTATIONS,
+  INITIAL_CUSTOMER_POS,
+  INITIAL_SALES_ORDERS,
+  INITIAL_PROJECT_JOBS,
+  INITIAL_DESIGN_JOBS,
+  INITIAL_SUPPLIERS,
+} from '../data/dbStore';
+import {
+  MOCK_AUDIT_LOGS,
+  MOCK_NOTIFICATIONS,
+  MOCK_JOBS,
+  MOCK_PROJECT_TASKS,
+  MOCK_PLANNING_STAGES,
+  MOCK_DEPARTMENT_ASSIGNMENTS,
+  MOCK_MILESTONES,
+  MOCK_PROJECT_ISSUES,
+  MOCK_PROJECT_DELAYS,
+  MOCK_CHANGE_REQUESTS,
+  MOCK_PROJECT_DOCUMENTS,
+  MOCK_PROJECT_COSTS,
+  MOCK_PROJECT_COMMENTS,
+  MOCK_PROJECT_APPROVALS,
+  MOCK_PROJECT_ACTIVITIES,
+  MOCK_CUSTOMER_REQUIREMENTS,
+  MOCK_DESIGN_TASKS,
+  MOCK_2D_DRAWINGS,
+  MOCK_3D_MODELS,
+  MOCK_ASSEMBLY_DRAWINGS,
+  MOCK_PART_DRAWINGS,
+  MOCK_BOM_HEADERS,
+  MOCK_BOM_REVISIONS,
+  MOCK_DESIGN_REVISIONS,
+  MOCK_DESIGN_REVIEWS,
+  MOCK_TECHNICAL_DOCUMENTS,
+  MOCK_SUPPLIER_CONTACTS,
+  MOCK_MATERIAL_REQUIREMENTS,
+  MOCK_PURCHASE_REQUISITIONS,
+  MOCK_RFQS,
+  MOCK_SUPPLIER_QUOTATIONS,
+  MOCK_QUOTATION_COMPARISONS,
+  MOCK_PURCHASE_ORDERS,
+  MOCK_PO_REVISIONS,
+  MOCK_PURCHASE_FOLLOWUPS,
+  MOCK_PURCHASE_RETURNS,
+} from '../data/mockData';
+import {
+  INITIAL_ITEM_CATEGORIES,
+  INITIAL_UOMS,
+  INITIAL_WAREHOUSES,
+  INITIAL_WAREHOUSE_LOCATIONS,
+  INITIAL_ITEM_MASTERS,
+  INITIAL_OPENING_STOCKS,
+  INITIAL_GOODS_RECEIPTS,
+  INITIAL_QC_INSPECTIONS,
+  INITIAL_STOCK_BALANCES,
+  INITIAL_STOCK_RESERVATIONS,
+  INITIAL_MATERIAL_ISSUES,
+  INITIAL_MATERIAL_RETURNS,
+  INITIAL_STOCK_TRANSFERS,
+  INITIAL_STOCK_ADJUSTMENTS,
+  INITIAL_SCRAP_ENTRIES,
+  INITIAL_PHYSICAL_COUNTS,
+  INITIAL_STOCK_LEDGERS,
+} from '../data/mockStoreData';
+import {
+  ManufacturingJob,
+  ProductionPlan,
+  WorkOrder,
+  ProductionOrder,
+  RoutingOperation,
+  WorkCenter,
+  ProductionScheduleItem,
+  MRPItemRequirement,
+  ProductionEntry,
+  WIPRecord,
+  ProductionHold,
+  ReworkOrder,
+  ProductionScrap,
+  ProductionCompletion,
+  FinishedGoodsItem,
+  ProductionCostSummary,
+} from '../types/production';
+import {
+  INITIAL_MANUFACTURING_JOBS,
+  INITIAL_PRODUCTION_PLANS,
+  INITIAL_WORK_CENTERS,
+  INITIAL_ROUTING_OPERATIONS,
+  INITIAL_WORK_ORDERS,
+  INITIAL_PRODUCTION_ORDERS,
+  INITIAL_PRODUCTION_SCHEDULES,
+  INITIAL_MRP_REQUIREMENTS,
+  INITIAL_PRODUCTION_ENTRIES,
+  INITIAL_WIP_RECORDS,
+  INITIAL_PRODUCTION_HOLDS,
+  INITIAL_REWORK_ORDERS,
+  INITIAL_PRODUCTION_SCRAPS,
+  INITIAL_FINISHED_GOODS,
+  INITIAL_PRODUCTION_COSTS,
+} from '../data/mockProductionData';
+import {
+  FinancialYear,
+  ChartOfAccount,
+  AccountGroup,
+  TaxMaster,
+  TDSMaster,
+  CostCenter,
+  SalesInvoice,
+  PurchaseInvoice,
+  CreditNote,
+  DebitNote,
+  CustomerReceipt,
+  SupplierPayment,
+  JournalEntry,
+  ContraEntry,
+  ExpenseEntry,
+  BankAccount,
+  BankTransaction,
+  BankReconciliation,
+  FixedAsset,
+  DepreciationEntry,
+  JobCostingSummary,
+  ReceivableAging,
+  PayableAging,
+} from '../types/accounting';
+import {
+  INITIAL_FINANCIAL_YEARS,
+  INITIAL_CHART_OF_ACCOUNTS,
+  INITIAL_ACCOUNT_GROUPS,
+  INITIAL_TAX_MASTERS,
+  INITIAL_TDS_MASTERS,
+  INITIAL_COST_CENTERS,
+  INITIAL_SALES_INVOICES,
+  INITIAL_PURCHASE_INVOICES,
+  INITIAL_CREDIT_NOTES,
+  INITIAL_DEBIT_NOTES,
+  INITIAL_CUSTOMER_RECEIPTS,
+  INITIAL_SUPPLIER_PAYMENTS,
+  INITIAL_JOURNAL_ENTRIES,
+  INITIAL_CONTRA_ENTRIES,
+  INITIAL_EXPENSE_ENTRIES,
+  INITIAL_BANK_ACCOUNTS,
+  INITIAL_BANK_TRANSACTIONS,
+  INITIAL_FIXED_ASSETS,
+  INITIAL_JOB_COSTINGS,
+  INITIAL_RECEIVABLE_AGING,
+  INITIAL_PAYABLE_AGING,
+} from '../data/mockAccountingData';
+
+interface ERPContextType {
+  // Auth & Session
+  currentUser: Employee;
+  setCurrentUser: (emp: Employee) => void;
+  availableEmployees: Employee[];
+  isAuthenticated: boolean;
+  login: (username: string, pass: string) => boolean;
+  logout: () => void;
+  updateCurrentUserProfile: (data: Partial<Employee>) => void;
+  changePassword: (newPass: string) => void;
+
+  // Navigation & Layout
+  activeDepartment: DepartmentType | 'all';
+  setActiveDepartment: (dept: DepartmentType | 'all') => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  isSearchOpen: boolean;
+  setIsSearchOpen: (open: boolean) => void;
+
+  // Permissions & RBAC
+  can: (module: string, page: string, action: 'view' | 'create' | 'edit' | 'delete' | 'approve' | 'reject' | 'export' | 'print') => boolean;
+  hasDepartmentAccess: (deptCode: string) => boolean;
+
+  // Master Settings
+  company: CompanySetting;
+  updateCompany: (data: Partial<CompanySetting>) => void;
+  numbering: NumberingSetting[];
+  updateNumbering: (id: string, data: Partial<NumberingSetting>) => void;
+  getNextDocNumber: (docType: NumberingSetting['docType']) => string;
+
+  // Master Entities
+  departments: Department[];
+  addDepartment: (dept: Omit<Department, 'id' | 'employeeCount'>) => void;
+  updateDepartment: (id: string, dept: Partial<Department>) => void;
+
+  roles: Role[];
+  addRole: (role: Omit<Role, 'id'>) => void;
+  updateRole: (id: string, role: Partial<Role>) => void;
+
+  employees: Employee[];
+  addEmployee: (emp: Omit<Employee, 'id'>) => void;
+  updateEmployee: (id: string, emp: Partial<Employee>) => void;
+
+  // CRM Entities
+  leads: Lead[];
+  addLead: (leadData: Omit<Lead, 'id' | 'leadNo' | 'createdDate'>) => Lead;
+  updateLead: (id: string, leadData: Partial<Lead>) => void;
+  deleteLead: (id: string) => void;
+  convertLeadToCustomer: (leadId: string) => { customer: Customer; enquiry?: Enquiry; opportunity?: Opportunity };
+
+  customers: Customer[];
+  addCustomer: (custData: Omit<Customer, 'id' | 'customerCode' | 'createdDate'>) => Customer;
+  updateCustomer: (id: string, custData: Partial<Customer>) => void;
+
+  contacts: Contact[];
+  addContact: (contact: Omit<Contact, 'id'>) => void;
+
+  enquiries: Enquiry[];
+  addEnquiry: (enqData: Omit<Enquiry, 'id' | 'enquiryNo' | 'enquiryDate'>) => Enquiry;
+  updateEnquiry: (id: string, enqData: Partial<Enquiry>) => void;
+
+  opportunities: Opportunity[];
+  addOpportunity: (oppData: Omit<Opportunity, 'id' | 'opportunityNo'>) => Opportunity;
+  updateOpportunity: (id: string, oppData: Partial<Opportunity>) => void;
+
+  followUps: FollowUp[];
+  addFollowUp: (flwData: Omit<FollowUp, 'id' | 'followUpNo'>) => FollowUp;
+  completeFollowUp: (id: string, notes: string, nextDate?: string) => void;
+
+  siteVisits: SiteVisit[];
+  addSiteVisit: (visitData: Omit<SiteVisit, 'id' | 'visitNo'>) => SiteVisit;
+
+  exhibitions: Exhibition[];
+  addExhibition: (expoData: Omit<Exhibition, 'id'>) => Exhibition;
+
+  quotations: Quotation[];
+  addQuotation: (quoData: Omit<Quotation, 'id' | 'quotationNumber'>) => Quotation;
+  addQuotationRevision: (quotationId: string, revision: QuotationRevision) => void;
+  updateQuotationStatus: (quotationId: string, revisionNumber: string, status: QuotationRevision['status']) => void;
+
+  customerPOs: CustomerPO[];
+  addCustomerPO: (poData: Omit<CustomerPO, 'id'>) => CustomerPO;
+  convertCustomerPOToSalesOrder: (poId: string) => SalesOrder;
+
+  salesOrders: SalesOrder[];
+  addSalesOrder: (soData: Omit<SalesOrder, 'id' | 'salesOrderNumber'>) => SalesOrder;
+  createProjectFromSalesOrder: (salesOrderId: string) => ProjectJobMaster;
+
+  projectJobs: ProjectJobMaster[];
+  updateProject: (id: string, prj: Partial<ProjectJobMaster>) => void;
+
+  // Module 2: Project Management & Job Management Entities
+  projectTasks: ProjectTask[];
+  addProjectTask: (task: Omit<ProjectTask, 'id' | 'taskNumber'>) => ProjectTask;
+  updateProjectTask: (id: string, task: Partial<ProjectTask>) => void;
+  deleteProjectTask: (id: string) => void;
+
+  projectPlanningStages: ProjectPlanningStage[];
+  updatePlanningStage: (id: string, stage: Partial<ProjectPlanningStage>) => void;
+
+  departmentAssignments: DepartmentAssignment[];
+  assignDepartment: (assignment: Omit<DepartmentAssignment, 'id'>) => DepartmentAssignment;
+
+  projectMilestones: ProjectMilestone[];
+  addProjectMilestone: (milestone: Omit<ProjectMilestone, 'id'>) => ProjectMilestone;
+  updateProjectMilestone: (id: string, milestone: Partial<ProjectMilestone>) => void;
+
+  projectIssues: ProjectIssue[];
+  addProjectIssue: (issue: Omit<ProjectIssue, 'id' | 'issueNo' | 'reportedDate'>) => ProjectIssue;
+  resolveProjectIssue: (id: string, resolution: string) => void;
+
+  projectDelays: ProjectDelay[];
+  addProjectDelay: (delay: Omit<ProjectDelay, 'id' | 'delayNo'>) => ProjectDelay;
+
+  changeRequests: CustomerChangeRequest[];
+  addCustomerChangeRequest: (cr: Omit<CustomerChangeRequest, 'id' | 'changeRequestNo' | 'requestDate' | 'approvalStatus'>) => CustomerChangeRequest;
+  approveChangeRequest: (id: string, status: 'approved' | 'rejected') => void;
+
+  projectDocuments: ProjectDocument[];
+  addProjectDocument: (doc: Omit<ProjectDocument, 'id' | 'uploadDate'>) => ProjectDocument;
+
+  projectCosts: ProjectCostItem[];
+  updateProjectCost: (id: string, cost: Partial<ProjectCostItem>) => void;
+
+  projectComments: ProjectComment[];
+  addProjectComment: (comment: Omit<ProjectComment, 'id' | 'date' | 'time' | 'resolved'>) => ProjectComment;
+
+  projectApprovals: ProjectApproval[];
+  approveProjectAction: (id: string, status: 'approved' | 'rejected', comments?: string) => void;
+
+  projectActivities: ProjectActivityLog[];
+  logProjectActivity: (projectId: string, jobNumber: string, action: string, details: string) => void;
+
+  // Module 3: Designer & Engineering Management Entities
+  designJobs: DesignJob[];
+  addDesignJob: (job: Omit<DesignJob, 'id' | 'createdDate'>) => void;
+  updateDesignJob: (id: string, updates: Partial<DesignJob>) => void;
+  customerRequirements: CustomerRequirement[];
+  addCustomerRequirement: (req: Omit<CustomerRequirement, 'id'>) => void;
+  approveCustomerRequirement: (id: string, approvedBy: string) => void;
+  designTasks: DesignTask[];
+  addDesignTask: (task: Omit<DesignTask, 'id'>) => void;
+  updateDesignTask: (id: string, updates: Partial<DesignTask>) => void;
+  drawings2D: Drawing2D[];
+  addDrawing2D: (drawing: Omit<Drawing2D, 'id' | 'uploadedDate'>) => void;
+  designs3D: Design3DModel[];
+  addDesign3D: (model: Omit<Design3DModel, 'id' | 'uploadedDate'>) => void;
+  assemblyDrawings: AssemblyDrawing[];
+  addAssemblyDrawing: (drawing: Omit<AssemblyDrawing, 'id' | 'uploadedDate'>) => void;
+  partDrawings: PartDrawing[];
+  addPartDrawing: (drawing: Omit<PartDrawing, 'id' | 'uploadedDate'>) => void;
+  boms: BOMHeader[];
+  addBOM: (bom: Omit<BOMHeader, 'id' | 'createdDate' | 'updatedDate'>) => void;
+  updateBOM: (id: string, updates: Partial<BOMHeader>) => void;
+  bomRevisions: BOMRevision[];
+  addBOMRevision: (rev: Omit<BOMRevision, 'id' | 'changedDate'>) => void;
+  designRevisions: DesignRevisionLog[];
+  addDesignRevision: (rev: Omit<DesignRevisionLog, 'id' | 'createdDate'>) => void;
+  designReviews: DesignReviewChecklist[];
+  addDesignReview: (rev: Omit<DesignReviewChecklist, 'id' | 'reviewDate'>) => void;
+  technicalDocuments: TechnicalDocumentItem[];
+  addTechnicalDocument: (doc: Omit<TechnicalDocumentItem, 'id' | 'uploadDate'>) => void;
+  releaseDesignToManufacturing: (designJobId: string, releasedBy: string) => void;
+
+  // Module 4: Purchase Management Entities
+  suppliers: Supplier[];
+  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
+  updateSupplier: (id: string, updates: Partial<Supplier>) => void;
+  supplierContacts: SupplierContact[];
+  addSupplierContact: (contact: Omit<SupplierContact, 'id'>) => void;
+  materialRequirements: MaterialRequirement[];
+  addMaterialRequirement: (mrp: Omit<MaterialRequirement, 'id'>) => void;
+  purchaseRequisitions: PurchaseRequisition[];
+  addPurchaseRequisition: (pr: Omit<PurchaseRequisition, 'id' | 'prDate'>) => void;
+  approvePurchaseRequisition: (id: string, approvedBy: string) => void;
+  rfqs: RequestForQuotation[];
+  addRFQ: (rfq: Omit<RequestForQuotation, 'id' | 'rfqDate'>) => void;
+  supplierQuotations: SupplierQuotation[];
+  addSupplierQuotation: (sq: Omit<SupplierQuotation, 'id'>) => void;
+  quotationComparisons: QuotationComparison[];
+  addQuotationComparison: (comp: Omit<QuotationComparison, 'id' | 'comparisonDate'>) => void;
+  approveQuotationComparison: (id: string, approvedBy: string) => void;
+  purchaseOrders: PurchaseOrder[];
+  addPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'poDate'>) => void;
+  approvePurchaseOrder: (id: string, approvedBy: string) => void;
+  poRevisions: PORevision[];
+  addPORevision: (rev: Omit<PORevision, 'id' | 'revisedDate'>) => void;
+  purchaseFollowUps: PurchaseFollowUp[];
+  addPurchaseFollowUp: (fol: Omit<PurchaseFollowUp, 'id'>) => void;
+  purchaseReturns: PurchaseReturn[];
+  addPurchaseReturn: (ret: Omit<PurchaseReturn, 'id' | 'returnDate'>) => void;
+
+  // Module 5: Store & Warehouse Management Entities
+  itemMasters: ItemMaster[];
+  addItemMaster: (item: Omit<ItemMaster, 'id' | 'createdAt'>) => void;
+  updateItemMaster: (id: string, updates: Partial<ItemMaster>) => void;
+  itemCategories: ItemCategory[];
+  addItemCategory: (cat: Omit<ItemCategory, 'id'>) => void;
+  uoms: UOMMaster[];
+  addUOM: (uom: Omit<UOMMaster, 'id'>) => void;
+  warehouses: Warehouse[];
+  addWarehouse: (wh: Omit<Warehouse, 'id'>) => void;
+  updateWarehouse: (id: string, updates: Partial<Warehouse>) => void;
+  warehouseLocations: WarehouseLocation[];
+  addWarehouseLocation: (loc: Omit<WarehouseLocation, 'id'>) => void;
+  openingStocks: OpeningStock[];
+  addOpeningStock: (stock: Omit<OpeningStock, 'id'>) => void;
+  goodsReceipts: GoodsReceiptNote[];
+  addGRN: (grn: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => void;
+  qcInspections: QCInspection[];
+  addQCInspection: (qc: Omit<QCInspection, 'id' | 'inspectionNumber'>) => void;
+  approveQCInspection: (id: string, inspectorName: string, qcResult: 'Pass' | 'Fail' | 'Conditional Approval', acceptedQty: number, rejectedQty: number) => void;
+  stockBalances: StockBalance[];
+  updateStockBalance: (id: string, updates: Partial<StockBalance>) => void;
+  stockReservations: StockReservation[];
+  addStockReservation: (res: Omit<StockReservation, 'id' | 'reservationNumber' | 'createdAt'>) => void;
+  releaseStockReservation: (id: string) => void;
+  materialIssues: MaterialIssue[];
+  addMaterialIssue: (issue: Omit<MaterialIssue, 'id' | 'issueNumber' | 'createdAt'>) => void;
+  materialReturns: MaterialReturn[];
+  addMaterialReturn: (ret: Omit<MaterialReturn, 'id' | 'returnNumber' | 'createdAt'>) => void;
+  stockTransfers: StockTransfer[];
+  addStockTransfer: (transfer: Omit<StockTransfer, 'id' | 'transferNumber' | 'createdAt'>) => void;
+  stockAdjustments: StockAdjustment[];
+  addStockAdjustment: (adj: Omit<StockAdjustment, 'id' | 'adjustmentNumber' | 'createdAt'>) => void;
+  scrapEntries: ScrapEntry[];
+  addScrapEntry: (scrap: Omit<ScrapEntry, 'id' | 'scrapNumber' | 'createdAt'>) => void;
+  physicalStockCounts: PhysicalStockCount[];
+  addPhysicalStockCount: (count: Omit<PhysicalStockCount, 'id' | 'countNumber'>) => void;
+  stockLedgers: StockLedgerEntry[];
+  logStockLedgerEntry: (entry: Omit<StockLedgerEntry, 'id'>) => void;
+
+  // Module 6: Production / Manufacturing / MRP Entities
+  manufacturingJobs: ManufacturingJob[];
+  addManufacturingJob: (job: Omit<ManufacturingJob, 'id' | 'createdAt'>) => void;
+  updateManufacturingJob: (id: string, updates: Partial<ManufacturingJob>) => void;
+  productionPlans: ProductionPlan[];
+  addProductionPlan: (plan: Omit<ProductionPlan, 'id' | 'createdAt'>) => void;
+  workOrders: WorkOrder[];
+  addWorkOrder: (wo: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>) => void;
+  releaseWorkOrder: (id: string) => void;
+  productionOrders: ProductionOrder[];
+  addProductionOrder: (po: Omit<ProductionOrder, 'id' | 'productionOrderNumber' | 'createdAt'>) => void;
+  routingOperations: RoutingOperation[];
+  addRoutingOperation: (op: Omit<RoutingOperation, 'id'>) => void;
+  workCenters: WorkCenter[];
+  addWorkCenter: (wc: Omit<WorkCenter, 'id'>) => void;
+  updateWorkCenter: (id: string, updates: Partial<WorkCenter>) => void;
+  productionSchedules: ProductionScheduleItem[];
+  addProductionSchedule: (sch: Omit<ProductionScheduleItem, 'id'>) => void;
+  mrpRequirements: MRPItemRequirement[];
+  productionEntries: ProductionEntry[];
+  recordProductionEntry: (entry: Omit<ProductionEntry, 'id' | 'productionEntryNumber' | 'goodQuantity'>) => void;
+  wipRecords: WIPRecord[];
+  productionHolds: ProductionHold[];
+  addProductionHold: (hold: Omit<ProductionHold, 'id' | 'holdNumber'>) => void;
+  resumeProductionHold: (id: string, resumeDate: string) => void;
+  reworkOrders: ReworkOrder[];
+  addReworkOrder: (rework: Omit<ReworkOrder, 'id' | 'reworkNumber'>) => void;
+  productionScraps: ProductionScrap[];
+  addProductionScrap: (scrap: Omit<ProductionScrap, 'id' | 'scrapNumber'>) => void;
+  productionCompletions: ProductionCompletion[];
+  completeWorkOrder: (comp: Omit<ProductionCompletion, 'id' | 'completionNumber'>) => void;
+  finishedGoods: FinishedGoodsItem[];
+  addFinishedGoods: (fg: Omit<FinishedGoodsItem, 'id' | 'finishedGoodsNumber' | 'createdAt'>) => void;
+  productionCosts: ProductionCostSummary[];
+
+  // Module 7: Accounting & Finance Entities
+  financialYears: FinancialYear[];
+  closeFinancialYear: (id: string, closedBy: string) => void;
+  chartOfAccounts: ChartOfAccount[];
+  addChartOfAccount: (account: Omit<ChartOfAccount, 'id' | 'currentBalance'>) => void;
+  accountGroups: AccountGroup[];
+  addAccountGroup: (group: Omit<AccountGroup, 'id'>) => void;
+  taxMasters: TaxMaster[];
+  addTaxMaster: (tax: Omit<TaxMaster, 'id'>) => void;
+  tdsMasters: TDSMaster[];
+  addTDSMaster: (tds: Omit<TDSMaster, 'id'>) => void;
+  costCenters: CostCenter[];
+  addCostCenter: (cc: Omit<CostCenter, 'id'>) => void;
+  salesInvoices: SalesInvoice[];
+  addSalesInvoice: (inv: Omit<SalesInvoice, 'id' | 'invoiceNumber' | 'createdAt'>) => void;
+  approveSalesInvoice: (id: string) => void;
+  purchaseInvoices: PurchaseInvoice[];
+  addPurchaseInvoice: (inv: Omit<PurchaseInvoice, 'id' | 'invoiceNumber' | 'createdAt'>) => void;
+  postPurchaseInvoice: (id: string) => void;
+  creditNotes: CreditNote[];
+  addCreditNote: (cn: Omit<CreditNote, 'id' | 'creditNoteNumber'>) => void;
+  debitNotes: DebitNote[];
+  addDebitNote: (dn: Omit<DebitNote, 'id' | 'debitNoteNumber'>) => void;
+  customerReceipts: CustomerReceipt[];
+  addCustomerReceipt: (rec: Omit<CustomerReceipt, 'id' | 'receiptNumber'>) => void;
+  supplierPayments: SupplierPayment[];
+  addSupplierPayment: (pay: Omit<SupplierPayment, 'id' | 'paymentNumber'>) => void;
+  journalEntries: JournalEntry[];
+  addJournalEntry: (jv: Omit<JournalEntry, 'id' | 'journalNumber'>) => void;
+  contraEntries: ContraEntry[];
+  addContraEntry: (contra: Omit<ContraEntry, 'id' | 'contraNumber'>) => void;
+  expenseEntries: ExpenseEntry[];
+  addExpenseEntry: (exp: Omit<ExpenseEntry, 'id' | 'expenseNumber'>) => void;
+  approveExpenseEntry: (id: string, approvedBy: string) => void;
+  bankAccounts: BankAccount[];
+  addBankAccount: (bank: Omit<BankAccount, 'id' | 'currentBalance'>) => void;
+  bankTransactions: BankTransaction[];
+  bankReconciliations: BankReconciliation[];
+  reconcileBankTransaction: (transactionId: string, matchedErpDocNumber: string) => void;
+  fixedAssets: FixedAsset[];
+  addFixedAsset: (asset: Omit<FixedAsset, 'id'>) => void;
+  depreciationEntries: DepreciationEntry[];
+  runDepreciation: (assetId: string, period: string, amount: number) => void;
+  jobCostings: JobCostingSummary[];
+  receivableAging: ReceivableAging[];
+  payableAging: PayableAging[];
+
+  // 360° Traceability Modal & Jobs
+  jobs: JobTraceabilityRecord[];
+  selectedJobForModal: JobTraceabilityRecord | null;
+  openJobModal: (jobNumber: string) => void;
+  closeJobModal: () => void;
+  updateJobStatus: (jobNumber: string, stepId: string, status: 'completed' | 'in_progress' | 'pending') => void;
+
+  // Module 8 Maintenance & Services state
+  internalAssets: InternalAsset[];
+  addInternalAsset: (asset: Omit<InternalAsset, 'id'>) => void;
+  updateInternalAsset: (id: string, asset: Partial<InternalAsset>) => void;
+  customerMachines: CustomerMachine[];
+  addCustomerMachine: (cm: Omit<CustomerMachine, 'id'>) => void;
+  updateCustomerMachine: (id: string, cm: Partial<CustomerMachine>) => void;
+  serviceRequests: ServiceRequest[];
+  addServiceRequest: (sr: Omit<ServiceRequest, 'id' | 'requestNumber' | 'requestDate' | 'createdAt'>) => ServiceRequest;
+  updateServiceRequestStatus: (id: string, status: ServiceRequestStatus, assignedTechId?: string, assignedTechName?: string) => void;
+  breakdowns: BreakdownRecord[];
+  addBreakdown: (bd: Omit<BreakdownRecord, 'id' | 'breakdownNumber'>) => void;
+  updateBreakdownStatus: (id: string, status: BreakdownRecord['status'], remarks?: string) => void;
+  preventivePlans: PreventiveMaintenancePlan[];
+  addPreventivePlan: (plan: Omit<PreventiveMaintenancePlan, 'id' | 'planNumber'>) => void;
+  servicePlanningItems: ServicePlanningItem[];
+  serviceVisits: ServiceVisit[];
+  addServiceVisit: (visit: Omit<ServiceVisit, 'id' | 'visitNumber'>) => void;
+  updateServiceVisitStatus: (id: string, status: ServiceVisitStatus) => void;
+  serviceWorkOrders: ServiceWorkOrder[];
+  addServiceWorkOrder: (swo: Omit<ServiceWorkOrder, 'id' | 'workOrderNumber'>) => void;
+  updateWorkOrderStatus: (id: string, status: WorkOrderStatus) => void;
+  servicePartIssues: ServicePartIssue[];
+  addServicePartIssue: (issue: Omit<ServicePartIssue, 'id' | 'issueNumber' | 'createdAt'>) => void;
+  servicePartReturns: ServicePartReturn[];
+  addServicePartReturn: (ret: Omit<ServicePartReturn, 'id' | 'returnNumber'>) => void;
+  serviceReports: ServiceReport[];
+  addServiceReport: (rep: Omit<ServiceReport, 'id' | 'reportNumber'>) => void;
+  warranties: WarrantyRecord[];
+  amcContracts: AMCContract[];
+  addAMCContract: (amc: Omit<AMCContract, 'id' | 'amcNumber'>) => void;
+  serviceContracts: ServiceContract[];
+  downtimeRecords: DowntimeRecord[];
+  addDowntimeRecord: (dt: Omit<DowntimeRecord, 'id' | 'downtimeNumber'>) => void;
+  maintenanceCosts: MaintenanceCostRecord[];
+  addMaintenanceCost: (mc: Omit<MaintenanceCostRecord, 'id'>) => void;
+  checklistTemplates: ServiceChecklistTemplate[];
+  technicians: TechnicianProfile[];
+
+  // Module 9 HR & Payroll state
+  designations: Designation[];
+  addDesignation: (desg: Omit<Designation, 'id'>) => void;
+  updateDesignation: (id: string, desg: Partial<Designation>) => void;
+  employeeDocuments: EmployeeDocumentItem[];
+  addEmployeeDocument: (doc: Omit<EmployeeDocumentItem, 'id'>) => void;
+  updateEmployeeDocumentStatus: (id: string, status: 'Verified' | 'Pending' | 'Rejected', verifiedBy?: string, remarks?: string) => void;
+  employeeOnboardings: EmployeeOnboardingItem[];
+  addEmployeeOnboarding: (onb: Omit<EmployeeOnboardingItem, 'id'>) => void;
+  updateEmployeeOnboardingStatus: (id: string, status: EmployeeOnboardingItem['status']) => void;
+  employeeTransfers: EmployeeTransferItem[];
+  addEmployeeTransfer: (trn: Omit<EmployeeTransferItem, 'id'>) => void;
+  employeePromotions: EmployeePromotionItem[];
+  addEmployeePromotion: (prm: Omit<EmployeePromotionItem, 'id'>) => void;
+  employeeExits: EmployeeExitItem[];
+  addEmployeeExit: (exit: Omit<EmployeeExitItem, 'id'>) => void;
+  updateEmployeeExitClearance: (id: string, clearanceType: 'dept' | 'asset' | 'hr' | 'accounts', status: boolean) => void;
+  fullAndFinalSettlements: FullAndFinalSettlementItem[];
+  addFullAndFinalSettlement: (fnf: Omit<FullAndFinalSettlementItem, 'id'>) => void;
+  updateFinalSettlementStatus: (id: string, status: FullAndFinalSettlementItem['paymentStatus'], voucherNo?: string) => void;
+  shiftMasters: ShiftMaster[];
+  addShiftMaster: (shift: Omit<ShiftMaster, 'id'>) => void;
+  updateShiftMaster: (id: string, shift: Partial<ShiftMaster>) => void;
+  shiftRosters: ShiftRosterItem[];
+  addShiftRoster: (roster: Omit<ShiftRosterItem, 'id'>) => void;
+  holidays: HolidayItem[];
+  addHoliday: (holiday: Omit<HolidayItem, 'id'>) => void;
+  attendanceRecords: AttendanceRecord[];
+  markAttendance: (record: Omit<AttendanceRecord, 'id'>) => void;
+  updateAttendanceRecord: (id: string, record: Partial<AttendanceRecord>) => void;
+  leaveTypes: LeaveType[];
+  addLeaveType: (lt: Omit<LeaveType, 'id'>) => void;
+  leaveBalances: LeaveBalance[];
+  leaveRequests: LeaveRequest[];
+  addLeaveRequest: (req: Omit<LeaveRequest, 'id' | 'leaveNumber' | 'appliedDate' | 'status'>) => void;
+  updateLeaveRequestStatus: (id: string, status: LeaveApprovalStatus, approvedBy?: string) => void;
+  wfhRequests: WFHRequest[];
+  addWFHRequest: (req: Omit<WFHRequest, 'id' | 'wfhNumber' | 'status'>) => void;
+  updateWFHRequestStatus: (id: string, status: LeaveApprovalStatus) => void;
+  missedPunchRequests: MissedPunchRequest[];
+  addMissedPunchRequest: (req: Omit<MissedPunchRequest, 'id' | 'requestNumber' | 'status'>) => void;
+  updateMissedPunchStatus: (id: string, status: LeaveApprovalStatus) => void;
+  attendanceRegularizations: AttendanceRegularization[];
+  addAttendanceRegularization: (reg: Omit<AttendanceRegularization, 'id' | 'regularizationNo' | 'status'>) => void;
+  updateAttendanceRegularizationStatus: (id: string, status: LeaveApprovalStatus) => void;
+  overtimeRecords: OvertimeRecord[];
+  addOvertimeRecord: (ot: Omit<OvertimeRecord, 'id' | 'overtimeNo' | 'status'>) => void;
+  updateOvertimeStatus: (id: string, status: OvertimeRecord['status']) => void;
+  earlyCheckoutRequests: EarlyCheckoutRequest[];
+  addEarlyCheckoutRequest: (req: Omit<EarlyCheckoutRequest, 'id' | 'requestNumber' | 'status'>) => void;
+  updateEarlyCheckoutStatus: (id: string, status: LeaveApprovalStatus) => void;
+  salaryComponents: SalaryComponent[];
+  addSalaryComponent: (comp: Omit<SalaryComponent, 'id'>) => void;
+  updateSalaryComponent: (id: string, comp: Partial<SalaryComponent>) => void;
+  salaryStructures: SalaryStructure[];
+  addSalaryStructure: (sal: Omit<SalaryStructure, 'id'>) => void;
+  updateSalaryStructure: (id: string, sal: Partial<SalaryStructure>) => void;
+  payrollRecords: PayrollRecord[];
+  generateMonthlyPayroll: (monthYear: string, financialYear: string) => void;
+  updatePayrollStatus: (id: string, status: PayrollStatusType, approvedBy?: string) => void;
+  employeeAdvanceLoans: EmployeeAdvanceLoan[];
+  addEmployeeAdvanceLoan: (loan: Omit<EmployeeAdvanceLoan, 'id' | 'loanNumber' | 'status'>) => void;
+  updateEmployeeAdvanceLoan: (id: string, loan: Partial<EmployeeAdvanceLoan>) => void;
+  reimbursementExpenses: ReimbursementExpense[];
+  addReimbursementExpense: (exp: Omit<ReimbursementExpense, 'id' | 'reimbursementNo' | 'status'>) => void;
+  updateReimbursementStatus: (id: string, status: ReimbursementExpense['status'], approvedBy?: string) => void;
+  kpiMasters: KPIMaster[];
+  addKPIMaster: (kpi: Omit<KPIMaster, 'id'>) => void;
+  employeeAppraisals: EmployeeAppraisal[];
+  addEmployeeAppraisal: (app: Omit<EmployeeAppraisal, 'id' | 'appraisalNumber' | 'status'>) => void;
+  updateAppraisalStatus: (id: string, status: EmployeeAppraisal['status']) => void;
+  trainingPrograms: TrainingProgram[];
+  addTrainingProgram: (tr: Omit<TrainingProgram, 'id'>) => void;
+  updateTrainingStatus: (id: string, status: TrainingProgram['status']) => void;
+  jobPositions: JobPosition[];
+  addJobPosition: (pos: Omit<JobPosition, 'id'>) => void;
+  updateJobPositionStatus: (id: string, status: JobPosition['status']) => void;
+  candidateProfiles: CandidateProfile[];
+  addCandidateProfile: (cand: Omit<CandidateProfile, 'id' | 'candidateCode'>) => void;
+  updateCandidateStatus: (id: string, status: CandidateProfile['status']) => void;
+  interviewRecords: InterviewRecord[];
+  addInterviewRecord: (interview: Omit<InterviewRecord, 'id'>) => void;
+  offerLetters: OfferLetter[];
+  addOfferLetter: (offer: Omit<OfferLetter, 'id' | 'offerNumber' | 'status'>) => void;
+  updateOfferLetterStatus: (id: string, status: OfferLetter['status']) => void;
+
+  // Logs & Notifications
+  auditLogs: AuditLogEntry[];
+  logAction: (action: AuditLogEntry['action'], module: string, page: string, recordId: string, notes?: string, oldValue?: string, newValue?: string) => void;
+  notifications: NotificationItem[];
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  sendNotification: (notif: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
+}
+
+const ERPContext = createContext<ERPContextType | undefined>(undefined);
+
+export function ERPProvider({ children }: { children: React.ReactNode }) {
+  // Master state initialized with deep relational seed
+  const [company, setCompany] = useState<CompanySetting>(INITIAL_COMPANY);
+  const [numbering, setNumbering] = useState<NumberingSetting[]>(INITIAL_NUMBERING);
+  const [departments, setDepartments] = useState<Department[]>(INITIAL_DEPARTMENTS);
+  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
+  
+  const mappedInitialEmployees: Employee[] = INITIAL_EMPLOYEES.map((e) => ({
+    ...e,
+    name: e.name || `${e.firstName} ${e.lastName}`,
+    department: e.department || e.departmentName,
+    phone: e.phone || e.mobile,
+    role: e.role || e.roleName || e.designation,
+    joinedDate: e.joinedDate || e.joiningDate,
+    status: e.status === 'active' ? 'Active' : e.status,
+  }));
+
+  const [employees, setEmployees] = useState<Employee[]>(mappedInitialEmployees);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<Employee>(mappedInitialEmployees[0]); // Default: Rajesh Patel (Super Admin)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+
+  // Layout State
+  const [activeDepartment, setActiveDepartment] = useState<DepartmentType | 'all'>('all');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
+
+  // CRM States
+  const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
+  const [customers, setCustomers] = useState<Customer[]>(INITIAL_CUSTOMERS);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>(INITIAL_ENQUIRIES);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>(INITIAL_OPPORTUNITIES);
+  const [followUps, setFollowUps] = useState<FollowUp[]>(INITIAL_FOLLOWUPS);
+  const [siteVisits, setSiteVisits] = useState<SiteVisit[]>(INITIAL_VISITS);
+  const [exhibitions, setExhibitions] = useState<Exhibition[]>(INITIAL_EXHIBITIONS);
+  const [quotations, setQuotations] = useState<Quotation[]>(INITIAL_QUOTATIONS);
+  const [customerPOs, setCustomerPOs] = useState<CustomerPO[]>(INITIAL_CUSTOMER_POS);
+  const [salesOrders, setSalesOrders] = useState<SalesOrder[]>(INITIAL_SALES_ORDERS);
+  const [projectJobs, setProjectJobs] = useState<ProjectJobMaster[]>(INITIAL_PROJECT_JOBS);
+  const [projectTasks, setProjectTasks] = useState<ProjectTask[]>(MOCK_PROJECT_TASKS);
+  const [projectPlanningStages, setProjectPlanningStages] = useState<ProjectPlanningStage[]>(MOCK_PLANNING_STAGES);
+  const [departmentAssignments, setDepartmentAssignments] = useState<DepartmentAssignment[]>(MOCK_DEPARTMENT_ASSIGNMENTS);
+  const [projectMilestones, setProjectMilestones] = useState<ProjectMilestone[]>(MOCK_MILESTONES);
+  const [projectIssues, setProjectIssues] = useState<ProjectIssue[]>(MOCK_PROJECT_ISSUES);
+  const [projectDelays, setProjectDelays] = useState<ProjectDelay[]>(MOCK_PROJECT_DELAYS);
+  const [changeRequests, setChangeRequests] = useState<CustomerChangeRequest[]>(MOCK_CHANGE_REQUESTS);
+  const [projectDocuments, setProjectDocuments] = useState<ProjectDocument[]>(MOCK_PROJECT_DOCUMENTS);
+  const [projectCosts, setProjectCosts] = useState<ProjectCostItem[]>(MOCK_PROJECT_COSTS);
+  const [projectComments, setProjectComments] = useState<ProjectComment[]>(MOCK_PROJECT_COMMENTS);
+  const [projectApprovals, setProjectApprovals] = useState<ProjectApproval[]>(MOCK_PROJECT_APPROVALS);
+  const [projectActivities, setProjectActivities] = useState<ProjectActivityLog[]>(MOCK_PROJECT_ACTIVITIES);
+
+  // Module 3: Designer & Engineering Management States
+  const [designJobs, setDesignJobs] = useState<DesignJob[]>(INITIAL_DESIGN_JOBS);
+  const [customerRequirements, setCustomerRequirements] = useState<CustomerRequirement[]>(MOCK_CUSTOMER_REQUIREMENTS);
+  const [designTasks, setDesignTasks] = useState<DesignTask[]>(MOCK_DESIGN_TASKS);
+  const [drawings2D, setDrawings2D] = useState<Drawing2D[]>(MOCK_2D_DRAWINGS);
+  const [designs3D, setDesigns3D] = useState<Design3DModel[]>(MOCK_3D_MODELS);
+  const [assemblyDrawings, setAssemblyDrawings] = useState<AssemblyDrawing[]>(MOCK_ASSEMBLY_DRAWINGS);
+  const [partDrawings, setPartDrawings] = useState<PartDrawing[]>(MOCK_PART_DRAWINGS);
+  const [boms, setBoms] = useState<BOMHeader[]>(MOCK_BOM_HEADERS);
+  const [bomRevisions, setBomRevisions] = useState<BOMRevision[]>(MOCK_BOM_REVISIONS);
+  const [designRevisions, setDesignRevisions] = useState<DesignRevisionLog[]>(MOCK_DESIGN_REVISIONS);
+  const [designReviews, setDesignReviews] = useState<DesignReviewChecklist[]>(MOCK_DESIGN_REVIEWS);
+  const [technicalDocuments, setTechnicalDocuments] = useState<TechnicalDocumentItem[]>(MOCK_TECHNICAL_DOCUMENTS);
+
+  // Module 4: Purchase Management States
+  const [suppliers, setSuppliers] = useState<Supplier[]>(INITIAL_SUPPLIERS);
+  const [supplierContacts, setSupplierContacts] = useState<SupplierContact[]>(MOCK_SUPPLIER_CONTACTS);
+  const [materialRequirements, setMaterialRequirements] = useState<MaterialRequirement[]>(MOCK_MATERIAL_REQUIREMENTS);
+  const [purchaseRequisitions, setPurchaseRequisitions] = useState<PurchaseRequisition[]>(MOCK_PURCHASE_REQUISITIONS);
+  const [rfqs, setRfqs] = useState<RequestForQuotation[]>(MOCK_RFQS);
+  const [supplierQuotations, setSupplierQuotations] = useState<SupplierQuotation[]>(MOCK_SUPPLIER_QUOTATIONS);
+  const [quotationComparisons, setQuotationComparisons] = useState<QuotationComparison[]>(MOCK_QUOTATION_COMPARISONS);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(MOCK_PURCHASE_ORDERS);
+  const [poRevisions, setPoRevisions] = useState<PORevision[]>(MOCK_PO_REVISIONS);
+  const [purchaseFollowUps, setPurchaseFollowUps] = useState<PurchaseFollowUp[]>(MOCK_PURCHASE_FOLLOWUPS);
+  const [purchaseReturns, setPurchaseReturns] = useState<PurchaseReturn[]>(MOCK_PURCHASE_RETURNS);
+
+  // Module 5: Store & Warehouse Management States
+  const [itemMasters, setItemMasters] = useState<ItemMaster[]>(INITIAL_ITEM_MASTERS);
+  const [itemCategories, setItemCategories] = useState<ItemCategory[]>(INITIAL_ITEM_CATEGORIES);
+  const [uoms, setUoms] = useState<UOMMaster[]>(INITIAL_UOMS);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>(INITIAL_WAREHOUSES);
+  const [warehouseLocations, setWarehouseLocations] = useState<WarehouseLocation[]>(INITIAL_WAREHOUSE_LOCATIONS);
+  const [openingStocks, setOpeningStocks] = useState<OpeningStock[]>(INITIAL_OPENING_STOCKS);
+  const [goodsReceipts, setGoodsReceipts] = useState<GoodsReceiptNote[]>(INITIAL_GOODS_RECEIPTS);
+  const [qcInspections, setQcInspections] = useState<QCInspection[]>(INITIAL_QC_INSPECTIONS);
+  const [stockBalances, setStockBalances] = useState<StockBalance[]>(INITIAL_STOCK_BALANCES);
+  const [stockReservations, setStockReservations] = useState<StockReservation[]>(INITIAL_STOCK_RESERVATIONS);
+  const [materialIssues, setMaterialIssues] = useState<MaterialIssue[]>(INITIAL_MATERIAL_ISSUES);
+  const [materialReturns, setMaterialReturns] = useState<MaterialReturn[]>(INITIAL_MATERIAL_RETURNS);
+  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>(INITIAL_STOCK_TRANSFERS);
+  const [stockAdjustments, setStockAdjustments] = useState<StockAdjustment[]>(INITIAL_STOCK_ADJUSTMENTS);
+  const [scrapEntries, setScrapEntries] = useState<ScrapEntry[]>(INITIAL_SCRAP_ENTRIES);
+  const [physicalStockCounts, setPhysicalStockCounts] = useState<PhysicalStockCount[]>(INITIAL_PHYSICAL_COUNTS);
+  const [stockLedgers, setStockLedgers] = useState<StockLedgerEntry[]>(INITIAL_STOCK_LEDGERS);
+
+  // Module 6: Production / Manufacturing / MRP States
+  const [manufacturingJobs, setManufacturingJobs] = useState<ManufacturingJob[]>(INITIAL_MANUFACTURING_JOBS);
+  const [productionPlans, setProductionPlans] = useState<ProductionPlan[]>(INITIAL_PRODUCTION_PLANS);
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(INITIAL_WORK_ORDERS);
+  const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>(INITIAL_PRODUCTION_ORDERS);
+  const [routingOperations, setRoutingOperations] = useState<RoutingOperation[]>(INITIAL_ROUTING_OPERATIONS);
+  const [workCenters, setWorkCenters] = useState<WorkCenter[]>(INITIAL_WORK_CENTERS);
+  const [productionSchedules, setProductionSchedules] = useState<ProductionScheduleItem[]>(INITIAL_PRODUCTION_SCHEDULES);
+  const [mrpRequirements, setMrpRequirements] = useState<MRPItemRequirement[]>(INITIAL_MRP_REQUIREMENTS);
+  const [productionEntries, setProductionEntries] = useState<ProductionEntry[]>(INITIAL_PRODUCTION_ENTRIES);
+  const [wipRecords, setWipRecords] = useState<WIPRecord[]>(INITIAL_WIP_RECORDS);
+  const [productionHolds, setProductionHolds] = useState<ProductionHold[]>(INITIAL_PRODUCTION_HOLDS);
+  const [reworkOrders, setReworkOrders] = useState<ReworkOrder[]>(INITIAL_REWORK_ORDERS);
+  const [productionScraps, setProductionScraps] = useState<ProductionScrap[]>(INITIAL_PRODUCTION_SCRAPS);
+  const [productionCompletions, setProductionCompletions] = useState<ProductionCompletion[]>([]);
+  const [finishedGoods, setFinishedGoods] = useState<FinishedGoodsItem[]>(INITIAL_FINISHED_GOODS);
+  const [productionCosts, setProductionCosts] = useState<ProductionCostSummary[]>(INITIAL_PRODUCTION_COSTS);
+
+  // Module 7: Accounting & Finance States
+  const [financialYears, setFinancialYears] = useState<FinancialYear[]>(INITIAL_FINANCIAL_YEARS);
+  const [chartOfAccounts, setChartOfAccounts] = useState<ChartOfAccount[]>(INITIAL_CHART_OF_ACCOUNTS);
+  const [accountGroups, setAccountGroups] = useState<AccountGroup[]>(INITIAL_ACCOUNT_GROUPS);
+  const [taxMasters, setTaxMasters] = useState<TaxMaster[]>(INITIAL_TAX_MASTERS);
+  const [tdsMasters, setTdsMasters] = useState<TDSMaster[]>(INITIAL_TDS_MASTERS);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>(INITIAL_COST_CENTERS);
+  const [salesInvoices, setSalesInvoices] = useState<SalesInvoice[]>(INITIAL_SALES_INVOICES);
+  const [purchaseInvoices, setPurchaseInvoices] = useState<PurchaseInvoice[]>(INITIAL_PURCHASE_INVOICES);
+  const [creditNotes, setCreditNotes] = useState<CreditNote[]>(INITIAL_CREDIT_NOTES);
+  const [debitNotes, setDebitNotes] = useState<DebitNote[]>(INITIAL_DEBIT_NOTES);
+  const [customerReceipts, setCustomerReceipts] = useState<CustomerReceipt[]>(INITIAL_CUSTOMER_RECEIPTS);
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(INITIAL_SUPPLIER_PAYMENTS);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(INITIAL_JOURNAL_ENTRIES);
+  const [contraEntries, setContraEntries] = useState<ContraEntry[]>(INITIAL_CONTRA_ENTRIES);
+  const [expenseEntries, setExpenseEntries] = useState<ExpenseEntry[]>(INITIAL_EXPENSE_ENTRIES);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(INITIAL_BANK_ACCOUNTS);
+  const [bankTransactions, setBankTransactions] = useState<BankTransaction[]>(INITIAL_BANK_TRANSACTIONS);
+  const [bankReconciliations, setBankReconciliations] = useState<BankReconciliation[]>([]);
+  const [fixedAssets, setFixedAssets] = useState<FixedAsset[]>(INITIAL_FIXED_ASSETS);
+  const [depreciationEntries, setDepreciationEntries] = useState<DepreciationEntry[]>([]);
+  const [jobCostings, setJobCostings] = useState<JobCostingSummary[]>(INITIAL_JOB_COSTINGS);
+  const [receivableAging, setReceivableAging] = useState<ReceivableAging[]>(INITIAL_RECEIVABLE_AGING);
+  const [payableAging, setPayableAging] = useState<PayableAging[]>(INITIAL_PAYABLE_AGING);
+
+  // Traceability & Audit & Notification
+  const [jobs, setJobs] = useState<JobTraceabilityRecord[]>(MOCK_JOBS);
+  const [selectedJobForModal, setSelectedJobForModal] = useState<JobTraceabilityRecord | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(MOCK_AUDIT_LOGS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
+
+  // Keyboard shortcut for Global Search (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Numbering Generator Helper
+  const getNextDocNumber = (docType: NumberingSetting['docType']): string => {
+    const numConfig = numbering.find((n) => n.docType === docType);
+    if (!numConfig) {
+      return `${docType.toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    }
+    const nextNum = numConfig.currentNumber + 1;
+    setNumbering((prev) =>
+      prev.map((n) => (n.docType === docType ? { ...n, currentNumber: nextNum } : n))
+    );
+    const padded = String(nextNum).padStart(numConfig.digitCount, '0');
+    return `${numConfig.prefix}${padded}${numConfig.suffix || ''}`;
+  };
+
+  // Audit Logger Hook
+  const logAction = (
+    action: AuditLogEntry['action'],
+    module: string,
+    page: string,
+    recordId: string,
+    notes?: string,
+    oldValue?: string,
+    newValue?: string
+  ) => {
+    const newEntry: AuditLogEntry = {
+      id: `AUD-${Date.now().toString().slice(-6)}`,
+      timestamp: new Date().toISOString(),
+      userId: currentUser.id,
+      userName: `${currentUser.firstName} ${currentUser.lastName}`,
+      role: (currentUser.roleName.toLowerCase().replace(/[^a-z]/g, '_') as any) || 'super_admin',
+      department: (currentUser.departmentName.toLowerCase().includes('crm') ? 'crm' : 'project') as any,
+      action,
+      module,
+      page,
+      recordId,
+      oldValue,
+      newValue,
+      notes,
+      ipAddress: '192.168.1.100 (Makarpura Plant Terminal)',
+    };
+    setAuditLogs((prev) => [newEntry, ...prev]);
+  };
+
+  // Notification Publisher
+  const sendNotification = (notif: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => {
+    const newNotif: NotificationItem = {
+      ...notif,
+      id: `NOTIF-${Date.now().toString().slice(-6)}`,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
+  // Authentication Helpers
+  const login = (username: string, pass: string): boolean => {
+    const found = employees.find(
+      (e) =>
+        (e.username.toLowerCase() === username.toLowerCase() || e.email.toLowerCase() === username.toLowerCase()) &&
+        e.status === 'active'
+    );
+    if (found) {
+      setCurrentUser(found);
+      setIsAuthenticated(true);
+      logAction('LOGIN', 'Authentication', 'Sign In', found.id, `User ${found.firstName} logged in`);
+      return true;
+    }
+    return false;
+  };
+
+  const logout = () => {
+    logAction('LOGOUT', 'Authentication', 'Sign Out', currentUser.id, `User ${currentUser.firstName} logged out`);
+    setIsAuthenticated(false);
+  };
+
+  const updateCurrentUserProfile = (data: Partial<Employee>) => {
+    setCurrentUser((prev) => ({ ...prev, ...data }));
+    setEmployees((prev) => prev.map((e) => (e.id === currentUser.id ? { ...e, ...data } : e)));
+    logAction('UPDATE', 'User Management', 'My Profile', currentUser.id, 'Updated profile details');
+  };
+
+  const changePassword = (newPass: string) => {
+    setCurrentUser((prev) => ({ ...prev, password: newPass }));
+    setEmployees((prev) => prev.map((e) => (e.id === currentUser.id ? { ...e, password: newPass } : e)));
+    logAction('UPDATE', 'User Management', 'Change Password', currentUser.id, 'Password updated successfully');
+  };
+
+  // RBAC Permission Engine
+  const can = (
+    module: string,
+    page: string,
+    action: 'view' | 'create' | 'edit' | 'delete' | 'approve' | 'reject' | 'export' | 'print'
+  ): boolean => {
+    if (currentUser.roleName === 'Super Admin') return true;
+
+    const userRole = roles.find((r) => r.id === currentUser.roleId);
+    if (!userRole) return false;
+
+    // Check module or page level permission
+    const perm = userRole.permissions.find(
+      (p) => p.module.toLowerCase() === module.toLowerCase() && (p.page === 'All' || p.page.toLowerCase() === page.toLowerCase())
+    );
+    if (!perm) return false;
+    return Boolean(perm[action]);
+  };
+
+  const hasDepartmentAccess = (deptCode: string): boolean => {
+    if (currentUser.roleName === 'Super Admin') return true;
+    if (currentUser.isFamilyMember) return true; // Family admins have broader access
+    return currentUser.departmentName.toLowerCase().includes(deptCode.toLowerCase());
+  };
+
+  // Company & Numbering Updates
+  const updateCompany = (data: Partial<CompanySetting>) => {
+    setCompany((prev) => ({ ...prev, ...data }));
+    logAction('UPDATE', 'Company Settings', 'Company Profile', 'COMP-01', 'Updated company profile information');
+  };
+
+  const updateNumbering = (id: string, data: Partial<NumberingSetting>) => {
+    setNumbering((prev) => prev.map((n) => (n.id === id ? { ...n, ...data } : n)));
+    logAction('UPDATE', 'Settings', 'Numbering Series', id, 'Updated numbering series pattern');
+  };
+
+  // Department CRUD
+  const addDepartment = (dept: Omit<Department, 'id' | 'employeeCount'>) => {
+    const newDept: Department = {
+      ...dept,
+      id: `dept-${dept.code.toLowerCase()}`,
+      employeeCount: 0,
+    };
+    setDepartments((prev) => [...prev, newDept]);
+    logAction('CREATE', 'Department Management', 'Add Department', newDept.id, `Created department ${newDept.name}`);
+  };
+
+  const updateDepartment = (id: string, dept: Partial<Department>) => {
+    setDepartments((prev) => prev.map((d) => (d.id === id ? { ...d, ...dept } : d)));
+    logAction('UPDATE', 'Department Management', 'Edit Department', id, `Updated department info`);
+  };
+
+  // Role CRUD
+  const addRole = (role: Omit<Role, 'id'>) => {
+    const newRole: Role = {
+      ...role,
+      id: `role-${Date.now().toString().slice(-4)}`,
+    };
+    setRoles((prev) => [...prev, newRole]);
+    logAction('CREATE', 'Role Management', 'Add Role', newRole.id, `Created role ${newRole.name}`);
+  };
+
+  const updateRole = (id: string, role: Partial<Role>) => {
+    setRoles((prev) => prev.map((r) => (r.id === id ? { ...r, ...role } : r)));
+    logAction('UPDATE', 'Role Management', 'Edit Role', id, `Updated role permissions`);
+  };
+
+  // Employee CRUD
+  const addEmployee = (emp: Omit<Employee, 'id'>) => {
+    const newEmp: Employee = {
+      ...emp,
+      id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
+    };
+    setEmployees((prev) => [...prev, newEmp]);
+    logAction('CREATE', 'User Management', 'Add Employee', newEmp.id, `Created employee ${newEmp.firstName} ${newEmp.lastName}`);
+  };
+
+  const updateEmployee = (id: string, emp: Partial<Employee>) => {
+    setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...emp } : e)));
+    logAction('UPDATE', 'User Management', 'Edit Employee', id, `Updated employee ${id}`);
+  };
+
+  // CRM: Leads
+  const addLead = (leadData: Omit<Lead, 'id' | 'leadNo' | 'createdDate'>): Lead => {
+    const leadNo = getNextDocNumber('lead');
+    const newLead: Lead = {
+      ...leadData,
+      id: leadNo,
+      leadNo,
+      createdDate: new Date().toISOString().split('T')[0],
+    };
+    setLeads((prev) => [newLead, ...prev]);
+    logAction('CREATE', 'CRM', 'Leads', leadNo, `New Lead for ${newLead.companyName} (${newLead.productName})`);
+    sendNotification({
+      title: 'New Lead Registered',
+      message: `${newLead.leadNo}: ${newLead.companyName} requires ${newLead.productName}.`,
+      type: 'info',
+      department: 'crm',
+      linkUrl: `/crm/leads/${newLead.id}`,
+      priority: newLead.priority === 'urgent' ? 'high' : 'normal',
+    });
+    return newLead;
+  };
+
+  const updateLead = (id: string, leadData: Partial<Lead>) => {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...leadData } : l)));
+    logAction('UPDATE', 'CRM', 'Leads', id, `Updated lead ${id}`);
+  };
+
+  const deleteLead = (id: string) => {
+    setLeads((prev) => prev.filter((l) => l.id !== id));
+    logAction('DELETE', 'CRM', 'Leads', id, `Deleted lead ${id}`);
+  };
+
+  const convertLeadToCustomer = (leadId: string): { customer: Customer; enquiry?: Enquiry; opportunity?: Opportunity } => {
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) throw new Error('Lead not found');
+
+    // Create Customer
+    const custId = `CUST-2026-${String(customers.length + 1).padStart(4, '0')}`;
+    const newCustomer: Customer = {
+      id: custId,
+      customerCode: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
+      customerType: 'company',
+      companyName: lead.companyName,
+      industry: lead.industry || 'Manufacturing',
+      gstin: lead.gstin || '24AAACX0000X1Z1',
+      pan: lead.gstin ? lead.gstin.slice(2, 12) : 'AAACX0000X',
+      website: lead.website || '',
+      contactPerson: lead.contactPerson,
+      designation: lead.designation,
+      mobile: lead.mobile,
+      email: lead.email,
+      whatsapp: lead.whatsapp,
+      billingAddress: lead.address,
+      shippingAddress: lead.address,
+      city: lead.city,
+      state: lead.state,
+      country: lead.country,
+      pincode: lead.pincode,
+      paymentTerms: '30% Advance, 70% against Dispatch',
+      creditLimit: 10000000,
+      currency: 'INR (₹)',
+      category: 'gold',
+      assignedSalesPerson: lead.assignedSalesPersonName,
+      createdDate: new Date().toISOString().split('T')[0],
+    };
+    setCustomers((prev) => [newCustomer, ...prev]);
+
+    // Create Enquiry
+    const enqNo = getNextDocNumber('enquiry');
+    const newEnquiry: Enquiry = {
+      id: enqNo,
+      enquiryNo: enqNo,
+      leadId: lead.id,
+      customerId: newCustomer.id,
+      customerName: newCustomer.companyName,
+      enquiryDate: new Date().toISOString().split('T')[0],
+      requirement: lead.requirementDescription,
+      machineProduct: lead.productName,
+      quantity: lead.quantity,
+      specification: lead.capacity || lead.requirementDescription || 'As per customer drawing/spec',
+      expectedDelivery: lead.expectedDelivery,
+      assignedPersonId: lead.assignedSalesPersonId,
+      assignedPersonName: lead.assignedSalesPersonName,
+      status: 'technical_review',
+    };
+    setEnquiries((prev) => [newEnquiry, ...prev]);
+
+    // Create Opportunity
+    const oppNo = getNextDocNumber('opportunity');
+    const newOpp: Opportunity = {
+      id: oppNo,
+      opportunityNo: oppNo,
+      leadId: lead.id,
+      customerId: newCustomer.id,
+      customerName: newCustomer.companyName,
+      machineProduct: lead.productName,
+      estimatedValue: lead.budget || 3500000,
+      expectedClosingDate: lead.expectedDelivery,
+      salesPersonId: lead.assignedSalesPersonId,
+      salesPersonName: lead.assignedSalesPersonName,
+      probability: 60,
+      stage: 'requirement',
+      remarks: `Converted from Lead ${lead.leadNo}`,
+    };
+    setOpportunities((prev) => [newOpp, ...prev]);
+
+    // Update Lead
+    updateLead(lead.id, {
+      status: 'qualified',
+      convertedCustomerId: newCustomer.id,
+      convertedEnquiryId: newEnquiry.id,
+      convertedOpportunityId: newOpp.id,
+    });
+
+    logAction('APPROVE', 'CRM', 'Convert Lead', lead.id, `Converted lead to Customer ${newCustomer.companyName}, Enquiry ${enqNo}, Opportunity ${oppNo}`);
+    return { customer: newCustomer, enquiry: newEnquiry, opportunity: newOpp };
+  };
+
+  // Customers
+  const addCustomer = (custData: Omit<Customer, 'id' | 'customerCode' | 'createdDate'>): Customer => {
+    const custId = `CUST-2026-${String(customers.length + 1).padStart(4, '0')}`;
+    const newCust: Customer = {
+      ...custData,
+      id: custId,
+      customerCode: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
+      createdDate: new Date().toISOString().split('T')[0],
+    };
+    setCustomers((prev) => [newCust, ...prev]);
+    logAction('CREATE', 'CRM', 'Customers', custId, `Added Customer ${newCust.companyName}`);
+    return newCust;
+  };
+
+  const updateCustomer = (id: string, custData: Partial<Customer>) => {
+    setCustomers((prev) => prev.map((c) => (c.id === id ? { ...c, ...custData } : c)));
+    logAction('UPDATE', 'CRM', 'Customers', id, `Updated Customer ${id}`);
+  };
+
+  const addContact = (contact: Omit<Contact, 'id'>) => {
+    const newContact: Contact = {
+      ...contact,
+      id: `CONT-${Date.now().toString().slice(-4)}`,
+    };
+    setContacts((prev) => [...prev, newContact]);
+    logAction('CREATE', 'CRM', 'Contacts', newContact.id, `Added Contact ${newContact.name}`);
+  };
+
+  // Enquiries & Opportunities
+  const addEnquiry = (enqData: Omit<Enquiry, 'id' | 'enquiryNo' | 'enquiryDate'>): Enquiry => {
+    const enqNo = getNextDocNumber('enquiry');
+    const newEnq: Enquiry = {
+      ...enqData,
+      id: enqNo,
+      enquiryNo: enqNo,
+      enquiryDate: new Date().toISOString().split('T')[0],
+    };
+    setEnquiries((prev) => [newEnq, ...prev]);
+    logAction('CREATE', 'CRM', 'Enquiries', enqNo, `Created Enquiry ${enqNo}`);
+    return newEnq;
+  };
+
+  const updateEnquiry = (id: string, enqData: Partial<Enquiry>) => {
+    setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, ...enqData } : e)));
+    logAction('UPDATE', 'CRM', 'Enquiries', id, `Updated Enquiry ${id}`);
+  };
+
+  const addOpportunity = (oppData: Omit<Opportunity, 'id' | 'opportunityNo'>): Opportunity => {
+    const oppNo = getNextDocNumber('opportunity');
+    const newOpp: Opportunity = {
+      ...oppData,
+      id: oppNo,
+      opportunityNo: oppNo,
+    };
+    setOpportunities((prev) => [newOpp, ...prev]);
+    logAction('CREATE', 'CRM', 'Opportunities', oppNo, `Created Opportunity ${oppNo}`);
+    return newOpp;
+  };
+
+  const updateOpportunity = (id: string, oppData: Partial<Opportunity>) => {
+    setOpportunities((prev) => prev.map((o) => (o.id === id ? { ...o, ...oppData } : o)));
+    logAction('UPDATE', 'CRM', 'Opportunities', id, `Updated Opportunity ${id}`);
+  };
+
+  // Follow-ups & Visits & Exhibitions
+  const addFollowUp = (flwData: Omit<FollowUp, 'id' | 'followUpNo'>): FollowUp => {
+    const flwNo = `FLW-2026-${String(followUps.length + 1).padStart(4, '0')}`;
+    const newFlw: FollowUp = {
+      ...flwData,
+      id: flwNo,
+      followUpNo: flwNo,
+    };
+    setFollowUps((prev) => [newFlw, ...prev]);
+    logAction('CREATE', 'CRM', 'Follow-ups', flwNo, `Scheduled follow-up for ${newFlw.leadOrCustomerName}`);
+    return newFlw;
+  };
+
+  const completeFollowUp = (id: string, notes: string, nextDate?: string) => {
+    setFollowUps((prev) =>
+      prev.map((f) =>
+        f.id === id ? { ...f, status: 'completed', completedNotes: notes, nextFollowUpDate: nextDate } : f
+      )
+    );
+    logAction('UPDATE', 'CRM', 'Follow-ups', id, `Completed follow-up: ${notes}`);
+  };
+
+  const addSiteVisit = (visitData: Omit<SiteVisit, 'id' | 'visitNo'>): SiteVisit => {
+    const visitNo = getNextDocNumber('visit');
+    const newVisit: SiteVisit = {
+      ...visitData,
+      id: visitNo,
+      visitNo,
+    };
+    setSiteVisits((prev) => [newVisit, ...prev]);
+    logAction('CREATE', 'CRM', 'Visits', visitNo, `Logged site visit to ${newVisit.customerName}`);
+    return newVisit;
+  };
+
+  const addExhibition = (expoData: Omit<Exhibition, 'id'>): Exhibition => {
+    const newExpo: Exhibition = {
+      ...expoData,
+      id: `EXPO-2026-${String(exhibitions.length + 1).padStart(2, '0')}`,
+    };
+    setExhibitions((prev) => [...prev, newExpo]);
+    logAction('CREATE', 'CRM', 'Exhibitions', newExpo.id, `Created exhibition entry ${newExpo.expoName}`);
+    return newExpo;
+  };
+
+  // Quotations & Multi-Revision Engine
+  const addQuotation = (quoData: Omit<Quotation, 'id' | 'quotationNumber'>): Quotation => {
+    const quoNo = getNextDocNumber('quotation');
+    const newQuo: Quotation = {
+      ...quoData,
+      id: quoNo,
+      quotationNumber: quoNo,
+    };
+    setQuotations((prev) => [newQuo, ...prev]);
+    logAction('CREATE', 'CRM', 'Quotations', quoNo, `Generated Quotation ${quoNo} (Rev-00) for ₹${newQuo.latestSummary.grandTotal}`);
+    sendNotification({
+      title: 'Quotation Ready for Approval',
+      message: `${quoNo} for ${newQuo.customerName} requires Manager Review.`,
+      type: 'approval_request',
+      department: 'crm',
+      linkUrl: `/crm/quotations/${quoNo}`,
+      priority: 'high',
+    });
+    return newQuo;
+  };
+
+  const addQuotationRevision = (quotationId: string, revision: QuotationRevision) => {
+    setQuotations((prev) =>
+      prev.map((q) => {
+        if (q.id !== quotationId) return q;
+        return {
+          ...q,
+          currentRevision: revision.revisionNumber,
+          revisions: [...q.revisions, revision],
+          latestSummary: {
+            grandTotal: revision.grandTotal,
+            status: revision.status,
+            machineProduct: revision.items[0]?.productName || q.latestSummary.machineProduct,
+          },
+        };
+      })
+    );
+    logAction('UPDATE', 'CRM', 'Quotation Revision', quotationId, `Created revision ${revision.revisionNumber}`);
+  };
+
+  const updateQuotationStatus = (quotationId: string, revisionNumber: string, status: QuotationRevision['status']) => {
+    setQuotations((prev) =>
+      prev.map((q) => {
+        if (q.id !== quotationId) return q;
+        const updatedRevs = q.revisions.map((r) => (r.revisionNumber === revisionNumber ? { ...r, status } : r));
+        return {
+          ...q,
+          revisions: updatedRevs,
+          latestSummary: {
+            ...q.latestSummary,
+            status,
+          },
+        };
+      })
+    );
+    logAction('APPROVE', 'CRM', 'Quotations', quotationId, `Updated ${revisionNumber} status to ${status}`);
+  };
+
+  // Customer PO & Sales Order
+  const addCustomerPO = (poData: Omit<CustomerPO, 'id'>): CustomerPO => {
+    const poId = getNextDocNumber('customer_po');
+    const newPO: CustomerPO = {
+      ...poData,
+      id: poId,
+    };
+    setCustomerPOs((prev) => [newPO, ...prev]);
+    logAction('CREATE', 'CRM', 'Customer PO', poId, `Received Customer PO ${newPO.poNumber} for ₹${newPO.poAmount}`);
+    sendNotification({
+      title: 'Customer PO Received',
+      message: `${newPO.poNumber} from ${newPO.customerName} received. Create Sales Order to initiate manufacturing.`,
+      type: 'success',
+      department: 'crm',
+      linkUrl: '/crm/customer-po',
+      priority: 'high',
+    });
+    return newPO;
+  };
+
+  const convertCustomerPOToSalesOrder = (poId: string): SalesOrder => {
+    const po = customerPOs.find((p) => p.id === poId);
+    if (!po) throw new Error('Customer PO not found');
+
+    const soNo = getNextDocNumber('sales_order');
+    const newSO: SalesOrder = {
+      id: soNo,
+      salesOrderNumber: soNo,
+      customerId: po.customerId,
+      customerName: po.customerName,
+      customerPoId: po.id,
+      customerPoNumber: po.poNumber,
+      quotationId: po.quotationId,
+      quotationNumber: po.quotationNumber,
+      orderDate: new Date().toISOString().split('T')[0],
+      deliveryDate: po.deliveryDate,
+      orderValue: po.poAmount,
+      paymentTerms: po.paymentTerms,
+      assignedProjectManager: 'Bhavin Shah',
+      status: 'confirmed',
+      items: [
+        {
+          id: 'so-1',
+          productName: `Custom Equipment (Ref ${po.quotationNumber})`,
+          specification: 'As per approved Quotation & Customer PO specs',
+          quantity: 1,
+          unit: 'Set',
+          rate: po.poAmount,
+          amount: po.poAmount,
+        },
+      ],
+    };
+
+    setSalesOrders((prev) => [newSO, ...prev]);
+    setCustomerPOs((prev) => prev.map((p) => (p.id === poId ? { ...p, status: 'sales_order_created', salesOrderId: soNo } : p)));
+    logAction('APPROVE', 'CRM', 'Sales Order Created', soNo, `Generated Sales Order ${soNo} from Customer PO ${po.poNumber}`);
+    sendNotification({
+      title: 'Sales Order Confirmed',
+      message: `${soNo} created for ${po.customerName}. Click to create Project / Job.`,
+      type: 'success',
+      department: 'crm',
+      linkUrl: '/crm/sales-orders',
+      priority: 'high',
+    });
+    return newSO;
+  };
+
+  const addSalesOrder = (soData: Omit<SalesOrder, 'id' | 'salesOrderNumber'>): SalesOrder => {
+    const soNo = getNextDocNumber('sales_order');
+    const newSO: SalesOrder = {
+      ...soData,
+      id: soNo,
+      salesOrderNumber: soNo,
+    };
+    setSalesOrders((prev) => [newSO, ...prev]);
+    logAction('CREATE', 'CRM', 'Sales Orders', soNo, `Created Sales Order ${soNo}`);
+    return newSO;
+  };
+
+  // CRM → PROJECT INTEGRATION (THE CENTRAL LINK!)
+  const createProjectFromSalesOrder = (salesOrderId: string): ProjectJobMaster => {
+    const so = salesOrders.find((s) => s.id === salesOrderId);
+    if (!so) throw new Error('Sales order not found');
+
+    const prjNo = getNextDocNumber('project');
+    const jobNo = getNextDocNumber('job');
+
+    const newProject: ProjectJobMaster = {
+      id: prjNo,
+      projectNumber: prjNo,
+      jobNumber: jobNo,
+      salesOrderId: so.id,
+      salesOrderNumber: so.salesOrderNumber,
+      customerPoNumber: so.customerPoNumber,
+      quotationNumber: so.quotationNumber,
+      customerId: so.customerId,
+      customerName: so.customerName,
+      productName: so.items[0]?.productName || 'Custom Manufacturing Unit',
+      specification: so.items[0]?.specification || 'As per Sales Order',
+      quantity: so.items[0]?.quantity || 1,
+      unit: so.items[0]?.unit || 'Unit',
+      orderValue: so.orderValue,
+      priority: 'high',
+      startDate: new Date().toISOString().split('T')[0],
+      deliveryDate: so.deliveryDate,
+      projectManager: so.assignedProjectManager,
+      status: 'planning',
+      progressPercent: 10,
+    };
+
+    setProjectJobs((prev) => [newProject, ...prev]);
+
+    // Update Sales Order with Project Link
+    setSalesOrders((prev) =>
+      prev.map((s) => (s.id === salesOrderId ? { ...s, status: 'project_created', projectId: prjNo, jobNumber: jobNo } : s))
+    );
+
+    // Also inject into Master Job Traceability
+    const newTraceableJob: JobTraceabilityRecord = {
+      jobNumber: jobNo,
+      salesOrderId: so.salesOrderNumber,
+      quotationId: so.quotationNumber,
+      customerPoNumber: so.customerPoNumber,
+      customerId: so.customerId,
+      customerName: so.customerName,
+      productName: newProject.productName,
+      productCode: `EQP-${jobNo.slice(-3)}`,
+      specification: newProject.specification,
+      quantity: newProject.quantity,
+      unit: newProject.unit,
+      orderValue: newProject.orderValue,
+      startDate: newProject.startDate,
+      targetDeliveryDate: newProject.deliveryDate,
+      currentStatus: 'planning',
+      progressPercent: 10,
+      priority: 'high',
+      projectManager: newProject.projectManager,
+      steps: [
+        { id: 's1', name: 'Lead & Enquiry', department: 'crm', status: 'completed', completedAt: newProject.startDate },
+        { id: 's2', name: 'Quotation Approved', department: 'crm', status: 'completed', completedAt: newProject.startDate },
+        { id: 's3', name: 'Customer PO Received', department: 'crm', status: 'completed', completedAt: newProject.startDate },
+        { id: 's4', name: 'Sales Order & Job Created', department: 'project', status: 'completed', completedAt: newProject.startDate },
+        { id: 's5', name: 'Design CAD & BOM', department: 'designer', status: 'in_progress' },
+        { id: 's6', name: 'Purchase Requisition', department: 'purchase', status: 'pending' },
+        { id: 's7', name: 'GRN Inward', department: 'store', status: 'pending' },
+        { id: 's8', name: 'Material Issue', department: 'store', status: 'pending' },
+        { id: 's9', name: 'Shop Floor Fabrication', department: 'production', status: 'pending' },
+        { id: 's10', name: 'QC & Testing', department: 'production', status: 'pending' },
+        { id: 's11', name: 'Dispatch', department: 'project', status: 'pending' },
+        { id: 's12', name: 'Site Commissioning', department: 'maintenance', status: 'pending' },
+        { id: 's13', name: 'Invoicing & Handover', department: 'accounting', status: 'pending' },
+      ],
+      linkedRecords: {
+        leadId: so.quotationId,
+        designRev: 'REV-00',
+        bomId: `BOM-${jobNo}-WIP`,
+        purchaseOrders: [],
+        grnNumbers: [],
+        materialIssues: [],
+        workOrderIds: [],
+        qcReportId: [],
+        invoiceNumbers: [],
+      },
+    };
+
+    setJobs((prev) => [newTraceableJob, ...prev]);
+
+    logAction(
+      'CREATE',
+      'CRM → Project Integration',
+      'Create Project',
+      prjNo,
+      `Generated Project ${prjNo} and Job Number ${jobNo} from Sales Order ${so.salesOrderNumber}`
+    );
+
+    sendNotification({
+      title: 'New MTO Project & Job Initiated',
+      message: `Project ${prjNo} (${jobNo}) for ${so.customerName} has been initialized for Engineering Design & BOM.`,
+      type: 'success',
+      department: 'project',
+      linkUrl: '/projects',
+      priority: 'high',
+    });
+
+    return newProject;
+  };
+
+  // PROJECT MODULE MANAGEMENT FUNCTIONS
+  const updateProject = (id: string, prj: Partial<ProjectJobMaster>) => {
+    setProjectJobs((prev) => prev.map((p) => (p.id === id ? { ...p, ...prj } : p)));
+    logAction('UPDATE', 'Project Management', 'Projects', id, `Updated project details for ${id}`);
+  };
+
+  const logProjectActivity = (projectId: string, jobNumber: string, action: string, details: string) => {
+    const now = new Date();
+    const newAct: ProjectActivityLog = {
+      id: `ACT-${Date.now()}`,
+      projectId,
+      jobNumber,
+      userName: `${currentUser.firstName} ${currentUser.lastName}`,
+      userRole: currentUser.roleName,
+      date: now.toISOString().split('T')[0],
+      time: now.toTimeString().split(' ')[0].slice(0, 5),
+      action,
+      details,
+    };
+    setProjectActivities((prev) => [newAct, ...prev]);
+  };
+
+  const addProjectTask = (taskData: Omit<ProjectTask, 'id' | 'taskNumber'>): ProjectTask => {
+    const tskNo = `TSK-2026-${String(projectTasks.length + 1).padStart(3, '0')}`;
+    const newTask: ProjectTask = {
+      ...taskData,
+      id: tskNo,
+      taskNumber: tskNo,
+    };
+    setProjectTasks((prev) => [newTask, ...prev]);
+    logProjectActivity(newTask.projectId, newTask.jobNumber, 'Task Created', `Created task ${newTask.taskName} assigned to ${newTask.assignedTo}`);
+    sendNotification({
+      title: 'New Project Task Assigned',
+      message: `Task ${newTask.taskName} (${tskNo}) assigned for ${newTask.jobNumber}`,
+      type: 'info',
+      department: 'project',
+      linkUrl: '/projects/tasks',
+      priority: newTask.priority === 'urgent' ? 'high' : 'normal',
+    });
+    return newTask;
+  };
+
+  const updateProjectTask = (id: string, taskUpdates: Partial<ProjectTask>) => {
+    const target = projectTasks.find((t) => t.id === id);
+    if (!target) return;
+
+    // Check dependency if attempting to complete
+    if (taskUpdates.status === 'completed' && target.dependentTaskId) {
+      const depTask = projectTasks.find((t) => t.id === target.dependentTaskId);
+      if (depTask && depTask.status !== 'completed') {
+        throw new Error(`Cannot complete task '${target.taskName}'. Prerequisite task '${depTask.taskName}' is not completed yet.`);
+      }
+    }
+
+    setProjectTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        const updated = { ...t, ...taskUpdates };
+        if (taskUpdates.status === 'completed') updated.completionPercent = 100;
+        return updated;
+      })
+    );
+
+    logProjectActivity(target.projectId, target.jobNumber, 'Task Status Updated', `Task ${target.taskName} updated to ${taskUpdates.status || 'modified'}`);
+  };
+
+  const deleteProjectTask = (id: string) => {
+    if (!can('project', 'tasks', 'delete')) {
+      throw new Error('Unauthorized: You do not have project.delete permission');
+    }
+    setProjectTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const updatePlanningStage = (id: string, stageUpdates: Partial<ProjectPlanningStage>) => {
+    setProjectPlanningStages((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...stageUpdates } : s))
+    );
+  };
+
+  const assignDepartment = (data: Omit<DepartmentAssignment, 'id'>): DepartmentAssignment => {
+    const newDA: DepartmentAssignment = {
+      ...data,
+      id: `DA-${Date.now()}`,
+    };
+    setDepartmentAssignments((prev) => [newDA, ...prev]);
+    logProjectActivity(data.projectId, data.jobNumber, 'Department Assigned', `Assigned ${data.department} dept (Manager: ${data.manager})`);
+    return newDA;
+  };
+
+  const addProjectMilestone = (data: Omit<ProjectMilestone, 'id'>): ProjectMilestone => {
+    const newMS: ProjectMilestone = {
+      ...data,
+      id: `MS-${Date.now()}`,
+    };
+    setProjectMilestones((prev) => [...prev, newMS]);
+    logProjectActivity(data.projectId, data.jobNumber, 'Milestone Created', `Milestone ${data.milestoneName} added for ${data.plannedDate}`);
+    return newMS;
+  };
+
+  const updateProjectMilestone = (id: string, updates: Partial<ProjectMilestone>) => {
+    setProjectMilestones((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...updates } : m))
+    );
+  };
+
+  const addProjectIssue = (data: Omit<ProjectIssue, 'id' | 'issueNo' | 'reportedDate'>): ProjectIssue => {
+    const issNo = `ISS-2026-${String(projectIssues.length + 1).padStart(3, '0')}`;
+    const newIssue: ProjectIssue = {
+      ...data,
+      id: issNo,
+      issueNo: issNo,
+      reportedDate: new Date().toISOString().split('T')[0],
+    };
+    setProjectIssues((prev) => [newIssue, ...prev]);
+    logProjectActivity(data.projectId, data.jobNumber, 'Issue Reported', `${data.issueType}: ${data.description}`);
+    sendNotification({
+      title: 'Project Issue Logged',
+      message: `${issNo} reported in ${data.department} department for ${data.jobNumber}`,
+      type: 'warning',
+      department: 'project',
+      linkUrl: '/projects/issues',
+      priority: 'high',
+    });
+    return newIssue;
+  };
+
+  const resolveProjectIssue = (id: string, resolution: string) => {
+    setProjectIssues((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, resolution, status: 'resolved' } : i))
+    );
+  };
+
+  const addProjectDelay = (data: Omit<ProjectDelay, 'id' | 'delayNo'>): ProjectDelay => {
+    const delNo = `DEL-2026-${String(projectDelays.length + 1).padStart(3, '0')}`;
+    const newDelay: ProjectDelay = {
+      ...data,
+      id: delNo,
+      delayNo: delNo,
+    };
+    setProjectDelays((prev) => [newDelay, ...prev]);
+
+    // Also update project expected delivery date
+    setProjectJobs((prev) =>
+      prev.map((p) => (p.id === data.projectId ? { ...p, expectedDeliveryDate: data.expectedDeliveryDate } : p))
+    );
+
+    logProjectActivity(data.projectId, data.jobNumber, 'Project Delay Logged', `${data.delayReason} (+${data.delayDays} days delay)`);
+    return newDelay;
+  };
+
+  const addCustomerChangeRequest = (data: Omit<CustomerChangeRequest, 'id' | 'changeRequestNo' | 'requestDate' | 'approvalStatus'>): CustomerChangeRequest => {
+    const crNo = `CR-2026-${String(changeRequests.length + 1).padStart(3, '0')}`;
+    const newCR: CustomerChangeRequest = {
+      ...data,
+      id: crNo,
+      changeRequestNo: crNo,
+      requestDate: new Date().toISOString().split('T')[0],
+      approvalStatus: 'requested',
+    };
+    setChangeRequests((prev) => [newCR, ...prev]);
+    logProjectActivity(data.projectId, data.jobNumber, 'Customer Change Requested', `CR ${crNo} submitted by ${data.requestedBy}`);
+    sendNotification({
+      title: 'Customer Change Request Received',
+      message: `${crNo} submitted for ${data.jobNumber} (Cost Impact: ₹${data.costImpact})`,
+      type: 'approval_request',
+      department: 'project',
+      linkUrl: '/projects/change-requests',
+      priority: 'high',
+    });
+    return newCR;
+  };
+
+  const approveChangeRequest = (id: string, status: 'approved' | 'rejected') => {
+    setChangeRequests((prev) =>
+      prev.map((cr) =>
+        cr.id === id
+          ? {
+              ...cr,
+              approvalStatus: status === 'approved' ? 'approved' : 'rejected',
+              approvedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+              approvedDate: new Date().toISOString().split('T')[0],
+            }
+          : cr
+      )
+    );
+  };
+
+  const addProjectDocument = (data: Omit<ProjectDocument, 'id' | 'uploadDate'>): ProjectDocument => {
+    const newDoc: ProjectDocument = {
+      ...data,
+      id: `DOC-${Date.now()}`,
+      uploadDate: new Date().toISOString().split('T')[0],
+    };
+    setProjectDocuments((prev) => [newDoc, ...prev]);
+    logProjectActivity(data.projectId, data.jobNumber, 'Document Uploaded', `${data.documentName} (${data.version})`);
+    return newDoc;
+  };
+
+  const updateProjectCost = (id: string, costUpdates: Partial<ProjectCostItem>) => {
+    if (!can('project', 'cost', 'edit') && !currentUser.roleName?.toLowerCase().includes('admin')) {
+      throw new Error('Unauthorized: You do not have permission to modify financial project cost data.');
+    }
+    setProjectCosts((prev) =>
+      prev.map((c) => {
+        if (c.id !== id) return c;
+        const est = costUpdates.estimatedCost ?? c.estimatedCost;
+        const act = costUpdates.actualCost ?? c.actualCost;
+        return {
+          ...c,
+          ...costUpdates,
+          estimatedCost: est,
+          actualCost: act,
+          difference: est - act,
+          updatedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+          updatedAt: new Date().toISOString().split('T')[0],
+        };
+      })
+    );
+  };
+
+  const addProjectComment = (data: Omit<ProjectComment, 'id' | 'date' | 'time' | 'resolved'>): ProjectComment => {
+    const now = new Date();
+    const newCmt: ProjectComment = {
+      ...data,
+      id: `CMT-${Date.now()}`,
+      date: now.toISOString().split('T')[0],
+      time: now.toTimeString().split(' ')[0].slice(0, 5),
+      resolved: false,
+    };
+    setProjectComments((prev) => [newCmt, ...prev]);
+    return newCmt;
+  };
+
+  const approveProjectAction = (id: string, status: 'approved' | 'rejected', comments?: string) => {
+    setProjectApprovals((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              status: status === 'approved' ? 'approved' : 'rejected',
+              approvedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+              approvalDate: new Date().toISOString().split('T')[0],
+              comments,
+            }
+          : a
+      )
+    );
+  };
+
+  // Module 3: Designer Management Handlers
+  const addDesignJob = (data: Omit<DesignJob, 'id' | 'createdDate'>) => {
+    const id = `DES-${new Date().getFullYear()}-${String(designJobs.length + 1).padStart(4, '0')}`;
+    const newJob: DesignJob = {
+      ...data,
+      id,
+      createdDate: new Date().toISOString().split('T')[0],
+    };
+    setDesignJobs((prev) => [newJob, ...prev]);
+    logAction('CREATE', 'Designer', 'Design Jobs', id, `Created design job ${newJob.designJobNumber} for project ${data.projectId}`);
+  };
+
+  const updateDesignJob = (id: string, updates: Partial<DesignJob>) => {
+    setDesignJobs((prev) => prev.map((j) => (j.id === id ? { ...j, ...updates } : j)));
+    logAction('UPDATE', 'Designer', 'Design Jobs', id, `Updated design job ${id}`);
+  };
+
+  const addCustomerRequirement = (data: Omit<CustomerRequirement, 'id'>) => {
+    const id = `REQ-${new Date().getFullYear()}-${String(customerRequirements.length + 1).padStart(3, '0')}`;
+    const newReq: CustomerRequirement = { ...data, id };
+    setCustomerRequirements((prev) => [newReq, ...prev]);
+    logAction('CREATE', 'Designer', 'Customer Requirements', id, `Added technical requirement sheet for ${data.jobNumber}`);
+  };
+
+  const approveCustomerRequirement = (id: string, approvedBy: string) => {
+    setCustomerRequirements((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              status: 'approved',
+              approvedBy,
+              approvalDate: new Date().toISOString().split('T')[0],
+            }
+          : r
+      )
+    );
+    logAction('APPROVE', 'Designer', 'Customer Requirements', id, `Approved technical requirement sheet by ${approvedBy}`);
+  };
+
+  const addDesignTask = (data: Omit<DesignTask, 'id'>) => {
+    const id = `DTASK-${Date.now().toString().slice(-5)}`;
+    const newTask: DesignTask = { ...data, id };
+    setDesignTasks((prev) => [newTask, ...prev]);
+    logAction('CREATE', 'Designer', 'Design Tasks', id, `Created design task ${data.taskName}`);
+  };
+
+  const updateDesignTask = (id: string, updates: Partial<DesignTask>) => {
+    setDesignTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  };
+
+  const addDrawing2D = (data: Omit<Drawing2D, 'id' | 'createdDate'>) => {
+    const id = `DRW2D-${Date.now().toString().slice(-5)}`;
+    const newDrw: Drawing2D = { ...data, id, createdDate: new Date().toISOString().split('T')[0] };
+    setDrawings2D((prev) => [newDrw, ...prev]);
+    logAction('CREATE', 'Designer', '2D Drawings', id, `Uploaded 2D Drawing ${data.drawingNumber}`);
+  };
+
+  const addDesign3D = (data: Omit<Design3DModel, 'id' | 'uploadedDate'>) => {
+    const id = `MOD3D-${Date.now().toString().slice(-5)}`;
+    const newMod: Design3DModel = { ...data, id, uploadedDate: new Date().toISOString().split('T')[0] };
+    setDesigns3D((prev) => [newMod, ...prev]);
+    logAction('CREATE', 'Designer', '3D Models', id, `Uploaded 3D Model ${data.modelName}`);
+  };
+
+  const addAssemblyDrawing = (data: Omit<AssemblyDrawing, 'id'>) => {
+    const id = `ASM-${Date.now().toString().slice(-5)}`;
+    const newAsm: AssemblyDrawing = { ...data, id };
+    setAssemblyDrawings((prev) => [newAsm, ...prev]);
+    logAction('CREATE', 'Designer', 'Assembly Drawings', id, `Uploaded Assembly Drawing ${data.assemblyNumber}`);
+  };
+
+  const addPartDrawing = (data: Omit<PartDrawing, 'id'>) => {
+    const id = `PRT-${Date.now().toString().slice(-5)}`;
+    const newPrt: PartDrawing = { ...data, id };
+    setPartDrawings((prev) => [newPrt, ...prev]);
+    logAction('CREATE', 'Designer', 'Part Drawings', id, `Uploaded Part Drawing ${data.partNumber}`);
+  };
+
+  const addBOM = (data: Omit<BOMHeader, 'id'>) => {
+    const id = `BOM-${data.jobNumber}`;
+    const newBom: BOMHeader = { ...data, id };
+    setBoms((prev) => [newBom, ...prev]);
+    logAction('CREATE', 'Designer', 'BOM Management', id, `Created Master BOM for ${data.jobNumber}`);
+  };
+
+  const updateBOM = (id: string, updates: Partial<BOMHeader>) => {
+    setBoms((prev) =>
+      prev.map((b) =>
+        b.id === id
+          ? { ...b, ...updates }
+          : b
+      )
+    );
+  };
+
+  const addBOMRevision = (data: Omit<BOMRevision, 'id' | 'changedDate'>) => {
+    const id = `BREV-${Date.now().toString().slice(-5)}`;
+    const newRev: BOMRevision = { ...data, id, changedDate: new Date().toISOString().split('T')[0] };
+    setBomRevisions((prev) => [newRev, ...prev]);
+    logAction('CREATE', 'Designer', 'BOM Revisions', id, `Created BOM Revision ${data.revisionNumber} for ${data.jobNumber}`);
+  };
+
+  const addDesignRevision = (data: Omit<DesignRevisionLog, 'id' | 'createdDate'>) => {
+    const id = `DREV-${Date.now().toString().slice(-5)}`;
+    const newRev: DesignRevisionLog = { ...data, id, createdDate: new Date().toISOString().split('T')[0] };
+    setDesignRevisions((prev) => [newRev, ...prev]);
+    logAction('CREATE', 'Designer', 'Design Revisions', id, `Recorded Design Revision ${data.revisionNumber} for ${data.jobNumber}`);
+  };
+
+  const addDesignReview = (data: Omit<DesignReviewChecklist, 'id' | 'reviewDate'>) => {
+    const id = `DRV-${Date.now().toString().slice(-5)}`;
+    const newRev: DesignReviewChecklist = { ...data, id, reviewDate: new Date().toISOString().split('T')[0] };
+    setDesignReviews((prev) => [newRev, ...prev]);
+    logAction('CREATE', 'Designer', 'Design Reviews', id, `Submitted Design Review for ${data.jobNumber}`);
+  };
+
+  const addTechnicalDocument = (data: Omit<TechnicalDocumentItem, 'id' | 'uploadDate'>) => {
+    const id = `TDOC-${Date.now().toString().slice(-5)}`;
+    const newDoc: TechnicalDocumentItem = { ...data, id, uploadDate: new Date().toISOString().split('T')[0] };
+    setTechnicalDocuments((prev) => [newDoc, ...prev]);
+    logAction('CREATE', 'Designer', 'Technical Documents', id, `Uploaded Technical Document ${data.documentName}`);
+  };
+
+  const releaseDesignToManufacturing = (designJobId: string, releasedBy: string) => {
+    const desJob = designJobs.find((j) => j.id === designJobId);
+    if (!desJob) return;
+
+    setDesignJobs((prev) =>
+      prev.map((j) =>
+        j.id === designJobId
+          ? { ...j, status: 'released_to_production', remarks: `Released to shop floor by ${releasedBy}` }
+          : j
+      )
+    );
+
+    setBoms((prev) =>
+      prev.map((b) => (b.projectId === desJob.projectId || b.jobNumber === desJob.jobNumber ? { ...b, status: 'released_to_production' } : b))
+    );
+
+    updateJobStatus(desJob.jobNumber, 'step-3', 'completed');
+    updateJobStatus(desJob.jobNumber, 'step-4', 'in_progress');
+
+    logAction('APPROVE', 'Designer', 'Design Release', designJobId, `Design Job ${desJob.designJobNumber} (${desJob.jobNumber}) released to Purchase, Store & Production departments by ${releasedBy}`);
+
+    sendNotification({
+      title: `🚀 Design Released for Manufacturing: ${desJob.jobNumber}`,
+      message: `Design Job ${desJob.designJobNumber} (${desJob.productName}) approved and released to production by ${releasedBy}. Material planning can now begin.`,
+      type: 'success',
+      department: 'project',
+      priority: 'high',
+      linkUrl: `/designer/jobs`,
+    });
+  };
+
+  // Module 4: Purchase Management Handlers
+  const addSupplier = (data: Omit<Supplier, 'id'>) => {
+    const id = `SUP-${new Date().getFullYear()}-${String(suppliers.length + 1).padStart(3, '0')}`;
+    const newSup: Supplier = { ...data, id };
+    setSuppliers((prev) => [newSup, ...prev]);
+    logAction('CREATE', 'Purchase', 'Supplier Master', id, `Added supplier ${data.supplierName}`);
+  };
+
+  const updateSupplier = (id: string, updates: Partial<Supplier>) => {
+    setSuppliers((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+  };
+
+  const addSupplierContact = (data: Omit<SupplierContact, 'id'>) => {
+    const id = `SCON-${Date.now().toString().slice(-5)}`;
+    const newCon: SupplierContact = { ...data, id };
+    setSupplierContacts((prev) => [newCon, ...prev]);
+  };
+
+  const addMaterialRequirement = (data: Omit<MaterialRequirement, 'id'>) => {
+    const id = `MRP-${Date.now().toString().slice(-5)}`;
+    const newMrp: MaterialRequirement = { ...data, id };
+    setMaterialRequirements((prev) => [newMrp, ...prev]);
+  };
+
+  const addPurchaseRequisition = (data: Omit<PurchaseRequisition, 'id' | 'prDate'>) => {
+    const prNumber = `PR-${new Date().getFullYear()}-${String(purchaseRequisitions.length + 1).padStart(3, '0')}`;
+    const newPr: PurchaseRequisition = {
+      ...data,
+      id: prNumber,
+      prNumber,
+      prDate: new Date().toISOString().split('T')[0],
+    };
+    setPurchaseRequisitions((prev) => [newPr, ...prev]);
+    logAction('CREATE', 'Purchase', 'Purchase Requisition', newPr.id, `Created PR ${newPr.prNumber} for job ${data.jobNumber}`);
+  };
+
+  const approvePurchaseRequisition = (id: string, approvedBy: string) => {
+    setPurchaseRequisitions((prev) =>
+      prev.map((pr) =>
+        pr.id === id
+          ? {
+              ...pr,
+              status: 'approved',
+              approvedBy,
+              approvedDate: new Date().toISOString().split('T')[0],
+            }
+          : pr
+      )
+    );
+    logAction('APPROVE', 'Purchase', 'Purchase Requisition', id, `Approved PR by ${approvedBy}`);
+  };
+
+  const addRFQ = (data: Omit<RequestForQuotation, 'id' | 'rfqDate'>) => {
+    const rfqNumber = `RFQ-${new Date().getFullYear()}-${String(rfqs.length + 1).padStart(3, '0')}`;
+    const newRfq: RequestForQuotation = {
+      ...data,
+      id: rfqNumber,
+      rfqNumber,
+      rfqDate: new Date().toISOString().split('T')[0],
+    };
+    setRfqs((prev) => [newRfq, ...prev]);
+    logAction('CREATE', 'Purchase', 'RFQ', newRfq.id, `Generated RFQ ${newRfq.rfqNumber} to suppliers`);
+  };
+
+  const addSupplierQuotation = (data: Omit<SupplierQuotation, 'id'>) => {
+    const id = `SQ-${Date.now().toString().slice(-5)}`;
+    const newSq: SupplierQuotation = { ...data, id };
+    setSupplierQuotations((prev) => [newSq, ...prev]);
+    logAction('CREATE', 'Purchase', 'Supplier Quotations', id, `Recorded Quotation ${data.supplierQuotationNumber} from ${data.supplierName}`);
+  };
+
+  const addQuotationComparison = (data: Omit<QuotationComparison, 'id' | 'comparisonDate'>) => {
+    const id = `COMP-${Date.now().toString().slice(-5)}`;
+    const newComp: QuotationComparison = {
+      ...data,
+      id,
+      comparisonDate: new Date().toISOString().split('T')[0],
+    };
+    setQuotationComparisons((prev) => [newComp, ...prev]);
+    logAction('CREATE', 'Purchase', 'Quotation Comparison', id, `Created comparison matrix for RFQ ${data.rfqNumber}`);
+  };
+
+  const approveQuotationComparison = (id: string, approvedBy: string) => {
+    setQuotationComparisons((prev) =>
+      prev.map((c) =>
+        c.id === id ? { ...c, approvalStatus: 'approved', approvedBy } : c
+      )
+    );
+  };
+
+  const addPurchaseOrder = (data: Omit<PurchaseOrder, 'id' | 'poDate'>) => {
+    const poNumber = `PO-${new Date().getFullYear()}-${String(purchaseOrders.length + 1).padStart(3, '0')}`;
+    const newPo: PurchaseOrder = {
+      ...data,
+      id: poNumber,
+      poNumber,
+      poDate: new Date().toISOString().split('T')[0],
+    };
+    setPurchaseOrders((prev) => [newPo, ...prev]);
+
+    addPORevision({
+      poId: newPo.id,
+      poNumber: newPo.poNumber,
+      revisionNumber: newPo.activeRevision || 'Rev-00',
+      revisionDate: new Date().toISOString().split('T')[0],
+      revisedBy: data.buyer || `${currentUser.firstName} ${currentUser.lastName}`,
+      reason: 'Initial PO Issuance',
+      reasonForRevision: 'Initial PO Issuance',
+      previousGrandTotal: 0,
+      revisedGrandTotal: newPo.grandTotal,
+      newGrandTotal: newPo.grandTotal,
+    });
+
+    logAction('CREATE', 'Purchase', 'Purchase Orders', newPo.id, `Created PO ${newPo.poNumber} for supplier ${data.supplierName}`);
+  };
+
+  const approvePurchaseOrder = (id: string, approvedBy: string) => {
+    const targetPo = purchaseOrders.find((p) => p.id === id);
+    if (!targetPo) return;
+
+    setPurchaseOrders((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? { ...p, status: 'approved' }
+          : p
+      )
+    );
+
+    const jobKey = targetPo.jobNumber || targetPo.jobId || '';
+    if (jobKey) {
+      updateJobStatus(jobKey, 'step-4', 'completed');
+      updateJobStatus(jobKey, 'step-5', 'in_progress');
+    }
+
+    logAction('APPROVE', 'Purchase', 'PO Approval', id, `Approved PO ${targetPo.poNumber} by ${approvedBy}`);
+
+    sendNotification({
+      title: `🛍️ PO Approved & Ready for Supplier: ${targetPo.poNumber}`,
+      message: `Purchase Order ${targetPo.poNumber} (₹${targetPo.grandTotal.toLocaleString('en-IN')}) approved for ${targetPo.supplierName}. Expediting & follow-up initiated.`,
+      type: 'success',
+      department: 'project',
+      priority: 'high',
+      linkUrl: `/purchase/po`,
+    });
+  };
+
+  const addPORevision = (data: Omit<PORevision, 'id' | 'revisedDate'>) => {
+    const id = `porev-${Date.now().toString().slice(-5)}`;
+    const newRev: PORevision = {
+      ...data,
+      id,
+      revisedDate: new Date().toISOString().split('T')[0],
+    };
+    setPoRevisions((prev) => [newRev, ...prev]);
+  };
+
+  const addPurchaseFollowUp = (data: Omit<PurchaseFollowUp, 'id'>) => {
+    const id = `fol-${Date.now().toString().slice(-5)}`;
+    const newFol: PurchaseFollowUp = { ...data, id };
+    setPurchaseFollowUps((prev) => [newFol, ...prev]);
+    logAction('CREATE', 'Purchase', 'Purchase Follow-up', id, `Recorded follow-up for PO ${data.poNumber}`);
+  };
+
+  const addPurchaseReturn = (data: Omit<PurchaseReturn, 'id' | 'returnDate'>) => {
+    const returnNumber = `PRET-${new Date().getFullYear()}-${String(purchaseReturns.length + 1).padStart(3, '0')}`;
+    const newRet: PurchaseReturn = {
+      ...data,
+      id: returnNumber,
+      returnNumber,
+      returnDate: new Date().toISOString().split('T')[0],
+    };
+    setPurchaseReturns((prev) => [newRet, ...prev]);
+    logAction('CREATE', 'Purchase', 'Purchase Returns', newRet.id, `Recorded return ${newRet.returnNumber} for ${data.supplierName}`);
+  };
+
+  // Module 5: Store Management Handlers
+  const addItemMaster = (data: Omit<ItemMaster, 'id' | 'createdAt'>) => {
+    const id = `ITEM-${String(itemMasters.length + 1).padStart(3, '0')}`;
+    const newItem: ItemMaster = { ...data, id, createdAt: new Date().toISOString().split('T')[0] };
+    setItemMasters((prev) => [newItem, ...prev]);
+    logAction('CREATE', 'Store', 'Item Master', id, `Added Item ${data.itemCode} - ${data.itemName}`);
+  };
+
+  const updateItemMaster = (id: string, updates: Partial<ItemMaster>) => {
+    setItemMasters((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+    logAction('UPDATE', 'Store', 'Item Master', id, `Updated item ${id}`);
+  };
+
+  const addItemCategory = (data: Omit<ItemCategory, 'id'>) => {
+    const id = `CAT-${String(itemCategories.length + 1).padStart(3, '0')}`;
+    const newCat: ItemCategory = { ...data, id };
+    setItemCategories((prev) => [...prev, newCat]);
+    logAction('CREATE', 'Store', 'Categories', id, `Added Category ${data.categoryName}`);
+  };
+
+  const addUOM = (data: Omit<UOMMaster, 'id'>) => {
+    const id = `UOM-${String(uoms.length + 1).padStart(3, '0')}`;
+    const newUom: UOMMaster = { ...data, id };
+    setUoms((prev) => [...prev, newUom]);
+    logAction('CREATE', 'Store', 'UOM Master', id, `Added UOM ${data.uomCode}`);
+  };
+
+  const addWarehouse = (data: Omit<Warehouse, 'id'>) => {
+    const id = `WH-${String(warehouses.length + 1).padStart(3, '0')}`;
+    const newWh: Warehouse = { ...data, id };
+    setWarehouses((prev) => [...prev, newWh]);
+    logAction('CREATE', 'Store', 'Warehouse Master', id, `Added Warehouse ${data.warehouseName}`);
+  };
+
+  const updateWarehouse = (id: string, updates: Partial<Warehouse>) => {
+    setWarehouses((prev) => prev.map((w) => (w.id === id ? { ...w, ...updates } : w)));
+  };
+
+  const addWarehouseLocation = (data: Omit<WarehouseLocation, 'id'>) => {
+    const id = `LOC-${String(warehouseLocations.length + 1).padStart(3, '0')}`;
+    const newLoc: WarehouseLocation = { ...data, id };
+    setWarehouseLocations((prev) => [...prev, newLoc]);
+  };
+
+  const addOpeningStock = (data: Omit<OpeningStock, 'id'>) => {
+    const id = `OP-${Date.now().toString().slice(-5)}`;
+    const newOp: OpeningStock = { ...data, id };
+    setOpeningStocks((prev) => [newOp, ...prev]);
+
+    logStockLedgerEntry({
+      entryDate: new Date().toISOString(),
+      transactionType: 'Opening Stock',
+      transactionNumber: id,
+      itemId: data.itemId,
+      itemCode: data.itemCode,
+      itemName: data.itemName,
+      warehouseId: data.warehouseId,
+      warehouseName: data.warehouseName,
+      locationCode: data.locationCode,
+      openingQty: 0,
+      inQty: data.quantity,
+      outQty: 0,
+      closingQty: data.quantity,
+      rate: data.rate,
+      transactionValue: data.totalValue,
+      userName: currentUser.firstName,
+      remarks: data.remarks,
+    });
+  };
+
+  const addGRN = (data: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => {
+    const grnNumber = `GRN-${new Date().getFullYear()}-${String(goodsReceipts.length + 1).padStart(4, '0')}`;
+    const newGrn: GoodsReceiptNote = {
+      ...data,
+      id: grnNumber,
+      grnNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setGoodsReceipts((prev) => [newGrn, ...prev]);
+
+    if (newGrn.jobId) {
+      updateJobStatus(newGrn.jobId, 'step-6', 'in_progress');
+    }
+
+    logAction('CREATE', 'Store', 'Goods Receipt', newGrn.id, `Received GRN ${newGrn.grnNumber} from ${newGrn.supplierName}`);
+    sendNotification({
+      title: `📦 GRN Created: ${newGrn.grnNumber}`,
+      message: `Goods received from ${newGrn.supplierName} for PO ${newGrn.poNumber}. Pending QC Inspection.`,
+      type: 'info',
+      department: 'store',
+      priority: 'normal',
+      linkUrl: '/store/grn',
+    });
+  };
+
+  const addQCInspection = (data: Omit<QCInspection, 'id' | 'inspectionNumber'>) => {
+    const inspectionNumber = `QC-${new Date().getFullYear()}-${String(qcInspections.length + 1).padStart(4, '0')}`;
+    const newQc: QCInspection = { ...data, id: inspectionNumber, inspectionNumber };
+    setQcInspections((prev) => [newQc, ...prev]);
+  };
+
+  const approveQCInspection = (id: string, inspectorName: string, qcResult: 'Pass' | 'Fail' | 'Conditional Approval', acceptedQty: number, rejectedQty: number) => {
+    const targetQc = qcInspections.find((q) => q.id === id);
+    if (!targetQc) return;
+
+    setQcInspections((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, qcResult, acceptedQuantity: acceptedQty, rejectedQuantity: rejectedQty, inspectorName } : q))
+    );
+
+    setGoodsReceipts((prev) =>
+      prev.map((g) => (g.id === targetQc.grnId ? { ...g, status: qcResult === 'Pass' ? 'Accepted' : qcResult === 'Fail' ? 'Rejected' : 'Partially Accepted' } : g))
+    );
+
+    logAction('APPROVE', 'Store', 'QC Inspection', id, `QC Inspection ${targetQc.inspectionNumber} set to ${qcResult} by ${inspectorName}`);
+  };
+
+  const updateStockBalance = (id: string, updates: Partial<StockBalance>) => {
+    setStockBalances((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+  };
+
+  const addStockReservation = (data: Omit<StockReservation, 'id' | 'reservationNumber' | 'createdAt'>) => {
+    const reservationNumber = `RES-${new Date().getFullYear()}-${String(stockReservations.length + 1).padStart(4, '0')}`;
+    const newRes: StockReservation = {
+      ...data,
+      id: reservationNumber,
+      reservationNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setStockReservations((prev) => [newRes, ...prev]);
+    logAction('CREATE', 'Store', 'Stock Reservation', newRes.id, `Reserved ${data.reservedQuantity} ${data.itemName} for ${data.jobId}`);
+  };
+
+  const releaseStockReservation = (id: string) => {
+    setStockReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'Released' } : r)));
+  };
+
+  const addMaterialIssue = (data: Omit<MaterialIssue, 'id' | 'issueNumber' | 'createdAt'>) => {
+    const issueNumber = `ISS-${new Date().getFullYear()}-${String(materialIssues.length + 1).padStart(4, '0')}`;
+    const newIssue: MaterialIssue = {
+      ...data,
+      id: issueNumber,
+      issueNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setMaterialIssues((prev) => [newIssue, ...prev]);
+
+    if (newIssue.jobId) {
+      updateJobStatus(newIssue.jobId, 'step-6', 'completed');
+      updateJobStatus(newIssue.jobId, 'step-7', 'in_progress');
+    }
+
+    logAction('CREATE', 'Store', 'Material Issue', newIssue.id, `Issued material slip ${newIssue.issueNumber} for Job ${newIssue.jobId}`);
+  };
+
+  const addMaterialReturn = (data: Omit<MaterialReturn, 'id' | 'returnNumber' | 'createdAt'>) => {
+    const returnNumber = `RET-${new Date().getFullYear()}-${String(materialReturns.length + 1).padStart(4, '0')}`;
+    const newRet: MaterialReturn = {
+      ...data,
+      id: returnNumber,
+      returnNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setMaterialReturns((prev) => [newRet, ...prev]);
+    logAction('CREATE', 'Store', 'Material Return', newRet.id, `Returned material ${newRet.returnNumber} from Job ${newRet.jobId}`);
+  };
+
+  const addStockTransfer = (data: Omit<StockTransfer, 'id' | 'transferNumber' | 'createdAt'>) => {
+    const transferNumber = `TRN-${new Date().getFullYear()}-${String(stockTransfers.length + 1).padStart(4, '0')}`;
+    const newTrn: StockTransfer = {
+      ...data,
+      id: transferNumber,
+      transferNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setStockTransfers((prev) => [newTrn, ...prev]);
+    logAction('CREATE', 'Store', 'Stock Transfer', newTrn.id, `Transferred items from ${data.fromWarehouseName} to ${data.toWarehouseName}`);
+  };
+
+  const addStockAdjustment = (data: Omit<StockAdjustment, 'id' | 'adjustmentNumber' | 'createdAt'>) => {
+    const adjustmentNumber = `ADJ-${new Date().getFullYear()}-${String(stockAdjustments.length + 1).padStart(4, '0')}`;
+    const newAdj: StockAdjustment = {
+      ...data,
+      id: adjustmentNumber,
+      adjustmentNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setStockAdjustments((prev) => [newAdj, ...prev]);
+    logAction('CREATE', 'Store', 'Stock Adjustment', newAdj.id, `Adjusted stock for ${data.itemName}: diff ${data.differenceQuantity}`);
+  };
+
+  const addScrapEntry = (data: Omit<ScrapEntry, 'id' | 'scrapNumber' | 'createdAt'>) => {
+    const scrapNumber = `SCR-${new Date().getFullYear()}-${String(scrapEntries.length + 1).padStart(4, '0')}`;
+    const newScrap: ScrapEntry = {
+      ...data,
+      id: scrapNumber,
+      scrapNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setScrapEntries((prev) => [newScrap, ...prev]);
+    logAction('CREATE', 'Store', 'Scrap Entry', newScrap.id, `Added scrap entry ${newScrap.scrapNumber}`);
+  };
+
+  const addPhysicalStockCount = (data: Omit<PhysicalStockCount, 'id' | 'countNumber'>) => {
+    const countNumber = `CNT-${new Date().getFullYear()}-${String(physicalStockCounts.length + 1).padStart(4, '0')}`;
+    const newCount: PhysicalStockCount = { ...data, id: countNumber, countNumber };
+    setPhysicalStockCounts((prev) => [newCount, ...prev]);
+  };
+
+  const logStockLedgerEntry = (entry: Omit<StockLedgerEntry, 'id'>) => {
+    const id = `LED-${Date.now().toString().slice(-6)}`;
+    const newLedger: StockLedgerEntry = { ...entry, id };
+    setStockLedgers((prev) => [newLedger, ...prev]);
+  };
+
+  // Module 6: Production / Manufacturing / MRP Handlers
+  const addManufacturingJob = (data: Omit<ManufacturingJob, 'id' | 'createdAt'>) => {
+    const id = `MJ-${new Date().getFullYear()}-${String(manufacturingJobs.length + 1).padStart(3, '0')}`;
+    const newJob: ManufacturingJob = {
+      ...data,
+      id,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setManufacturingJobs((prev) => [newJob, ...prev]);
+    logAction('CREATE', 'Production', 'Manufacturing Jobs', newJob.id, `Created manufacturing job ${newJob.jobNumber}`);
+  };
+
+  const updateManufacturingJob = (id: string, updates: Partial<ManufacturingJob>) => {
+    setManufacturingJobs((prev) => prev.map((j) => (j.id === id || j.jobNumber === id ? { ...j, ...updates } : j)));
+  };
+
+  const addProductionPlan = (data: Omit<ProductionPlan, 'id' | 'createdAt'>) => {
+    const planNumber = `PLAN-${new Date().getFullYear()}-${String(productionPlans.length + 1).padStart(3, '0')}`;
+    const newPlan: ProductionPlan = {
+      ...data,
+      id: planNumber,
+      planNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setProductionPlans((prev) => [newPlan, ...prev]);
+    logAction('CREATE', 'Production', 'Production Planning', newPlan.id, `Created production plan ${newPlan.planNumber} for Job ${newPlan.jobNumber}`);
+  };
+
+  const addWorkOrder = (data: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>) => {
+    const workOrderNumber = `WO-${new Date().getFullYear()}-${String(workOrders.length + 1).padStart(3, '0')}-A`;
+    const newWo: WorkOrder = {
+      ...data,
+      id: workOrderNumber,
+      workOrderNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setWorkOrders((prev) => [newWo, ...prev]);
+    if (newWo.jobNumber) {
+      updateJobStatus(newWo.jobNumber, 'step-7', 'in_progress');
+    }
+    logAction('CREATE', 'Production', 'Work Orders', newWo.id, `Generated Work Order ${newWo.workOrderNumber} for ${newWo.jobNumber}`);
+  };
+
+  const releaseWorkOrder = (id: string) => {
+    setWorkOrders((prev) => prev.map((w) => (w.id === id || w.workOrderNumber === id ? { ...w, status: 'Released' } : w)));
+    logAction('UPDATE', 'Production', 'Work Orders', id, `Released Work Order ${id} to shop floor`);
+  };
+
+  const addProductionOrder = (data: Omit<ProductionOrder, 'id' | 'productionOrderNumber' | 'createdAt'>) => {
+    const productionOrderNumber = `PO-PROD-${new Date().getFullYear()}-${String(productionOrders.length + 1).padStart(3, '0')}`;
+    const newPo: ProductionOrder = {
+      ...data,
+      id: productionOrderNumber,
+      productionOrderNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setProductionOrders((prev) => [newPo, ...prev]);
+    logAction('CREATE', 'Production', 'Production Orders', newPo.id, `Created Production Order ${newPo.productionOrderNumber}`);
+  };
+
+  const addRoutingOperation = (op: Omit<RoutingOperation, 'id'>) => {
+    const id = `OP-${(routingOperations.length + 1) * 10}`;
+    const newOp: RoutingOperation = { ...op, id };
+    setRoutingOperations((prev) => [...prev, newOp]);
+  };
+
+  const addWorkCenter = (wc: Omit<WorkCenter, 'id'>) => {
+    const id = `WC-${String(workCenters.length + 1).padStart(3, '0')}`;
+    const newWc: WorkCenter = { ...wc, id };
+    setWorkCenters((prev) => [...prev, newWc]);
+    logAction('CREATE', 'Production', 'Work Centers', newWc.id, `Created Work Center ${newWc.workCenterCode}`);
+  };
+
+  const updateWorkCenter = (id: string, updates: Partial<WorkCenter>) => {
+    setWorkCenters((prev) => prev.map((w) => (w.id === id || w.workCenterCode === id ? { ...w, ...updates } : w)));
+  };
+
+  const addProductionSchedule = (sch: Omit<ProductionScheduleItem, 'id'>) => {
+    const id = `SCH-${Date.now().toString().slice(-6)}`;
+    const newSch: ProductionScheduleItem = { ...sch, id };
+    setProductionSchedules((prev) => [newSch, ...prev]);
+  };
+
+  const recordProductionEntry = (data: Omit<ProductionEntry, 'id' | 'productionEntryNumber' | 'goodQuantity'>) => {
+    const productionEntryNumber = `PENTRY-${new Date().getFullYear()}-${String(productionEntries.length + 1).padStart(4, '0')}`;
+    const goodQuantity = Math.max(0, data.producedQuantity - data.rejectedQuantity - data.scrapQuantity);
+    const newEntry: ProductionEntry = {
+      ...data,
+      id: productionEntryNumber,
+      productionEntryNumber,
+      goodQuantity,
+    };
+    setProductionEntries((prev) => [newEntry, ...prev]);
+    logAction('CREATE', 'Production', 'Production Entry', newEntry.id, `Recorded entry ${newEntry.productionEntryNumber}: Good Qty = ${goodQuantity} for ${newEntry.workOrderNumber}`);
+  };
+
+  const addProductionHold = (data: Omit<ProductionHold, 'id' | 'holdNumber'>) => {
+    const holdNumber = `HLD-${new Date().getFullYear()}-${String(productionHolds.length + 1).padStart(3, '0')}`;
+    const newHold: ProductionHold = { ...data, id: holdNumber, holdNumber };
+    setProductionHolds((prev) => [newHold, ...prev]);
+    logAction('CREATE', 'Production', 'Production Holds', newHold.id, `Placed Hold ${newHold.holdNumber} on ${newHold.workOrderNumber} due to ${newHold.reason}`);
+  };
+
+  const resumeProductionHold = (id: string, resumeDate: string) => {
+    setProductionHolds((prev) => prev.map((h) => (h.id === id || h.holdNumber === id ? { ...h, status: 'Resumed', resumeDate } : h)));
+    logAction('UPDATE', 'Production', 'Production Holds', id, `Resumed production hold ${id}`);
+  };
+
+  const addReworkOrder = (data: Omit<ReworkOrder, 'id' | 'reworkNumber'>) => {
+    const reworkNumber = `RWK-${new Date().getFullYear()}-${String(reworkOrders.length + 1).padStart(3, '0')}`;
+    const newRework: ReworkOrder = { ...data, id: reworkNumber, reworkNumber };
+    setReworkOrders((prev) => [newRework, ...prev]);
+    logAction('CREATE', 'Production', 'Rework Orders', newRework.id, `Created Rework Order ${newRework.reworkNumber} for ${newRework.workOrderNumber}`);
+  };
+
+  const addProductionScrap = (data: Omit<ProductionScrap, 'id' | 'scrapNumber'>) => {
+    const scrapNumber = `PSCRAP-${new Date().getFullYear()}-${String(productionScraps.length + 1).padStart(3, '0')}`;
+    const newScrap: ProductionScrap = { ...data, id: scrapNumber, scrapNumber };
+    setProductionScraps((prev) => [newScrap, ...prev]);
+    logAction('CREATE', 'Production', 'Production Scrap', newScrap.id, `Logged production scrap ${newScrap.scrapNumber} for ${newScrap.materialName}`);
+  };
+
+  const completeWorkOrder = (data: Omit<ProductionCompletion, 'id' | 'completionNumber'>) => {
+    const completionNumber = `CMP-${new Date().getFullYear()}-${String(productionCompletions.length + 1).padStart(3, '0')}`;
+    const newComp: ProductionCompletion = { ...data, id: completionNumber, completionNumber };
+    setProductionCompletions((prev) => [newComp, ...prev]);
+
+    // Update Work Order status to Completed
+    setWorkOrders((prev) => prev.map((w) => (w.workOrderNumber === data.workOrderNumber ? { ...w, status: 'Completed' } : w)));
+
+    if (data.jobNumber) {
+      updateJobStatus(data.jobNumber, 'step-7', 'completed');
+      updateJobStatus(data.jobNumber, 'step-8', 'in_progress');
+    }
+
+    logAction('CREATE', 'Production', 'Work Order Completion', newComp.id, `Completed Work Order ${newComp.workOrderNumber}`);
+  };
+
+  const addFinishedGoods = (data: Omit<FinishedGoodsItem, 'id' | 'finishedGoodsNumber' | 'createdAt'>) => {
+    const finishedGoodsNumber = `FG-${new Date().getFullYear()}-${String(finishedGoods.length + 1).padStart(3, '0')}`;
+    const newFg: FinishedGoodsItem = {
+      ...data,
+      id: finishedGoodsNumber,
+      finishedGoodsNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setFinishedGoods((prev) => [newFg, ...prev]);
+    logAction('CREATE', 'Production', 'Finished Goods', newFg.id, `Transferred ${newFg.productName} to Finished Goods Warehouse (${newFg.warehouseName})`);
+  };
+
+  // Traceability Modal Helpers
+  const openJobModal = (jobNumber: string) => {
+    const job = jobs.find((j) => j.jobNumber.toLowerCase() === jobNumber.toLowerCase());
+    if (job) {
+      setSelectedJobForModal(job);
+    }
+  };
+
+  const closeJobModal = () => setSelectedJobForModal(null);
+
+  const updateJobStatus = (jobNumber: string, stepId: string, status: 'completed' | 'in_progress' | 'pending') => {
+    setJobs((prev) =>
+      prev.map((j) => {
+        if (j.jobNumber !== jobNumber) return j;
+        const updatedSteps = j.steps.map((s) => (s.id === stepId ? { ...s, status, completedAt: status === 'completed' ? new Date().toISOString().split('T')[0] : s.completedAt } : s));
+        const completedCount = updatedSteps.filter((s) => s.status === 'completed').length;
+        const progressPercent = Math.round((completedCount / updatedSteps.length) * 100);
+        return {
+          ...j,
+          steps: updatedSteps,
+          progressPercent,
+        };
+      })
+    );
+    logAction('UPDATE', 'Job Traceability', 'Step Progress', jobNumber, `Step ${stepId} changed to ${status}`);
+  };
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  };
+
+  // Module 7 Handlers
+  const closeFinancialYear = (id: string, closedBy: string) => {
+    setFinancialYears((prev) => prev.map((fy) => (fy.id === id ? { ...fy, status: 'Closed', closedBy, closedAt: new Date().toISOString().split('T')[0] } : fy)));
+    logAction('UPDATE', 'Accounting', 'Financial Year', id, `Closed Financial Year ${id} by ${closedBy}`);
+  };
+
+  const addChartOfAccount = (account: Omit<ChartOfAccount, 'id' | 'currentBalance'>) => {
+    const id = `ACC-${String(chartOfAccounts.length + 1).padStart(3, '0')}`;
+    const newAcc: ChartOfAccount = { ...account, id, currentBalance: account.openingBalance };
+    setChartOfAccounts((prev) => [...prev, newAcc]);
+    logAction('CREATE', 'Accounting', 'Chart of Accounts', id, `Added Account ${account.accountCode} - ${account.accountName}`);
+  };
+
+  const addAccountGroup = (group: Omit<AccountGroup, 'id'>) => {
+    const id = `AGRP-${String(accountGroups.length + 1).padStart(3, '0')}`;
+    const newGrp: AccountGroup = { ...group, id };
+    setAccountGroups((prev) => [...prev, newGrp]);
+    logAction('CREATE', 'Accounting', 'Account Groups', id, `Added Account Group ${group.groupName}`);
+  };
+
+  const addTaxMaster = (tax: Omit<TaxMaster, 'id'>) => {
+    const id = `TAX-${String(taxMasters.length + 1).padStart(2, '0')}`;
+    const newTax: TaxMaster = { ...tax, id };
+    setTaxMasters((prev) => [...prev, newTax]);
+    logAction('CREATE', 'Accounting', 'Tax Master', id, `Added Tax ${tax.taxCode} (${tax.rate}%)`);
+  };
+
+  const addTDSMaster = (tds: Omit<TDSMaster, 'id'>) => {
+    const id = `TDS-${String(tdsMasters.length + 1).padStart(2, '0')}`;
+    const newTDS: TDSMaster = { ...tds, id };
+    setTdsMasters((prev) => [...prev, newTDS]);
+    logAction('CREATE', 'Accounting', 'TDS Master', id, `Added TDS Section ${tds.sectionCode}`);
+  };
+
+  const addCostCenter = (cc: Omit<CostCenter, 'id'>) => {
+    const id = `CC-${String(costCenters.length + 1).padStart(3, '0')}`;
+    const newCC: CostCenter = { ...cc, id };
+    setCostCenters((prev) => [...prev, newCC]);
+    logAction('CREATE', 'Accounting', 'Cost Centers', id, `Added Cost Center ${cc.costCenterCode}`);
+  };
+
+  const addSalesInvoice = (inv: Omit<SalesInvoice, 'id' | 'invoiceNumber' | 'createdAt'>) => {
+    const invoiceNumber = `SINV-2026-${String(salesInvoices.length + 1).padStart(4, '0')}`;
+    const newInv: SalesInvoice = {
+      ...inv,
+      id: invoiceNumber,
+      invoiceNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setSalesInvoices((prev) => [newInv, ...prev]);
+    logAction('CREATE', 'Accounting', 'Sales Invoices', newInv.id, `Generated Sales Invoice ${newInv.invoiceNumber} for ₹${newInv.grandTotal.toLocaleString()}`);
+  };
+
+  const approveSalesInvoice = (id: string) => {
+    setSalesInvoices((prev) => prev.map((inv) => (inv.id === id || inv.invoiceNumber === id ? { ...inv, status: 'Approved' } : inv)));
+    logAction('APPROVE', 'Accounting', 'Sales Invoices', id, `Approved Sales Invoice ${id}`);
+  };
+
+  const addPurchaseInvoice = (inv: Omit<PurchaseInvoice, 'id' | 'invoiceNumber' | 'createdAt'>) => {
+    const invoiceNumber = `PINV-2026-${String(purchaseInvoices.length + 1).padStart(4, '0')}`;
+    const newInv: PurchaseInvoice = {
+      ...inv,
+      id: invoiceNumber,
+      invoiceNumber,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setPurchaseInvoices((prev) => [newInv, ...prev]);
+    logAction('CREATE', 'Accounting', 'Purchase Invoices', newInv.id, `Created Purchase Invoice ${newInv.invoiceNumber} for ₹${newInv.grandTotal.toLocaleString()}`);
+  };
+
+  const postPurchaseInvoice = (id: string) => {
+    setPurchaseInvoices((prev) => prev.map((inv) => (inv.id === id || inv.invoiceNumber === id ? { ...inv, status: 'Posted' } : inv)));
+    logAction('APPROVE', 'Accounting', 'Purchase Invoices', id, `Posted Purchase Invoice ${id} to Ledger`);
+  };
+
+  const addCreditNote = (cn: Omit<CreditNote, 'id' | 'creditNoteNumber'>) => {
+    const creditNoteNumber = `CN-2026-${String(creditNotes.length + 1).padStart(3, '0')}`;
+    const newCN: CreditNote = { ...cn, id: creditNoteNumber, creditNoteNumber };
+    setCreditNotes((prev) => [newCN, ...prev]);
+    logAction('CREATE', 'Accounting', 'Credit Notes', newCN.id, `Issued Credit Note ${newCN.creditNoteNumber} for ₹${newCN.totalAmount.toLocaleString()}`);
+  };
+
+  const addDebitNote = (dn: Omit<DebitNote, 'id' | 'debitNoteNumber'>) => {
+    const debitNoteNumber = `DN-2026-${String(debitNotes.length + 1).padStart(3, '0')}`;
+    const newDN: DebitNote = { ...dn, id: debitNoteNumber, debitNoteNumber };
+    setDebitNotes((prev) => [newDN, ...prev]);
+    logAction('CREATE', 'Accounting', 'Debit Notes', newDN.id, `Issued Debit Note ${newDN.debitNoteNumber} for ₹${newDN.totalAmount.toLocaleString()}`);
+  };
+
+  const addCustomerReceipt = (rec: Omit<CustomerReceipt, 'id' | 'receiptNumber'>) => {
+    const receiptNumber = `RCT-2026-${String(customerReceipts.length + 1).padStart(4, '0')}`;
+    const newRec: CustomerReceipt = { ...rec, id: receiptNumber, receiptNumber };
+    setCustomerReceipts((prev) => [newRec, ...prev]);
+    logAction('CREATE', 'Accounting', 'Customer Receipts', newRec.id, `Recorded Receipt ${newRec.receiptNumber} from ${newRec.customerName} (₹${(newRec.amountPaid ?? 0).toLocaleString()})`);
+  };
+
+  const addSupplierPayment = (pay: Omit<SupplierPayment, 'id' | 'paymentNumber'>) => {
+    const paymentNumber = `PAY-2026-${String(supplierPayments.length + 1).padStart(4, '0')}`;
+    const newPay: SupplierPayment = { ...pay, id: paymentNumber, paymentNumber };
+    setSupplierPayments((prev) => [newPay, ...prev]);
+    logAction('CREATE', 'Accounting', 'Supplier Payments', newPay.id, `Recorded Payment ${newPay.paymentNumber} to ${newPay.supplierName} (₹${(newPay.amountPaid ?? 0).toLocaleString()})`);
+  };
+
+  const addJournalEntry = (jv: Omit<JournalEntry, 'id' | 'journalNumber'>) => {
+    const journalNumber = `JV-2026-${String(journalEntries.length + 1).padStart(4, '0')}`;
+    const newJV: JournalEntry = { ...jv, id: journalNumber, journalNumber };
+    setJournalEntries((prev) => [newJV, ...prev]);
+    logAction('CREATE', 'Accounting', 'Journal Entries', newJV.id, `Created JV ${newJV.journalNumber}: Debit ₹${newJV.totalDebit.toLocaleString()} = Credit ₹${newJV.totalCredit.toLocaleString()}`);
+  };
+
+  const addContraEntry = (contra: Omit<ContraEntry, 'id' | 'contraNumber'>) => {
+    const contraNumber = `CNT-2026-${String(contraEntries.length + 1).padStart(3, '0')}`;
+    const newContra: ContraEntry = { ...contra, id: contraNumber, contraNumber };
+    setContraEntries((prev) => [newContra, ...prev]);
+    logAction('CREATE', 'Accounting', 'Contra Entries', newContra.id, `Created Contra ${newContra.contraNumber} for ₹${newContra.amount.toLocaleString()}`);
+  };
+
+  const addExpenseEntry = (exp: Omit<ExpenseEntry, 'id' | 'expenseNumber'>) => {
+    const expenseNumber = `EXP-2026-${String(expenseEntries.length + 1).padStart(4, '0')}`;
+    const newExp: ExpenseEntry = { ...exp, id: expenseNumber, expenseNumber };
+    setExpenseEntries((prev) => [newExp, ...prev]);
+    logAction('CREATE', 'Accounting', 'Expense Entries', newExp.id, `Logged Expense ${newExp.expenseNumber} for ₹${(newExp.grandTotal || newExp.totalAmount || newExp.amount || 0).toLocaleString()}`);
+  };
+
+  const approveExpenseEntry = (id: string, approvedBy: string) => {
+    setExpenseEntries((prev) => prev.map((exp) => (exp.id === id || exp.expenseNumber === id ? { ...exp, status: 'Approved', approvedBy } : exp)));
+    logAction('APPROVE', 'Accounting', 'Expense Entries', id, `Approved Expense Entry ${id} by ${approvedBy}`);
+  };
+
+  const addBankAccount = (bank: Omit<BankAccount, 'id' | 'currentBalance'>) => {
+    const id = `BANK-${String(bankAccounts.length + 1).padStart(2, '0')}`;
+    const newBank: BankAccount = { ...bank, id, currentBalance: bank.openingBalance };
+    setBankAccounts((prev) => [...prev, newBank]);
+    logAction('CREATE', 'Accounting', 'Cash & Bank', id, `Added Bank Account ${bank.bankName} - ${bank.accountNumber}`);
+  };
+
+  const reconcileBankTransaction = (transactionId: string, matchedErpDocNumber: string) => {
+    setBankTransactions((prev) => prev.map((tx) => (tx.id === transactionId ? { ...tx, isReconciled: true, matchedErpDocNumber, reconciliationStatus: 'Reconciled' } : tx)));
+    logAction('UPDATE', 'Accounting', 'Bank Reconciliation', transactionId, `Reconciled bank transaction ${transactionId} with ERP Doc ${matchedErpDocNumber}`);
+  };
+
+  const addFixedAsset = (asset: Omit<FixedAsset, 'id'>) => {
+    const id = `AST-${String(fixedAssets.length + 1).padStart(3, '0')}`;
+    const newAsset: FixedAsset = { ...asset, id };
+    setFixedAssets((prev) => [...prev, newAsset]);
+    logAction('CREATE', 'Accounting', 'Fixed Assets', id, `Registered Fixed Asset ${asset.assetCode} - ${asset.assetName}`);
+  };
+
+  const runDepreciation = (assetId: string, period: string, amount: number) => {
+    const entry: DepreciationEntry = {
+      id: `DEP-${Date.now().toString().slice(-6)}`,
+      assetId,
+      period,
+      depreciationDate: new Date().toISOString().split('T')[0],
+      amount,
+      accumulatedDepreciationAfter: (fixedAssets.find((a) => a.id === assetId)?.accumulatedDepreciation || 0) + amount,
+      bookValueAfter: (fixedAssets.find((a) => a.id === assetId)?.currentBookValue || 0) - amount,
+      journalEntryNumber: `JV-DEP-${Date.now().toString().slice(-4)}`,
+    };
+    setDepreciationEntries((prev) => [entry, ...prev]);
+    setFixedAssets((prev) =>
+      prev.map((a) =>
+        a.id === assetId
+          ? {
+              ...a,
+              accumulatedDepreciation: a.accumulatedDepreciation + amount,
+              currentBookValue: Math.max(0, a.currentBookValue - amount),
+            }
+          : a
+      )
+    );
+    logAction('CREATE', 'Accounting', 'Depreciation', assetId, `Ran Depreciation of ₹${amount.toLocaleString()} for ${period}`);
+  };
+
+  // Module 8 Maintenance & Services State
+  const [internalAssets, setInternalAssets] = useState<InternalAsset[]>(mockInternalAssets);
+  const [customerMachines, setCustomerMachines] = useState<CustomerMachine[]>(mockCustomerMachines);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>(mockServiceRequests);
+  const [breakdowns, setBreakdowns] = useState<BreakdownRecord[]>(mockBreakdowns);
+  const [preventivePlans, setPreventivePlans] = useState<PreventiveMaintenancePlan[]>(mockPreventiveMaintenancePlans);
+  const [servicePlanningItems, setServicePlanningItems] = useState<ServicePlanningItem[]>(mockServicePlanningItems);
+  const [serviceVisits, setServiceVisits] = useState<ServiceVisit[]>(mockServiceVisits);
+  const [serviceWorkOrders, setServiceWorkOrders] = useState<ServiceWorkOrder[]>(mockServiceWorkOrders);
+  const [servicePartIssues, setServicePartIssues] = useState<ServicePartIssue[]>(mockServicePartIssues);
+  const [servicePartReturns, setServicePartReturns] = useState<ServicePartReturn[]>(mockServicePartReturns);
+  const [serviceReports, setServiceReports] = useState<ServiceReport[]>(mockServiceReports);
+  const [warranties, setWarranties] = useState<WarrantyRecord[]>(mockWarranties);
+  const [amcContracts, setAmcContracts] = useState<AMCContract[]>(mockAMCContracts);
+  const [serviceContracts, setServiceContracts] = useState<ServiceContract[]>(mockServiceContracts);
+  const [downtimeRecords, setDowntimeRecords] = useState<DowntimeRecord[]>(mockDowntimeRecords);
+  const [maintenanceCosts, setMaintenanceCosts] = useState<MaintenanceCostRecord[]>(mockMaintenanceCosts);
+  const [checklistTemplates, setChecklistTemplates] = useState<ServiceChecklistTemplate[]>(mockChecklistTemplates);
+  const [technicians, setTechnicians] = useState<TechnicianProfile[]>(mockTechnicians);
+
+  const addInternalAsset = (asset: Omit<InternalAsset, 'id'>) => {
+    const newId = `AST-${100 + internalAssets.length + 1}`;
+    const newAsset: InternalAsset = { ...asset, id: newId };
+    setInternalAssets((prev) => [newAsset, ...prev]);
+    logAction('CREATE', 'maintenance', 'assets', newId, `Created asset ${newAsset.assetName}`);
+  };
+
+  const updateInternalAsset = (id: string, assetData: Partial<InternalAsset>) => {
+    setInternalAssets((prev) => prev.map((a) => (a.id === id ? { ...a, ...assetData } : a)));
+    logAction('UPDATE', 'maintenance', 'assets', id, `Updated asset ${id}`);
+  };
+
+  const addCustomerMachine = (cm: Omit<CustomerMachine, 'id'>) => {
+    const newId = `CM-2026-00${customerMachines.length + 1}`;
+    const newMachine: CustomerMachine = { ...cm, id: newId };
+    setCustomerMachines((prev) => [newMachine, ...prev]);
+    logAction('CREATE', 'maintenance', 'customer-machines', newId, `Registered customer machine ${newMachine.machineName}`);
+  };
+
+  const updateCustomerMachine = (id: string, cmData: Partial<CustomerMachine>) => {
+    setCustomerMachines((prev) => prev.map((m) => (m.id === id ? { ...m, ...cmData } : m)));
+    logAction('UPDATE', 'maintenance', 'customer-machines', id, `Updated customer machine ${id}`);
+  };
+
+  const addServiceRequest = (sr: Omit<ServiceRequest, 'id' | 'requestNumber' | 'requestDate' | 'createdAt'>): ServiceRequest => {
+    const reqNo = `SR-2026-00${serviceRequests.length + 1}`;
+    const newSr: ServiceRequest = {
+      ...sr,
+      id: reqNo,
+      requestNumber: reqNo,
+      requestDate: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
+    };
+    setServiceRequests((prev) => [newSr, ...prev]);
+    logAction('CREATE', 'maintenance', 'service-requests', reqNo, `Created service request ${reqNo}`);
+    sendNotification({
+      title: 'New Service Request Logged',
+      message: `Service request ${reqNo} created for ${newSr.customerName}`,
+      type: 'info',
+      department: 'maintenance',
+      priority: newSr.priority === 'Critical' ? 'high' : 'normal',
+    });
+    return newSr;
+  };
+
+  const updateServiceRequestStatus = (id: string, status: ServiceRequestStatus, assignedTechId?: string, assignedTechName?: string) => {
+    setServiceRequests((prev) =>
+      prev.map((sr) => {
+        if (sr.id === id || sr.requestNumber === id) {
+          return {
+            ...sr,
+            status,
+            ...(assignedTechId ? { assignedTechnicianId: assignedTechId, assignedTechnicianName: assignedTechName } : {}),
+            ...(status === 'Closed' || status === 'Resolved' ? { closedAt: new Date().toISOString() } : {}),
+          };
+        }
+        return sr;
+      })
+    );
+    logAction('UPDATE', 'maintenance', 'service-requests', id, `Updated SR status to ${status}`);
+  };
+
+  const addBreakdown = (bd: Omit<BreakdownRecord, 'id' | 'breakdownNumber'>) => {
+    const bdNo = `BD-2026-00${breakdowns.length + 1}`;
+    const newBd: BreakdownRecord = { ...bd, id: bdNo, breakdownNumber: bdNo };
+    setBreakdowns((prev) => [newBd, ...prev]);
+    logAction('CREATE', 'maintenance', 'breakdowns', bdNo, `Reported breakdown ${bdNo} on ${newBd.assetName}`);
+    if (newBd.severity === 'Critical') {
+      sendNotification({
+        title: 'CRITICAL BREAKDOWN ALERT',
+        message: `Critical breakdown ${bdNo} reported on ${newBd.assetName}`,
+        type: 'alert',
+        department: 'maintenance',
+        priority: 'high',
+      });
+    }
+  };
+
+  const updateBreakdownStatus = (id: string, status: BreakdownRecord['status'], remarks?: string) => {
+    setBreakdowns((prev) =>
+      prev.map((bd) => (bd.id === id || bd.breakdownNumber === id ? { ...bd, status, ...(remarks ? { remarks } : {}) } : bd))
+    );
+    logAction('UPDATE', 'maintenance', 'breakdowns', id, `Updated breakdown status to ${status}`);
+  };
+
+  const addPreventivePlan = (plan: Omit<PreventiveMaintenancePlan, 'id' | 'planNumber'>) => {
+    const planNo = `PM-PLAN-00${preventivePlans.length + 1}`;
+    const newPlan: PreventiveMaintenancePlan = { ...plan, id: planNo, planNumber: planNo };
+    setPreventivePlans((prev) => [newPlan, ...prev]);
+    logAction('CREATE', 'maintenance', 'preventive', planNo, `Created PM plan ${planNo}`);
+  };
+
+  const addServiceVisit = (visit: Omit<ServiceVisit, 'id' | 'visitNumber'>) => {
+    const vNo = `VISIT-2026-00${serviceVisits.length + 1}`;
+    const newVisit: ServiceVisit = { ...visit, id: vNo, visitNumber: vNo };
+    setServiceVisits((prev) => [newVisit, ...prev]);
+    logAction('CREATE', 'maintenance', 'service-visits', vNo, `Created service visit ${vNo}`);
+  };
+
+  const updateServiceVisitStatus = (id: string, status: ServiceVisitStatus) => {
+    setServiceVisits((prev) => prev.map((v) => (v.id === id || v.visitNumber === id ? { ...v, status } : v)));
+    logAction('UPDATE', 'maintenance', 'service-visits', id, `Updated visit status to ${status}`);
+  };
+
+  const addServiceWorkOrder = (swo: Omit<ServiceWorkOrder, 'id' | 'workOrderNumber'>) => {
+    const swoNo = `SWO-2026-00${serviceWorkOrders.length + 1}`;
+    const newSwo: ServiceWorkOrder = { ...swo, id: swoNo, workOrderNumber: swoNo };
+    setServiceWorkOrders((prev) => [newSwo, ...prev]);
+    logAction('CREATE', 'maintenance', 'work-orders', swoNo, `Created service work order ${swoNo}`);
+  };
+
+  const updateWorkOrderStatus = (id: string, status: WorkOrderStatus) => {
+    setServiceWorkOrders((prev) => prev.map((swo) => (swo.id === id || swo.workOrderNumber === id ? { ...swo, status } : swo)));
+    logAction('UPDATE', 'maintenance', 'work-orders', id, `Updated work order status to ${status}`);
+  };
+
+  const addServicePartIssue = (issue: Omit<ServicePartIssue, 'id' | 'issueNumber' | 'createdAt'>) => {
+    const issueNo = `SPI-2026-00${servicePartIssues.length + 1}`;
+    const newIssue: ServicePartIssue = {
+      ...issue,
+      id: issueNo,
+      issueNumber: issueNo,
+      createdAt: new Date().toISOString(),
+    };
+    setServicePartIssues((prev) => [newIssue, ...prev]);
+    logAction('CREATE', 'maintenance', 'parts-issue', issueNo, `Created service part issue ${issueNo}`);
+  };
+
+  const addServicePartReturn = (ret: Omit<ServicePartReturn, 'id' | 'returnNumber'>) => {
+    const retNo = `SPR-2026-00${servicePartReturns.length + 1}`;
+    const newRet: ServicePartReturn = { ...ret, id: retNo, returnNumber: retNo };
+    setServicePartReturns((prev) => [newRet, ...prev]);
+    logAction('CREATE', 'maintenance', 'parts-return', retNo, `Created service part return ${retNo}`);
+  };
+
+  const addServiceReport = (rep: Omit<ServiceReport, 'id' | 'reportNumber'>) => {
+    const repNo = `SREP-2026-00${serviceReports.length + 1}`;
+    const newRep: ServiceReport = { ...rep, id: repNo, reportNumber: repNo };
+    setServiceReports((prev) => [newRep, ...prev]);
+    logAction('CREATE', 'maintenance', 'service-reports', repNo, `Created service report ${repNo}`);
+  };
+
+  const addAMCContract = (amc: Omit<AMCContract, 'id' | 'amcNumber'>) => {
+    const amcNo = `AMC-2026-00${amcContracts.length + 1}`;
+    const newAmc: AMCContract = { ...amc, id: amcNo, amcNumber: amcNo };
+    setAmcContracts((prev) => [newAmc, ...prev]);
+    logAction('CREATE', 'maintenance', 'amc', amcNo, `Created AMC ${amcNo}`);
+  };
+
+  const addDowntimeRecord = (dt: Omit<DowntimeRecord, 'id' | 'downtimeNumber'>) => {
+    const dtNo = `DT-2026-00${downtimeRecords.length + 1}`;
+    const newDt: DowntimeRecord = { ...dt, id: dtNo, downtimeNumber: dtNo };
+    setDowntimeRecords((prev) => [newDt, ...prev]);
+    logAction('CREATE', 'maintenance', 'downtime', dtNo, `Logged downtime ${dtNo} for ${newDt.machineName}`);
+  };
+
+  const addMaintenanceCost = (mc: Omit<MaintenanceCostRecord, 'id'>) => {
+    const newId = `MC-2026-00${maintenanceCosts.length + 1}`;
+    const newCost: MaintenanceCostRecord = { ...mc, id: newId };
+    setMaintenanceCosts((prev) => [newCost, ...prev]);
+    logAction('CREATE', 'maintenance', 'costs', newId, `Recorded maintenance cost ${newId}`);
+  };
+
+  // Module 9 HR & Payroll State
+  const [designations, setDesignations] = useState<Designation[]>(mockDesignations);
+  const [employeeDocuments, setEmployeeDocuments] = useState<EmployeeDocumentItem[]>(mockEmployeeDocuments);
+  const [employeeOnboardings, setEmployeeOnboardings] = useState<EmployeeOnboardingItem[]>(mockEmployeeOnboardings);
+  const [employeeTransfers, setEmployeeTransfers] = useState<EmployeeTransferItem[]>(mockEmployeeTransfers);
+  const [employeePromotions, setEmployeePromotions] = useState<EmployeePromotionItem[]>(mockEmployeePromotions);
+  const [employeeExits, setEmployeeExits] = useState<EmployeeExitItem[]>(mockEmployeeExits);
+  const [fullAndFinalSettlements, setFullAndFinalSettlements] = useState<FullAndFinalSettlementItem[]>(mockFullAndFinalSettlements);
+  const [shiftMasters, setShiftMasters] = useState<ShiftMaster[]>(mockShifts);
+  const [shiftRosters, setShiftRosters] = useState<ShiftRosterItem[]>(mockShiftRosters);
+  const [holidays, setHolidays] = useState<HolidayItem[]>(mockHolidays);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>(mockAttendanceRecords);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>(mockLeaveTypes);
+  const [leaveBalances] = useState<LeaveBalance[]>(mockLeaveBalances);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(mockLeaveRequests);
+  const [wfhRequests, setWFHRequests] = useState<WFHRequest[]>(mockWFHRequests);
+  const [missedPunchRequests, setMissedPunchRequests] = useState<MissedPunchRequest[]>(mockMissedPunchRequests);
+  const [attendanceRegularizations, setAttendanceRegularizations] = useState<AttendanceRegularization[]>(mockRegularizationRequests);
+  const [overtimeRecords, setOvertimeRecords] = useState<OvertimeRecord[]>(mockOvertimeRecords);
+  const [earlyCheckoutRequests, setEarlyCheckoutRequests] = useState<EarlyCheckoutRequest[]>(mockEarlyCheckoutRequests);
+  const [salaryComponents, setSalaryComponents] = useState<SalaryComponent[]>(mockSalaryComponents);
+  const [salaryStructures, setSalaryStructures] = useState<SalaryStructure[]>(mockSalaryStructures);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>(mockPayrollRecords);
+  const [employeeAdvanceLoans, setEmployeeAdvanceLoans] = useState<EmployeeAdvanceLoan[]>(mockEmployeeAdvances);
+  const [reimbursementExpenses, setReimbursementExpenses] = useState<ReimbursementExpense[]>(mockReimbursements);
+  const [kpiMasters, setKPIMasters] = useState<KPIMaster[]>(mockKPIMasters);
+  const [employeeAppraisals, setEmployeeAppraisals] = useState<EmployeeAppraisal[]>(mockEmployeeAppraisals);
+  const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>(mockTrainingPrograms);
+  const [jobPositions, setJobPositions] = useState<JobPosition[]>(mockJobPositions);
+  const [candidateProfiles, setCandidateProfiles] = useState<CandidateProfile[]>(mockCandidateProfiles);
+  const [interviewRecords, setInterviewRecords] = useState<InterviewRecord[]>(mockInterviewRecords);
+  const [offerLetters, setOfferLetters] = useState<OfferLetter[]>(mockOfferLetters);
+
+  // Module 9 HR Handlers
+  const addDesignation = (desg: Omit<Designation, 'id'>) => {
+    const newId = `DESG-0${designations.length + 1}`;
+    const newDesg = { ...desg, id: newId };
+    setDesignations((prev) => [...prev, newDesg]);
+    logAction('CREATE', 'hr', 'designations', newId, `Created Designation ${desg.designationName}`);
+  };
+  const updateDesignation = (id: string, desg: Partial<Designation>) => {
+    setDesignations((prev) => prev.map((d) => (d.id === id ? { ...d, ...desg } : d)));
+    logAction('UPDATE', 'hr', 'designations', id, `Updated Designation`);
+  };
+
+  const addEmployeeDocument = (doc: Omit<EmployeeDocumentItem, 'id'>) => {
+    const newId = `DOC-${100 + employeeDocuments.length + 1}`;
+    const newDoc = { ...doc, id: newId };
+    setEmployeeDocuments((prev) => [newDoc, ...prev]);
+    logAction('CREATE', 'hr', 'employee-documents', newId, `Uploaded document for ${doc.employeeName}`);
+  };
+  const updateEmployeeDocumentStatus = (id: string, status: 'Verified' | 'Pending' | 'Rejected', verifiedBy?: string, remarks?: string) => {
+    setEmployeeDocuments((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? {
+              ...d,
+              verificationStatus: status,
+              verifiedBy: verifiedBy || d.verifiedBy,
+              verifiedDate: new Date().toISOString().split('T')[0],
+              remarks: remarks || d.remarks,
+            }
+          : d
+      )
+    );
+    logAction('UPDATE', 'hr', 'employee-documents', id, `Updated document verification status to ${status}`);
+  };
+
+  const addEmployeeOnboarding = (onb: Omit<EmployeeOnboardingItem, 'id'>) => {
+    const newId = `ONB-2026-0${employeeOnboardings.length + 1}`;
+    const newOnb = { ...onb, id: newId };
+    setEmployeeOnboardings((prev) => [newOnb, ...prev]);
+    logAction('CREATE', 'hr', 'employee-onboarding', newId, `Created onboarding for ${onb.candidateName}`);
+  };
+  const updateEmployeeOnboardingStatus = (id: string, status: EmployeeOnboardingItem['status']) => {
+    setEmployeeOnboardings((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
+    logAction('UPDATE', 'hr', 'employee-onboarding', id, `Updated onboarding status to ${status}`);
+  };
+
+  const addEmployeeTransfer = (trn: Omit<EmployeeTransferItem, 'id'>) => {
+    const newId = `TRN-2026-0${employeeTransfers.length + 1}`;
+    const newTrn = { ...trn, id: newId };
+    setEmployeeTransfers((prev) => [newTrn, ...prev]);
+    logAction('CREATE', 'hr', 'employee-transfers', newId, `Transferred ${trn.employeeName} to ${trn.toDepartment}`);
+  };
+
+  const addEmployeePromotion = (prm: Omit<EmployeePromotionItem, 'id'>) => {
+    const newId = `PRM-2026-0${employeePromotions.length + 1}`;
+    const newPrm = { ...prm, id: newId };
+    setEmployeePromotions((prev) => [newPrm, ...prev]);
+    logAction('CREATE', 'hr', 'employee-promotions', newId, `Promoted ${prm.employeeName} to ${prm.newDesignation}`);
+  };
+
+  const addEmployeeExit = (exit: Omit<EmployeeExitItem, 'id'>) => {
+    const newId = `EXIT-2026-0${employeeExits.length + 1}`;
+    const newExit = { ...exit, id: newId };
+    setEmployeeExits((prev) => [newExit, ...prev]);
+    logAction('CREATE', 'hr', 'resignation-exit', newId, `Logged exit for ${exit.employeeName}`);
+  };
+  const updateEmployeeExitClearance = (id: string, clearanceType: 'dept' | 'asset' | 'hr' | 'accounts', status: boolean) => {
+    setEmployeeExits((prev) =>
+      prev.map((e) => {
+        if (e.id === id) {
+          const updated = { ...e };
+          if (clearanceType === 'dept') updated.departmentClearance = status;
+          if (clearanceType === 'asset') updated.assetReturnClearance = status;
+          if (clearanceType === 'hr') updated.hrClearance = status;
+          if (clearanceType === 'accounts') updated.accountsClearance = status;
+          if (updated.departmentClearance && updated.assetReturnClearance && updated.hrClearance && updated.accountsClearance) {
+            updated.status = 'Cleared';
+          }
+          return updated;
+        }
+        return e;
+      })
+    );
+    logAction('UPDATE', 'hr', 'resignation-exit', id, `Updated clearance (${clearanceType}) to ${status}`);
+  };
+
+  const addFullAndFinalSettlement = (fnf: Omit<FullAndFinalSettlementItem, 'id'>) => {
+    const newId = `FNF-2026-0${fullAndFinalSettlements.length + 1}`;
+    const newFnf = { ...fnf, id: newId };
+    setFullAndFinalSettlements((prev) => [newFnf, ...prev]);
+    logAction('CREATE', 'hr', 'full-final-settlement', newId, `Calculated F&F settlement for ${fnf.employeeName}`);
+  };
+  const updateFinalSettlementStatus = (id: string, status: FullAndFinalSettlementItem['paymentStatus'], voucherNo?: string) => {
+    setFullAndFinalSettlements((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, paymentStatus: status, ...(voucherNo ? { accountingVoucherNo: voucherNo } : {}) } : f))
+    );
+    logAction('UPDATE', 'hr', 'full-final-settlement', id, `Updated F&F payment status to ${status}`);
+  };
+
+  const addShiftMaster = (shift: Omit<ShiftMaster, 'id'>) => {
+    const newId = `SHIFT-0${shiftMasters.length + 1}`;
+    const newShift = { ...shift, id: newId };
+    setShiftMasters((prev) => [...prev, newShift]);
+    logAction('CREATE', 'hr', 'shift-management', newId, `Created Shift ${shift.shiftName}`);
+  };
+  const updateShiftMaster = (id: string, shift: Partial<ShiftMaster>) => {
+    setShiftMasters((prev) => prev.map((s) => (s.id === id ? { ...s, ...shift } : s)));
+    logAction('UPDATE', 'hr', 'shift-management', id, `Updated Shift ${id}`);
+  };
+
+  const addShiftRoster = (roster: Omit<ShiftRosterItem, 'id'>) => {
+    const newId = `RST-${1000 + shiftRosters.length + 1}`;
+    const newRoster = { ...roster, id: newId };
+    setShiftRosters((prev) => [newRoster, ...prev]);
+    logAction('CREATE', 'hr', 'shift-roster', newId, `Assigned shift ${roster.shiftName} to ${roster.employeeName}`);
+  };
+
+  const addHoliday = (holiday: Omit<HolidayItem, 'id'>) => {
+    const newId = `HOL-2026-0${holidays.length + 1}`;
+    const newHol = { ...holiday, id: newId };
+    setHolidays((prev) => [...prev, newHol]);
+    logAction('CREATE', 'hr', 'holiday-calendar', newId, `Added Holiday ${holiday.holidayName}`);
+  };
+
+  const markAttendance = (record: Omit<AttendanceRecord, 'id'>) => {
+    const newId = `ATT-2026-${1000 + attendanceRecords.length + 1}`;
+    const newRecord = { ...record, id: newId };
+    setAttendanceRecords((prev) => [newRecord, ...prev]);
+    logAction('CREATE', 'hr', 'attendance', newId, `Marked attendance ${record.status} for ${record.employeeName}`);
+  };
+  const updateAttendanceRecord = (id: string, record: Partial<AttendanceRecord>) => {
+    setAttendanceRecords((prev) => prev.map((a) => (a.id === id ? { ...a, ...record } : a)));
+    logAction('UPDATE', 'hr', 'attendance', id, `Updated attendance record ${id}`);
+  };
+
+  const addLeaveType = (lt: Omit<LeaveType, 'id'>) => {
+    const newId = `LT-0${leaveTypes.length + 1}`;
+    const newLt = { ...lt, id: newId };
+    setLeaveTypes((prev) => [...prev, newLt]);
+    logAction('CREATE', 'hr', 'leave-management', newId, `Added Leave Type ${lt.leaveName}`);
+  };
+
+  const addLeaveRequest = (req: Omit<LeaveRequest, 'id' | 'leaveNumber' | 'appliedDate' | 'status'>) => {
+    const lNo = `LV-2026-${100 + leaveRequests.length + 1}`;
+    const newReq: LeaveRequest = {
+      ...req,
+      id: lNo,
+      leaveNumber: lNo,
+      appliedDate: new Date().toISOString().split('T')[0],
+      status: 'Pending',
+    };
+    setLeaveRequests((prev) => [newReq, ...prev]);
+    logAction('CREATE', 'hr', 'leave-management', lNo, `Applied for leave ${req.leaveName} by ${req.employeeName}`);
+  };
+  const updateLeaveRequestStatus = (id: string, status: LeaveApprovalStatus, approvedBy?: string) => {
+    setLeaveRequests((prev) =>
+      prev.map((l) =>
+        l.id === id || l.leaveNumber === id
+          ? { ...l, status, approvedBy: approvedBy || 'HR / Manager', approvedDate: new Date().toISOString().split('T')[0] }
+          : l
+      )
+    );
+    logAction('UPDATE', 'hr', 'leave-approvals', id, `Leave request status updated to ${status}`);
+  };
+
+  const addWFHRequest = (req: Omit<WFHRequest, 'id' | 'wfhNumber' | 'status'>) => {
+    const wNo = `WFH-2026-0${wfhRequests.length + 1}`;
+    const newReq: WFHRequest = { ...req, id: wNo, wfhNumber: wNo, status: 'Pending' };
+    setWFHRequests((prev) => [newReq, ...prev]);
+    logAction('CREATE', 'hr', 'wfh-remote', wNo, `Applied for WFH by ${req.employeeName}`);
+  };
+  const updateWFHRequestStatus = (id: string, status: LeaveApprovalStatus) => {
+    setWFHRequests((prev) => prev.map((w) => (w.id === id || w.wfhNumber === id ? { ...w, status } : w)));
+    logAction('UPDATE', 'hr', 'wfh-remote', id, `WFH request status updated to ${status}`);
+  };
+
+  const addMissedPunchRequest = (req: Omit<MissedPunchRequest, 'id' | 'requestNumber' | 'status'>) => {
+    const rNo = `MP-2026-0${missedPunchRequests.length + 1}`;
+    const newReq: MissedPunchRequest = { ...req, id: rNo, requestNumber: rNo, status: 'Pending' };
+    setMissedPunchRequests((prev) => [newReq, ...prev]);
+    logAction('CREATE', 'hr', 'missed-punch', rNo, `Submitted Missed Punch request for ${req.employeeName}`);
+  };
+  const updateMissedPunchStatus = (id: string, status: LeaveApprovalStatus) => {
+    setMissedPunchRequests((prev) => prev.map((m) => (m.id === id || m.requestNumber === id ? { ...m, status } : m)));
+    logAction('UPDATE', 'hr', 'missed-punch', id, `Missed punch status updated to ${status}`);
+  };
+
+  const addAttendanceRegularization = (reg: Omit<AttendanceRegularization, 'id' | 'regularizationNo' | 'status'>) => {
+    const regNo = `REG-2026-0${attendanceRegularizations.length + 1}`;
+    const newReg: AttendanceRegularization = { ...reg, id: regNo, regularizationNo: regNo, status: 'Pending' };
+    setAttendanceRegularizations((prev) => [newReg, ...prev]);
+    logAction('CREATE', 'hr', 'attendance-regularization', regNo, `Submitted Regularization for ${reg.employeeName}`);
+  };
+  const updateAttendanceRegularizationStatus = (id: string, status: LeaveApprovalStatus) => {
+    setAttendanceRegularizations((prev) => prev.map((r) => (r.id === id || r.regularizationNo === id ? { ...r, status } : r)));
+    logAction('UPDATE', 'hr', 'attendance-regularization', id, `Regularization status updated to ${status}`);
+  };
+
+  const addOvertimeRecord = (ot: Omit<OvertimeRecord, 'id' | 'overtimeNo' | 'status'>) => {
+    const otNo = `OT-2026-0${overtimeRecords.length + 1}`;
+    const newOt: OvertimeRecord = { ...ot, id: otNo, overtimeNo: otNo, status: 'Pending' };
+    setOvertimeRecords((prev) => [newOt, ...prev]);
+    logAction('CREATE', 'hr', 'overtime', otNo, `Logged overtime ${ot.overtimeHours} hrs for ${ot.employeeName}`);
+  };
+  const updateOvertimeStatus = (id: string, status: OvertimeRecord['status']) => {
+    setOvertimeRecords((prev) => prev.map((o) => (o.id === id || o.overtimeNo === id ? { ...o, status } : o)));
+    logAction('UPDATE', 'hr', 'overtime', id, `Updated overtime status to ${status}`);
+  };
+
+  const addEarlyCheckoutRequest = (req: Omit<EarlyCheckoutRequest, 'id' | 'requestNumber' | 'status'>) => {
+    const rNo = `ECO-2026-0${earlyCheckoutRequests.length + 1}`;
+    const newReq: EarlyCheckoutRequest = { ...req, id: rNo, requestNumber: rNo, status: 'Pending' };
+    setEarlyCheckoutRequests((prev) => [newReq, ...prev]);
+    logAction('CREATE', 'hr', 'early-checkout', rNo, `Early checkout request for ${req.employeeName}`);
+  };
+  const updateEarlyCheckoutStatus = (id: string, status: LeaveApprovalStatus) => {
+    setEarlyCheckoutRequests((prev) => prev.map((e) => (e.id === id || e.requestNumber === id ? { ...e, status } : e)));
+    logAction('UPDATE', 'hr', 'early-checkout', id, `Updated early checkout status to ${status}`);
+  };
+
+  const addSalaryComponent = (comp: Omit<SalaryComponent, 'id'>) => {
+    const newId = `SAL-COMP-0${salaryComponents.length + 1}`;
+    const newComp = { ...comp, id: newId };
+    setSalaryComponents((prev) => [...prev, newComp]);
+    logAction('CREATE', 'hr', 'salary-components', newId, `Added Salary Component ${comp.componentName}`);
+  };
+  const updateSalaryComponent = (id: string, comp: Partial<SalaryComponent>) => {
+    setSalaryComponents((prev) => prev.map((c) => (c.id === id ? { ...c, ...comp } : c)));
+    logAction('UPDATE', 'hr', 'salary-components', id, `Updated Salary Component ${id}`);
+  };
+
+  const addSalaryStructure = (sal: Omit<SalaryStructure, 'id'>) => {
+    const newId = `SAL-STR-0${salaryStructures.length + 1}`;
+    const newSal = { ...sal, id: newId };
+    setSalaryStructures((prev) => [...prev, newSal]);
+    logAction('CREATE', 'hr', 'salary-structure', newId, `Created Salary Structure for ${sal.employeeName}`);
+  };
+  const updateSalaryStructure = (id: string, sal: Partial<SalaryStructure>) => {
+    setSalaryStructures((prev) => prev.map((s) => (s.id === id ? { ...s, ...sal } : s)));
+    logAction('UPDATE', 'hr', 'salary-structure', id, `Updated Salary Structure for ${id}`);
+  };
+
+  const generateMonthlyPayroll = (monthYear: string, financialYear: string) => {
+    const newRecords: PayrollRecord[] = salaryStructures.map((struct, idx) => {
+      const pNo = `PAY-2026-${monthYear.substring(0, 3).toUpperCase()}-0${idx + 1}`;
+      return {
+        id: pNo,
+        payrollNumber: pNo,
+        monthYear,
+        financialYear,
+        employeeId: struct.employeeId,
+        employeeName: struct.employeeName,
+        department: 'Production',
+        designation: 'Engineer',
+        workingDays: 26,
+        presentDays: 25,
+        leaveDays: 1,
+        lossOfPayDays: 0,
+        overtimeHours: 6,
+        basicSalary: struct.basicSalary,
+        hra: struct.hra,
+        allowances: struct.conveyanceAllowance + struct.medicalAllowance + struct.specialAllowance,
+        overtimeAmount: 1800,
+        grossEarnings: struct.grossSalary + 1800,
+        pfDeduction: struct.employeePF,
+        esiDeduction: struct.employeeESI,
+        ptDeduction: struct.professionalTax,
+        tdsDeduction: struct.tdsMonthly,
+        loanAdvanceRecovery: 0,
+        otherDeductions: 0,
+        totalDeductions: struct.totalDeductions,
+        netSalary: struct.netSalary + 1800,
+        employerPF: struct.employerPF,
+        employerESI: struct.employerESI,
+        totalCTC: struct.totalCTC + 1800,
+        status: 'Draft',
+        processedDate: new Date().toISOString().split('T')[0],
+      };
+    });
+    setPayrollRecords((prev) => [...newRecords, ...prev]);
+    logAction('CREATE', 'hr', 'monthly-payroll', monthYear, `Generated monthly payroll for ${monthYear}`);
+  };
+  const updatePayrollStatus = (id: string, status: PayrollStatusType, approvedBy?: string) => {
+    setPayrollRecords((prev) =>
+      prev.map((p) => (p.id === id || p.payrollNumber === id ? { ...p, status, approvedBy: approvedBy || p.approvedBy } : p))
+    );
+    logAction('UPDATE', 'hr', 'payroll-approvals', id, `Updated payroll status to ${status}`);
+  };
+
+  const addEmployeeAdvanceLoan = (loan: Omit<EmployeeAdvanceLoan, 'id' | 'loanNumber' | 'status'>) => {
+    const lNo = `ADV-2026-0${employeeAdvanceLoans.length + 1}`;
+    const newLoan: EmployeeAdvanceLoan = { ...loan, id: lNo, loanNumber: lNo, status: 'Active' };
+    setEmployeeAdvanceLoans((prev) => [newLoan, ...prev]);
+    logAction('CREATE', 'hr', 'advances-loans', lNo, `Sanctioned advance/loan ${lNo} for ${loan.employeeName}`);
+  };
+  const updateEmployeeAdvanceLoan = (id: string, loan: Partial<EmployeeAdvanceLoan>) => {
+    setEmployeeAdvanceLoans((prev) => prev.map((l) => (l.id === id || l.loanNumber === id ? { ...l, ...loan } : l)));
+    logAction('UPDATE', 'hr', 'advances-loans', id, `Updated advance/loan ${id}`);
+  };
+
+  const addReimbursementExpense = (exp: Omit<ReimbursementExpense, 'id' | 'reimbursementNo' | 'status'>) => {
+    const rNo = `EXP-2026-0${reimbursementExpenses.length + 1}`;
+    const newExp: ReimbursementExpense = { ...exp, id: rNo, reimbursementNo: rNo, status: 'Pending Manager' };
+    setReimbursementExpenses((prev) => [newExp, ...prev]);
+    logAction('CREATE', 'hr', 'reimbursements', rNo, `Submitted expense ${rNo} by ${exp.employeeName}`);
+  };
+  const updateReimbursementStatus = (id: string, status: ReimbursementExpense['status'], approvedBy?: string) => {
+    setReimbursementExpenses((prev) =>
+      prev.map((r) => (r.id === id || r.reimbursementNo === id ? { ...r, status, approvedBy: approvedBy || r.approvedBy } : r))
+    );
+    logAction('UPDATE', 'hr', 'reimbursements', id, `Updated reimbursement status to ${status}`);
+  };
+
+  const addKPIMaster = (kpi: Omit<KPIMaster, 'id'>) => {
+    const kNo = `KPI-0${kpiMasters.length + 1}`;
+    const newKpi = { ...kpi, id: kNo };
+    setKPIMasters((prev) => [...prev, newKpi]);
+    logAction('CREATE', 'hr', 'kpi-management', kNo, `Added KPI ${kpi.kpiName}`);
+  };
+
+  const addEmployeeAppraisal = (app: Omit<EmployeeAppraisal, 'id' | 'appraisalNumber' | 'status'>) => {
+    const aNo = `APR-2026-0${employeeAppraisals.length + 1}`;
+    const newApp: EmployeeAppraisal = { ...app, id: aNo, appraisalNumber: aNo, status: 'Self Review Pending' };
+    setEmployeeAppraisals((prev) => [newApp, ...prev]);
+    logAction('CREATE', 'hr', 'appraisals', aNo, `Initiated Appraisal ${aNo} for ${app.employeeName}`);
+  };
+  const updateAppraisalStatus = (id: string, status: EmployeeAppraisal['status']) => {
+    setEmployeeAppraisals((prev) => prev.map((a) => (a.id === id || a.appraisalNumber === id ? { ...a, status } : a)));
+    logAction('UPDATE', 'hr', 'appraisals', id, `Updated appraisal status to ${status}`);
+  };
+
+  const addTrainingProgram = (tr: Omit<TrainingProgram, 'id'>) => {
+    const tNo = `TRN-PROG-0${trainingPrograms.length + 1}`;
+    const newTr = { ...tr, id: tNo };
+    setTrainingPrograms((prev) => [...prev, newTr]);
+    logAction('CREATE', 'hr', 'training', tNo, `Scheduled Training ${tr.title}`);
+  };
+  const updateTrainingStatus = (id: string, status: TrainingProgram['status']) => {
+    setTrainingPrograms((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+    logAction('UPDATE', 'hr', 'training', id, `Updated training status to ${status}`);
+  };
+
+  const addJobPosition = (pos: Omit<JobPosition, 'id'>) => {
+    const pNo = `JOB-POS-0${jobPositions.length + 1}`;
+    const newPos = { ...pos, id: pNo };
+    setJobPositions((prev) => [...prev, newPos]);
+    logAction('CREATE', 'hr', 'recruitment-positions', pNo, `Opened Job Position ${pos.title}`);
+  };
+  const updateJobPositionStatus = (id: string, status: JobPosition['status']) => {
+    setJobPositions((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));
+    logAction('UPDATE', 'hr', 'recruitment-positions', id, `Updated position status to ${status}`);
+  };
+
+  const addCandidateProfile = (cand: Omit<CandidateProfile, 'id' | 'candidateCode'>) => {
+    const cNo = `CAND-2026-0${candidateProfiles.length + 1}`;
+    const newCand = { ...cand, id: cNo, candidateCode: cNo };
+    setCandidateProfiles((prev) => [newCand, ...prev]);
+    logAction('CREATE', 'hr', 'recruitment-candidates', cNo, `Added candidate ${cand.candidateName}`);
+  };
+  const updateCandidateStatus = (id: string, status: CandidateProfile['status']) => {
+    setCandidateProfiles((prev) => prev.map((c) => (c.id === id || c.candidateCode === id ? { ...c, status } : c)));
+    logAction('UPDATE', 'hr', 'recruitment-candidates', id, `Updated candidate status to ${status}`);
+  };
+
+  const addInterviewRecord = (interview: Omit<InterviewRecord, 'id'>) => {
+    const iNo = `INT-2026-0${interviewRecords.length + 1}`;
+    const newInt = { ...interview, id: iNo };
+    setInterviewRecords((prev) => [newInt, ...prev]);
+    logAction('CREATE', 'hr', 'interview-management', iNo, `Logged interview for ${interview.candidateName}`);
+  };
+
+  const addOfferLetter = (offer: Omit<OfferLetter, 'id' | 'offerNumber' | 'status'>) => {
+    const oNo = `OFF-2026-0${offerLetters.length + 1}`;
+    const newOffer: OfferLetter = { ...offer, id: oNo, offerNumber: oNo, status: 'Sent' };
+    setOfferLetters((prev) => [newOffer, ...prev]);
+    logAction('CREATE', 'hr', 'offer-management', oNo, `Generated Offer Letter ${oNo} for ${offer.candidateName}`);
+  };
+  const updateOfferLetterStatus = (id: string, status: OfferLetter['status']) => {
+    setOfferLetters((prev) => prev.map((o) => (o.id === id || o.offerNumber === id ? { ...o, status } : o)));
+    logAction('UPDATE', 'hr', 'offer-management', id, `Updated offer letter status to ${status}`);
+  };
+
+  return (
+    <ERPContext.Provider
+      value={{
+        currentUser,
+        setCurrentUser,
+        availableEmployees: employees,
+        isAuthenticated,
+        login,
+        logout,
+        updateCurrentUserProfile,
+        changePassword,
+        activeDepartment,
+        setActiveDepartment,
+        sidebarCollapsed,
+        setSidebarCollapsed,
+        isSearchOpen,
+        setIsSearchOpen,
+        can,
+        hasDepartmentAccess,
+        company,
+        updateCompany,
+        numbering,
+        updateNumbering,
+        getNextDocNumber,
+        departments,
+        addDepartment,
+        updateDepartment,
+        roles,
+        addRole,
+        updateRole,
+        employees,
+        addEmployee,
+        updateEmployee,
+        leads,
+        addLead,
+        updateLead,
+        deleteLead,
+        convertLeadToCustomer,
+        customers,
+        addCustomer,
+        updateCustomer,
+        contacts,
+        addContact,
+        enquiries,
+        addEnquiry,
+        updateEnquiry,
+        opportunities,
+        addOpportunity,
+        updateOpportunity,
+        followUps,
+        addFollowUp,
+        completeFollowUp,
+        siteVisits,
+        addSiteVisit,
+        exhibitions,
+        addExhibition,
+        quotations,
+        addQuotation,
+        addQuotationRevision,
+        updateQuotationStatus,
+        customerPOs,
+        addCustomerPO,
+        convertCustomerPOToSalesOrder,
+        salesOrders,
+        addSalesOrder,
+        createProjectFromSalesOrder,
+        projectJobs,
+        updateProject,
+        projectTasks,
+        addProjectTask,
+        updateProjectTask,
+        deleteProjectTask,
+        projectPlanningStages,
+        updatePlanningStage,
+        departmentAssignments,
+        assignDepartment,
+        projectMilestones,
+        addProjectMilestone,
+        updateProjectMilestone,
+        projectIssues,
+        addProjectIssue,
+        resolveProjectIssue,
+        projectDelays,
+        addProjectDelay,
+        changeRequests,
+        addCustomerChangeRequest,
+        approveChangeRequest,
+        projectDocuments,
+        addProjectDocument,
+        projectCosts,
+        updateProjectCost,
+        projectComments,
+        addProjectComment,
+        projectApprovals,
+        approveProjectAction,
+        projectActivities,
+        logProjectActivity,
+        designJobs,
+        addDesignJob,
+        updateDesignJob,
+        customerRequirements,
+        addCustomerRequirement,
+        approveCustomerRequirement,
+        designTasks,
+        addDesignTask,
+        updateDesignTask,
+        drawings2D,
+        addDrawing2D,
+        designs3D,
+        addDesign3D,
+        assemblyDrawings,
+        addAssemblyDrawing,
+        partDrawings,
+        addPartDrawing,
+        boms,
+        addBOM,
+        updateBOM,
+        bomRevisions,
+        addBOMRevision,
+        designRevisions,
+        addDesignRevision,
+        designReviews,
+        addDesignReview,
+        technicalDocuments,
+        addTechnicalDocument,
+        releaseDesignToManufacturing,
+        suppliers,
+        addSupplier,
+        updateSupplier,
+        supplierContacts,
+        addSupplierContact,
+        materialRequirements,
+        addMaterialRequirement,
+        purchaseRequisitions,
+        addPurchaseRequisition,
+        approvePurchaseRequisition,
+        rfqs,
+        addRFQ,
+        supplierQuotations,
+        addSupplierQuotation,
+        quotationComparisons,
+        addQuotationComparison,
+        approveQuotationComparison,
+        purchaseOrders,
+        addPurchaseOrder,
+        approvePurchaseOrder,
+        poRevisions,
+        addPORevision,
+        purchaseFollowUps,
+        addPurchaseFollowUp,
+        purchaseReturns,
+        addPurchaseReturn,
+        itemMasters,
+        addItemMaster,
+        updateItemMaster,
+        itemCategories,
+        addItemCategory,
+        uoms,
+        addUOM,
+        warehouses,
+        addWarehouse,
+        updateWarehouse,
+        warehouseLocations,
+        addWarehouseLocation,
+        openingStocks,
+        addOpeningStock,
+        goodsReceipts,
+        addGRN,
+        qcInspections,
+        addQCInspection,
+        approveQCInspection,
+        stockBalances,
+        updateStockBalance,
+        stockReservations,
+        addStockReservation,
+        releaseStockReservation,
+        materialIssues,
+        addMaterialIssue,
+        materialReturns,
+        addMaterialReturn,
+        stockTransfers,
+        addStockTransfer,
+        stockAdjustments,
+        addStockAdjustment,
+        scrapEntries,
+        addScrapEntry,
+        physicalStockCounts,
+        addPhysicalStockCount,
+        stockLedgers,
+        logStockLedgerEntry,
+        manufacturingJobs,
+        addManufacturingJob,
+        updateManufacturingJob,
+        productionPlans,
+        addProductionPlan,
+        workOrders,
+        addWorkOrder,
+        releaseWorkOrder,
+        productionOrders,
+        addProductionOrder,
+        routingOperations,
+        addRoutingOperation,
+        workCenters,
+        addWorkCenter,
+        updateWorkCenter,
+        productionSchedules,
+        addProductionSchedule,
+        mrpRequirements,
+        productionEntries,
+        recordProductionEntry,
+        wipRecords,
+        productionHolds,
+        addProductionHold,
+        resumeProductionHold,
+        reworkOrders,
+        addReworkOrder,
+        productionScraps,
+        addProductionScrap,
+        productionCompletions,
+        completeWorkOrder,
+        finishedGoods,
+        addFinishedGoods,
+        productionCosts,
+
+        // Module 7 Accounting exports
+        financialYears,
+        closeFinancialYear,
+        chartOfAccounts,
+        addChartOfAccount,
+        accountGroups,
+        addAccountGroup,
+        taxMasters,
+        addTaxMaster,
+        tdsMasters,
+        addTDSMaster,
+        costCenters,
+        addCostCenter,
+        salesInvoices,
+        addSalesInvoice,
+        approveSalesInvoice,
+        purchaseInvoices,
+        addPurchaseInvoice,
+        postPurchaseInvoice,
+        creditNotes,
+        addCreditNote,
+        debitNotes,
+        addDebitNote,
+        customerReceipts,
+        addCustomerReceipt,
+        supplierPayments,
+        addSupplierPayment,
+        journalEntries,
+        addJournalEntry,
+        contraEntries,
+        addContraEntry,
+        expenseEntries,
+        addExpenseEntry,
+        approveExpenseEntry,
+        bankAccounts,
+        addBankAccount,
+        bankTransactions,
+        bankReconciliations,
+        reconcileBankTransaction,
+        fixedAssets,
+        addFixedAsset,
+        depreciationEntries,
+        runDepreciation,
+        jobCostings,
+        receivableAging,
+        payableAging,
+
+        // Module 8 Maintenance & Services exports
+        internalAssets,
+        addInternalAsset,
+        updateInternalAsset,
+        customerMachines,
+        addCustomerMachine,
+        updateCustomerMachine,
+        serviceRequests,
+        addServiceRequest,
+        updateServiceRequestStatus,
+        breakdowns,
+        addBreakdown,
+        updateBreakdownStatus,
+        preventivePlans,
+        addPreventivePlan,
+        servicePlanningItems,
+        serviceVisits,
+        addServiceVisit,
+        updateServiceVisitStatus,
+        serviceWorkOrders,
+        addServiceWorkOrder,
+        updateWorkOrderStatus,
+        servicePartIssues,
+        addServicePartIssue,
+        servicePartReturns,
+        addServicePartReturn,
+        serviceReports,
+        addServiceReport,
+        warranties,
+        amcContracts,
+        addAMCContract,
+        serviceContracts,
+        downtimeRecords,
+        addDowntimeRecord,
+        maintenanceCosts,
+        addMaintenanceCost,
+        checklistTemplates,
+        technicians,
+
+        // Module 9 HR & Payroll exports
+        designations,
+        addDesignation,
+        updateDesignation,
+        employeeDocuments,
+        addEmployeeDocument,
+        updateEmployeeDocumentStatus,
+        employeeOnboardings,
+        addEmployeeOnboarding,
+        updateEmployeeOnboardingStatus,
+        employeeTransfers,
+        addEmployeeTransfer,
+        employeePromotions,
+        addEmployeePromotion,
+        employeeExits,
+        addEmployeeExit,
+        updateEmployeeExitClearance,
+        fullAndFinalSettlements,
+        addFullAndFinalSettlement,
+        updateFinalSettlementStatus,
+        shiftMasters,
+        addShiftMaster,
+        updateShiftMaster,
+        shiftRosters,
+        addShiftRoster,
+        holidays,
+        addHoliday,
+        attendanceRecords,
+        markAttendance,
+        updateAttendanceRecord,
+        leaveTypes,
+        addLeaveType,
+        leaveBalances,
+        leaveRequests,
+        addLeaveRequest,
+        updateLeaveRequestStatus,
+        wfhRequests,
+        addWFHRequest,
+        updateWFHRequestStatus,
+        missedPunchRequests,
+        addMissedPunchRequest,
+        updateMissedPunchStatus,
+        attendanceRegularizations,
+        addAttendanceRegularization,
+        updateAttendanceRegularizationStatus,
+        overtimeRecords,
+        addOvertimeRecord,
+        updateOvertimeStatus,
+        earlyCheckoutRequests,
+        addEarlyCheckoutRequest,
+        updateEarlyCheckoutStatus,
+        salaryComponents,
+        addSalaryComponent,
+        updateSalaryComponent,
+        salaryStructures,
+        addSalaryStructure,
+        updateSalaryStructure,
+        payrollRecords,
+        generateMonthlyPayroll,
+        updatePayrollStatus,
+        employeeAdvanceLoans,
+        addEmployeeAdvanceLoan,
+        updateEmployeeAdvanceLoan,
+        reimbursementExpenses,
+        addReimbursementExpense,
+        updateReimbursementStatus,
+        kpiMasters,
+        addKPIMaster,
+        employeeAppraisals,
+        addEmployeeAppraisal,
+        updateAppraisalStatus,
+        trainingPrograms,
+        addTrainingProgram,
+        updateTrainingStatus,
+        jobPositions,
+        addJobPosition,
+        updateJobPositionStatus,
+        candidateProfiles,
+        addCandidateProfile,
+        updateCandidateStatus,
+        interviewRecords,
+        addInterviewRecord,
+        offerLetters,
+        addOfferLetter,
+        updateOfferLetterStatus,
+
+        jobs,
+        selectedJobForModal,
+        openJobModal,
+        closeJobModal,
+        updateJobStatus,
+        auditLogs,
+        logAction,
+        notifications,
+        markNotificationRead,
+        markAllNotificationsRead,
+        sendNotification,
+      }}
+    >
+      {children}
+    </ERPContext.Provider>
+  );
+}
+
+export function useERP() {
+  const context = useContext(ERPContext);
+  if (!context) {
+    throw new Error('useERP must be used within an ERPProvider');
+  }
+  return context;
+}
