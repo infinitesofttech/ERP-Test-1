@@ -133,35 +133,35 @@ export default function ProjectDashboardPage() {
   const customers = Array.from(new Set(projectJobs.map((p) => p.customerName)));
 
   return (
-    <div className="space-y-6 text-xs pb-12">
+    <div className="space-y-5 text-xs pb-12">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white p-6 rounded-2xl border border-slate-800 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#FAF3EA] via-[#F8EDE0] to-[#F1DFC9] text-[#211B17] p-5 sm:p-6 rounded-2xl border border-[#E9DFD3] shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-mono text-[11px] font-bold border border-amber-500/30 uppercase tracking-wider">
+            <span className="px-3 py-0.5 rounded-full bg-[#F5E6D8] text-[#8C5229] font-mono text-[10px] font-bold border border-[#E7DED5] uppercase tracking-wider">
               Module 2 • Manufacturing Project Control
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2.5">
-            <Briefcase className="w-6 h-6 text-amber-400" />
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight flex items-center gap-2.5 text-[#211B17]">
+            <Briefcase className="w-5 h-5 text-[#75401F]" />
             Project Management Dashboard
           </h1>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-[#6F6156] text-xs mt-1 leading-relaxed">
             Real-time status tracking, department coordination, timeline health, and delivery performance for Uma Techno Fab.
           </p>
         </div>
 
         {/* Filters Panel */}
-        <div className="flex flex-wrap items-center gap-2 bg-slate-900/80 p-3 rounded-xl border border-slate-800/80 backdrop-blur-sm">
-          <div className="flex items-center gap-1 text-slate-400 font-bold mr-1">
-            <Filter className="w-3.5 h-3.5 text-amber-400" />
+        <div className="flex flex-wrap items-center gap-2 bg-[#FAF7F2] p-2.5 rounded-2xl border border-[#E7DED5] shadow-xs">
+          <div className="flex items-center gap-1 text-[#70665F] font-bold mr-1">
+            <Filter className="w-3.5 h-3.5 text-[#75401F]" />
             <span>Filters:</span>
           </div>
 
           <select
             value={managerFilter}
             onChange={(e) => setManagerFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 bg-white border border-[#E7DED5] rounded-full text-xs font-semibold text-[#211B17] focus:outline-none focus:border-[#75401F] shadow-xs cursor-pointer"
           >
             <option value="all">All Managers</option>
             {managers.map((m) => (
@@ -172,7 +172,7 @@ export default function ProjectDashboardPage() {
           <select
             value={customerFilter}
             onChange={(e) => setCustomerFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 bg-white border border-[#E7DED5] rounded-full text-xs font-semibold text-[#211B17] focus:outline-none focus:border-[#75401F] shadow-xs cursor-pointer"
           >
             <option value="all">All Customers</option>
             {customers.map((c) => (
@@ -183,7 +183,7 @@ export default function ProjectDashboardPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 bg-white border border-[#E7DED5] rounded-full text-xs font-semibold text-[#211B17] focus:outline-none focus:border-[#75401F] shadow-xs cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="planning">Planning</option>
@@ -198,7 +198,7 @@ export default function ProjectDashboardPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs font-semibold text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 bg-white border border-[#E7DED5] rounded-full text-xs font-semibold text-[#211B17] focus:outline-none focus:border-[#75401F] shadow-xs cursor-pointer"
           >
             <option value="all">All Priorities</option>
             <option value="urgent">Urgent</option>
@@ -215,7 +215,7 @@ export default function ProjectDashboardPage() {
                 setStatusFilter('all');
                 setPriorityFilter('all');
               }}
-              className="px-2 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg flex items-center gap-1 transition"
+              className="px-3 py-1.5 bg-white hover:bg-[#FAF7F2] text-[#70665F] border border-[#E7DED5] rounded-full flex items-center gap-1 transition shadow-xs font-semibold cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
               Reset
@@ -226,119 +226,119 @@ export default function ProjectDashboardPage() {
 
       {/* 12 KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Total Projects</span>
-            <Briefcase className="w-4 h-4 text-blue-500" />
+            <Briefcase className="w-4 h-4 text-[#75401F]" />
           </div>
-          <div className="text-2xl font-black text-slate-900 dark:text-white">{totalProjects}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Make-To-Order Master</span>
+          <div className="text-2xl font-bold font-mono text-[#211B17]">{totalProjects}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Make-To-Order Master</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Active Projects</span>
-            <TrendingUp className="w-4 h-4 text-emerald-500" />
+            <TrendingUp className="w-4 h-4 text-[#169B62]" />
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{activeProjects}</div>
-          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">In Pipeline</span>
+          <div className="text-2xl font-bold font-mono text-[#169B62]">{activeProjects}</div>
+          <span className="text-[10px] text-[#169B62] font-semibold">In Pipeline</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Planning</span>
-            <Layers className="w-4 h-4 text-purple-500" />
+            <Layers className="w-4 h-4 text-[#8B5CF6]" />
           </div>
-          <div className="text-2xl font-black text-purple-600 dark:text-purple-400">{planningCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Stage 1 & 2</span>
+          <div className="text-2xl font-bold font-mono text-[#8B5CF6]">{planningCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Stage 1 & 2</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Design Pending</span>
-            <Cpu className="w-4 h-4 text-pink-500" />
+            <Cpu className="w-4 h-4 text-[#A43D8F]" />
           </div>
-          <div className="text-2xl font-black text-pink-600 dark:text-pink-400">{designPendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">CAD & GA Drawing</span>
+          <div className="text-2xl font-bold font-mono text-[#A43D8F]">{designPendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">CAD & GA Drawing</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Material Pending</span>
-            <Wrench className="w-4 h-4 text-amber-500" />
+            <Wrench className="w-4 h-4 text-[#D68A22]" />
           </div>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400">{materialPendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">BOM Release</span>
+          <div className="text-2xl font-bold font-mono text-[#D68A22]">{materialPendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">BOM Release</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Purchase Pending</span>
-            <ShoppingCart className="w-4 h-4 text-blue-400" />
+            <ShoppingCart className="w-4 h-4 text-[#0E91B2]" />
           </div>
-          <div className="text-2xl font-black text-blue-600 dark:text-blue-400">{purchasePendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">PR & PO Issuance</span>
+          <div className="text-2xl font-bold font-mono text-[#0E91B2]">{purchasePendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">PR & PO Issuance</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Production Running</span>
-            <Wrench className="w-4 h-4 text-emerald-500" />
+            <Wrench className="w-4 h-4 text-[#169B62]" />
           </div>
-          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{productionRunningCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Shop Floor Fab</span>
+          <div className="text-2xl font-bold font-mono text-[#169B62]">{productionRunningCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Shop Floor Fab</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>QC Pending</span>
-            <ShieldCheck className="w-4 h-4 text-cyan-500" />
+            <ShieldCheck className="w-4 h-4 text-[#0E91B2]" />
           </div>
-          <div className="text-2xl font-black text-cyan-600 dark:text-cyan-400">{qcPendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Hydro & DP Testing</span>
+          <div className="text-2xl font-bold font-mono text-[#0E91B2]">{qcPendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Hydro & DP Testing</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Dispatch Pending</span>
-            <Truck className="w-4 h-4 text-orange-500" />
+            <Truck className="w-4 h-4 text-[#D68A22]" />
           </div>
-          <div className="text-2xl font-black text-orange-600 dark:text-orange-400">{dispatchPendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Packing & Challan</span>
+          <div className="text-2xl font-bold font-mono text-[#D68A22]">{dispatchPendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Packing & Challan</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Installation Pending</span>
-            <Building className="w-4 h-4 text-indigo-500" />
+            <Building className="w-4 h-4 text-[#75401F]" />
           </div>
-          <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{installationPendingCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Site Erection</span>
+          <div className="text-2xl font-bold font-mono text-[#75401F]">{installationPendingCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Site Erection</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-400 font-bold mb-1">
+        <div className="bg-white p-4 rounded-2xl border border-[#E7DED5] shadow-xs flex flex-col justify-between hover:border-[#D5CAC0] transition-colors">
+          <div className="flex items-center justify-between text-[#70665F] font-bold mb-1">
             <span>Completed</span>
-            <CheckCircle2 className="w-4 h-4 text-slate-500" />
+            <CheckCircle2 className="w-4 h-4 text-[#169B62]" />
           </div>
-          <div className="text-2xl font-black text-slate-700 dark:text-slate-300">{completedCount}</div>
-          <span className="text-[10px] text-slate-500 mt-1">Handed Over</span>
+          <div className="text-2xl font-bold font-mono text-[#70665F]">{completedCount}</div>
+          <span className="text-[10px] text-[#8D827A] mt-1">Handed Over</span>
         </div>
 
-        <div className="bg-white dark:bg-[#0B1120] p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 shadow-sm flex flex-col justify-between bg-rose-50/20 dark:bg-rose-950/10">
-          <div className="flex items-center justify-between text-rose-500 font-bold mb-1">
+        <div className="bg-[#FFF8F8] p-4 rounded-2xl border border-[#FED7D7] shadow-xs flex flex-col justify-between hover:border-[#FEB2B2] transition-colors">
+          <div className="flex items-center justify-between text-[#D9383A] font-bold mb-1">
             <span>Delayed Projects</span>
-            <AlertTriangle className="w-4 h-4 text-rose-500" />
+            <AlertTriangle className="w-4 h-4 text-[#D9383A]" />
           </div>
-          <div className="text-2xl font-black text-rose-600 dark:text-rose-400">{delayedProjectsCount}</div>
-          <span className="text-[10px] text-rose-500 font-medium">Requires PM Action</span>
+          <div className="text-2xl font-bold font-mono text-[#D9383A]">{delayedProjectsCount}</div>
+          <span className="text-[10px] text-[#D9383A] font-semibold">Requires PM Action</span>
         </div>
       </div>
 
       {/* 7 Recharts Visualization Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Chart 1: Projects by Status */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <PieChart className="w-4 h-4 text-blue-500" />
             Projects Breakdown by Status
@@ -360,7 +360,7 @@ export default function ProjectDashboardPage() {
         </div>
 
         {/* Chart 2: Department Workload */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <BarChart className="w-4 h-4 text-emerald-500" />
             Department Workload & Active Tasks
@@ -382,7 +382,7 @@ export default function ProjectDashboardPage() {
         </div>
 
         {/* Chart 3: Projects by Priority */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
             Projects by Priority Level
@@ -402,7 +402,7 @@ export default function ProjectDashboardPage() {
         </div>
 
         {/* Chart 4: Monthly Project Creation */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-purple-500" />
             Monthly MTO Project Inflow Trend
@@ -422,7 +422,7 @@ export default function ProjectDashboardPage() {
         </div>
 
         {/* Chart 5: Project Delivery Performance */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             Project Delivery Performance (Planned vs Actual)
@@ -444,7 +444,7 @@ export default function ProjectDashboardPage() {
         </div>
 
         {/* Chart 6: Delayed Projects Analysis */}
-        <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
             <Clock className="w-4 h-4 text-rose-500" />
             Delay Impact Analysis by Reason

@@ -447,6 +447,13 @@ export interface ProjectTask {
   remarks?: string;
 }
 
+export interface PlanningStageAssignee {
+  id: string;
+  name: string;
+  role?: string;
+  department?: string;
+}
+
 export interface ProjectPlanningStage {
   id: string;
   stageNumber: number;
@@ -459,9 +466,14 @@ export interface ProjectPlanningStage {
   actualEnd?: string;
   responsibleDepartment: string;
   responsibleEmployee: string;
+  assignedEmployeeIds?: string[];
+  assignedEmployees?: PlanningStageAssignee[];
   status: 'pending' | 'in_progress' | 'completed' | 'delayed';
   progressPercent: number;
   remarks?: string;
+  completedBy?: string;
+  completedAt?: string;
+  deliverables?: string;
 }
 
 export interface DepartmentAssignment {

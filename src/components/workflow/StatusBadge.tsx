@@ -15,69 +15,69 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       case 'won':
       case 'converted':
         return {
-          label: status === 'won' ? 'WON (ORDER BOOKED)' : status === 'converted' ? 'CONVERTED TO CUSTOMER' : 'COMPLETED / APPROVED',
-          bg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
-          dot: 'bg-emerald-500 shadow-sm shadow-emerald-500/50',
+          label: status === 'won' ? 'WON (ORDER BOOKED)' : status === 'converted' ? 'CONVERTED' : 'COMPLETED / APPROVED',
+          bg: 'bg-[#DCFCE7] text-[#15803D] border-[#BBF7D0]',
+          dot: 'bg-[#15803D]',
         };
       case 'production':
       case 'in_progress':
         return {
           label: 'IN PRODUCTION',
-          bg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
-          dot: 'bg-blue-500 animate-pulse shadow-sm shadow-blue-500/50',
+          bg: 'bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]',
+          dot: 'bg-[#0284C7] animate-pulse',
         };
       case 'qc':
         return {
-          label: 'QUALITY INSPECTION (FAT/NDT)',
-          bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
-          dot: 'bg-purple-500',
+          label: 'QUALITY INSPECTION',
+          bg: 'bg-[#F3E8FF] text-[#7E22CE] border-[#E9D5FF]',
+          dot: 'bg-[#9333EA]',
         };
       case 'design':
       case 'material_planning':
         return {
-          label: status === 'design' ? 'ENGINEERING & BOM' : 'MATERIAL PLANNING',
-          bg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
-          dot: 'bg-indigo-500',
+          label: status === 'design' ? 'DESIGN RELEASE' : 'MATERIAL PLANNING',
+          bg: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]',
+          dot: 'bg-[#D97706]',
         };
       case 'purchase':
         return {
-          label: 'PURCHASE / RM INDENT',
-          bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30',
-          dot: 'bg-amber-500',
+          label: 'PURCHASE & STORE',
+          bg: 'bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]',
+          dot: 'bg-[#EA580C]',
         };
       case 'ready_for_dispatch':
       case 'dispatched':
         return {
           label: status === 'dispatched' ? 'DISPATCHED' : 'READY FOR DISPATCH',
-          bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30',
-          dot: 'bg-cyan-500',
+          bg: 'bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]',
+          dot: 'bg-[#0D9488]',
         };
       case 'delayed':
       case 'rejected':
       case 'lost':
         return {
           label: status === 'lost' ? 'LOST' : status === 'rejected' ? 'REJECTED' : 'DELAYED',
-          bg: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
-          dot: 'bg-rose-500',
+          bg: 'bg-[#FEE2E2] text-[#B91C1C] border-[#FECACA]',
+          dot: 'bg-[#DC2626]',
         };
       case 'urgent':
         return {
           label: 'URGENT PRIORITY',
-          bg: 'bg-rose-600 text-white border-rose-600 font-black shadow-md shadow-rose-600/30',
+          bg: 'bg-[#991B1B] text-white border-[#7F1D1D] shadow-xs',
           dot: 'bg-white animate-ping',
         };
       case 'high':
         return {
           label: 'HIGH PRIORITY',
-          bg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30',
-          dot: 'bg-orange-500',
+          bg: 'bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]',
+          dot: 'bg-[#EA580C]',
         };
       case 'new':
       case 'contacted':
         return {
           label: status === 'new' ? 'NEW LEAD' : 'CONTACTED',
-          bg: 'bg-blue-500/10 text-blue-600 dark:text-blue-300 border-blue-500/30',
-          dot: 'bg-blue-500',
+          bg: 'bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]',
+          dot: 'bg-[#0284C7]',
         };
       case 'draft':
       case 'planning':
@@ -85,8 +85,8 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       default:
         return {
           label: String(status).replace('_', ' ').toUpperCase(),
-          bg: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20',
-          dot: 'bg-slate-400',
+          bg: 'bg-[#F3ECE4] text-[#70665F] border-[#E7DED5]',
+          dot: 'bg-[#8D827A]',
         };
     }
   };

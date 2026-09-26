@@ -127,22 +127,22 @@ export default function ProductionDashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-[#090D1A] min-h-screen text-slate-100">
+    <div className="space-y-5 text-xs pb-12 text-[#211B17]">
       {/* Header & Quick Action Buttons */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
               <Factory className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-[#211B17] tracking-tight flex items-center gap-2">
                 Production Management Dashboard
                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 font-medium border border-orange-500/30">
                   Shop Floor Control
                 </span>
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#70665F]">
                 Uma Techno Fab Manufacturing ERP — Make-to-Order (MTO) Real-time Shop Floor Monitoring
               </p>
             </div>
@@ -159,7 +159,7 @@ export default function ProductionDashboardPage() {
           </Link>
           <Link
             href="/production/entry"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-700 text-slate-200 font-medium text-xs border border-slate-700 transition"
           >
             <Activity className="w-4 h-4 text-emerald-400" /> Operator Entry
           </Link>
@@ -173,15 +173,15 @@ export default function ProductionDashboardPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs">
-        <div className="flex items-center gap-2 text-slate-400 font-medium">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-slate-900/60 border border-[#E7DED5] text-xs">
+        <div className="flex items-center gap-2 text-[#70665F] font-medium">
           <Filter className="w-4 h-4 text-orange-400" /> Dashboard Filters:
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
+            className="bg-white border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
           >
             <option value="All">Date Range: All Time</option>
             <option value="Today">Today</option>
@@ -191,7 +191,7 @@ export default function ProductionDashboardPage() {
           <select
             value={jobFilter}
             onChange={(e) => setJobFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
+            className="bg-white border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
           >
             <option value="All">Filter Job: All Jobs</option>
             {manufacturingJobs.map((j) => (
@@ -203,7 +203,7 @@ export default function ProductionDashboardPage() {
           <select
             value={wcFilter}
             onChange={(e) => setWcFilter(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
+            className="bg-white border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 focus:outline-none focus:border-orange-500"
           >
             <option value="All">Work Center: All Bays</option>
             {workCenters.map((wc) => (
@@ -217,57 +217,57 @@ export default function ProductionDashboardPage() {
 
       {/* 13 KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Total Jobs</span>
             <Briefcase className="w-4 h-4 text-sky-400" />
           </div>
-          <div className="text-xl font-bold text-white mt-1">{totalJobs}</div>
+          <div className="text-xl font-bold text-[#211B17] mt-1">{totalJobs}</div>
           <div className="text-[10px] text-sky-400 mt-1 flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" /> 100% Active MTO
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Active Work Orders</span>
             <ClipboardList className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-xl font-bold text-white mt-1">{activeWorkOrders}</div>
+          <div className="text-xl font-bold text-[#211B17] mt-1">{activeWorkOrders}</div>
           <div className="text-[10px] text-indigo-400 mt-1">Shop Floor Released</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Prod Orders Running</span>
             <FileText className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-xl font-bold text-white mt-1">{inProgressProductionOrders}</div>
+          <div className="text-xl font-bold text-[#211B17] mt-1">{inProgressProductionOrders}</div>
           <div className="text-[10px] text-emerald-400 mt-1">In Production</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Active Work Centers</span>
             <Wrench className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-xl font-bold text-white mt-1">
+          <div className="text-xl font-bold text-[#211B17] mt-1">
             {activeWorkCenters} / {workCenters.length}
           </div>
           <div className="text-[10px] text-purple-400 mt-1">Bays Operational</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Overall OEE %</span>
             <Activity className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-xl font-bold text-amber-400 mt-1">{avgOee}%</div>
-          <div className="text-[10px] text-slate-400 mt-1">Efficiency Metric</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Efficiency Metric</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>On-Time Rate</span>
             <Clock className="w-4 h-4 text-cyan-400" />
           </div>
@@ -275,17 +275,17 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-cyan-400 mt-1">Schedule Compliance</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>WIP Jobs</span>
             <Layers className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-xl font-bold text-white mt-1">{wipRecords.length}</div>
+          <div className="text-xl font-bold text-[#211B17] mt-1">{wipRecords.length}</div>
           <div className="text-[10px] text-blue-400 mt-1">Under Manufacturing</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Good Qty Produced</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
@@ -293,8 +293,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-emerald-400 mt-1">Passed QC</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Rejected Qty</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
@@ -302,8 +302,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-rose-400 mt-1">Defect Qty</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Active Holds</span>
             <PauseCircle className="w-4 h-4 text-red-400" />
           </div>
@@ -311,8 +311,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-red-400 mt-1">Production Stopped</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Rework Orders</span>
             <RotateCcw className="w-4 h-4 text-amber-500" />
           </div>
@@ -320,8 +320,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-amber-400 mt-1">Action Required</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Total Scrap Value</span>
             <DollarSign className="w-4 h-4 text-rose-400" />
           </div>
@@ -329,8 +329,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-rose-400 mt-1">Material Scrap</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Finished Goods</span>
             <ShieldCheck className="w-4 h-4 text-sky-400" />
           </div>
@@ -338,8 +338,8 @@ export default function ProductionDashboardPage() {
           <div className="text-[10px] text-sky-400 mt-1">Ready for Dispatch</div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 shadow-md">
-          <div className="flex justify-between items-center text-slate-400 text-[11px]">
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-[#E7DED5] shadow-md">
+          <div className="flex justify-between items-center text-[#70665F] text-[11px]">
             <span>Cost Variance</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
@@ -351,8 +351,8 @@ export default function ProductionDashboardPage() {
       {/* 8 Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Job Status Breakdown */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <Briefcase className="w-4 h-4 text-sky-400" /> 1. Manufacturing Job Status Breakdown
           </h3>
           <div className="h-64">
@@ -364,15 +364,15 @@ export default function ProductionDashboardPage() {
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px', color: '#FFF' }} />
-                <Legend formatter={(value) => <span className="text-xs text-slate-300">{value}</span>} />
+                <Legend formatter={(value) => <span className="text-xs text-[#544B45]">{value}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Chart 2: Work Center Utilization */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <Wrench className="w-4 h-4 text-purple-400" /> 2. Work Center Capacity & Hours Available
           </h3>
           <div className="h-64">
@@ -382,7 +382,7 @@ export default function ProductionDashboardPage() {
                 <XAxis dataKey="name" stroke="#64748B" fontSize={11} />
                 <YAxis stroke="#64748B" fontSize={11} />
                 <Tooltip contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px', color: '#FFF' }} />
-                <Legend formatter={(value) => <span className="text-xs text-slate-300">{value}</span>} />
+                <Legend formatter={(value) => <span className="text-xs text-[#544B45]">{value}</span>} />
                 <Bar dataKey="Capacity" fill="#6366F1" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Available" fill="#10B981" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -391,8 +391,8 @@ export default function ProductionDashboardPage() {
         </div>
 
         {/* Chart 3: Daily Output Trend */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <Activity className="w-4 h-4 text-emerald-400" /> 3. Daily Production Output (Good Qty vs Scrap)
           </h3>
           <div className="h-64">
@@ -410,8 +410,8 @@ export default function ProductionDashboardPage() {
         </div>
 
         {/* Chart 4: WIP Stage-wise Distribution */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <Layers className="w-4 h-4 text-blue-400" /> 4. Work in Progress (WIP) Operations Tracking
           </h3>
           <div className="h-64">
@@ -429,8 +429,8 @@ export default function ProductionDashboardPage() {
         </div>
 
         {/* Chart 5: Job-wise Actual vs Estimated Cost */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-emerald-400" /> 5. Job Production Costing (Estimated vs Actual in ₹ Lacs)
           </h3>
           <div className="h-64">
@@ -440,7 +440,7 @@ export default function ProductionDashboardPage() {
                 <XAxis dataKey="job" stroke="#64748B" fontSize={11} />
                 <YAxis stroke="#64748B" fontSize={11} />
                 <Tooltip contentStyle={{ backgroundColor: '#0F172A', borderColor: '#334155', borderRadius: '8px', color: '#FFF' }} />
-                <Legend formatter={(value) => <span className="text-xs text-slate-300">{value}</span>} />
+                <Legend formatter={(value) => <span className="text-xs text-[#544B45]">{value}</span>} />
                 <Bar dataKey="Estimated" fill="#64748B" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Actual" fill="#10B981" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -449,8 +449,8 @@ export default function ProductionDashboardPage() {
         </div>
 
         {/* Chart 6: Downtime Reason Analytics */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <PauseCircle className="w-4 h-4 text-rose-400" /> 6. Shop Floor Downtime Reason Distribution (%)
           </h3>
           <div className="h-64">
@@ -469,7 +469,7 @@ export default function ProductionDashboardPage() {
       </div>
 
       {/* Active Work Orders Overview Table */}
-      <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl space-y-4">
+      <div className="p-5 rounded-2xl bg-slate-900/80 border border-[#E7DED5] shadow-xl space-y-4">
         <div className="flex justify-between items-center">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-orange-400" /> Active Work Orders & Progress Status
@@ -480,8 +480,8 @@ export default function ProductionDashboardPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-800/80 text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-700">
+          <table className="w-full text-left text-xs text-[#544B45]">
+            <thead className="bg-[#FAF7F2] text-[#70665F] font-semibold uppercase text-[10px] tracking-wider border-b border-slate-700">
               <tr>
                 <th className="p-3">Work Order #</th>
                 <th className="p-3">Job Number</th>
@@ -495,20 +495,20 @@ export default function ProductionDashboardPage() {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {workOrders.map((wo) => (
-                <tr key={wo.id} className="hover:bg-slate-800/40 transition">
+                <tr key={wo.id} className="hover:bg-white/40 transition">
                   <td className="p-3 font-mono font-bold text-orange-400">{wo.workOrderNumber}</td>
                   <td className="p-3 font-mono text-sky-300">{wo.jobNumber}</td>
                   <td className="p-3 font-medium text-white max-w-xs truncate">{wo.productName}</td>
-                  <td className="p-3 text-slate-400">
+                  <td className="p-3 text-[#70665F]">
                     {wo.designRevision} / {wo.bomRevision}
                   </td>
-                  <td className="p-3 text-slate-300">{wo.plannedEndDate}</td>
+                  <td className="p-3 text-[#544B45]">{wo.plannedEndDate}</td>
                   <td className="p-3">
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         wo.priority === 'High' || wo.priority === 'Urgent'
                           ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                          : 'bg-slate-700 text-slate-300'
+                          : 'bg-slate-700 text-[#544B45]'
                       }`}
                     >
                       {wo.priority}

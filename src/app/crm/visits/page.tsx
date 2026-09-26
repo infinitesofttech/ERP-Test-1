@@ -114,10 +114,10 @@ export default function VisitsPage() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm"
+          className="px-4 py-2 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-xl font-bold transition flex items-center gap-2 shadow-xs cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Log Site Visit</span>
+          <span>Log Site Visit</span>
         </button>
       </div>
 

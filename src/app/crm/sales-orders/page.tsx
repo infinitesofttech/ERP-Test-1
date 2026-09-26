@@ -23,49 +23,49 @@ export default function SalesOrdersPage() {
 
   const columns: Column<SalesOrder>[] = [
     {
-      header: 'Sales Order #',
+      header: 'SALES ORDER #',
       accessorKey: 'salesOrderNumber',
       cell: (so) => (
-        <span className="font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 text-xs">
+        <span className="font-mono font-bold text-[#0E91B2] bg-[#E0F2FE] px-2.5 py-1 rounded-lg border border-[#BAE6FD] text-xs whitespace-nowrap inline-block">
           {so.salesOrderNumber}
         </span>
       ),
     },
     {
-      header: 'Customer & PO Reference',
+      header: 'CUSTOMER & PO REFERENCE',
       cell: (so) => (
-        <div>
-          <span className="font-bold text-slate-900 dark:text-white block">{so.customerName}</span>
-          <span className="text-[11px] text-slate-400 font-mono">PO: {so.customerPoNumber}</span>
+        <div className="min-w-[180px]">
+          <span className="font-bold text-[#211B17] block">{so.customerName}</span>
+          <span className="text-[11px] text-[#70665F] font-mono">PO: {so.customerPoNumber}</span>
         </div>
       ),
     },
     {
-      header: 'Equipment Scope',
+      header: 'EQUIPMENT SCOPE',
       cell: (so) => (
-        <span className="font-bold text-slate-800 dark:text-slate-200 block truncate max-w-xs">
+        <span className="font-semibold text-[#544B45] block max-w-sm truncate">
           {so.items[0]?.productName || 'Custom Manufacturing Machine'}
         </span>
       ),
     },
     {
-      header: 'Total Order Value',
-      cell: (so) => <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs">{formatCurrency(so.orderValue)}</span>,
+      header: 'TOTAL ORDER VALUE',
+      cell: (so) => <span className="font-mono font-bold text-[#169B62] text-xs whitespace-nowrap inline-block">{formatCurrency(so.orderValue)}</span>,
     },
     {
-      header: 'Delivery Target',
-      cell: (so) => <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{formatDate(so.deliveryDate)}</span>,
+      header: 'DELIVERY TARGET',
+      cell: (so) => <span className="text-[#70665F] font-mono text-[11px] whitespace-nowrap inline-block">{formatDate(so.deliveryDate)}</span>,
     },
     {
-      header: 'MTO Integration Status',
+      header: 'MTO INTEGRATION STATUS',
       cell: (so) => (
-        <div>
+        <div className="whitespace-nowrap">
           {so.jobNumber ? (
-            <span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">
+            <span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-bold bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0]">
               Linked Job: {so.jobNumber}
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">
+            <span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-bold bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]">
               Awaiting Job Creation
             </span>
           )}
@@ -73,17 +73,17 @@ export default function SalesOrdersPage() {
       ),
     },
     {
-      header: 'Actions (CRM → Project)',
+      header: 'ACTIONS (CRM → PROJECT)',
       cell: (so) => (
-        <div>
+        <div className="whitespace-nowrap">
           {so.jobNumber ? (
-            <span className="font-mono font-bold text-slate-600 dark:text-slate-400 text-xs flex items-center gap-1">
+            <span className="font-mono font-bold text-[#70665F] text-xs flex items-center gap-1">
               <span>{so.projectId}</span>
             </span>
           ) : (
             <button
               onClick={() => handleCreateProject(so.id)}
-              className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition cursor-pointer"
+              className="px-3.5 py-1.5 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
             >
               <Zap className="w-3.5 h-3.5 text-amber-300" />
               <span>Create Project / Job</span>
@@ -96,19 +96,21 @@ export default function SalesOrdersPage() {
 
   return (
     <div className="space-y-5 text-xs pb-10">
-      <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md shadow-slate-900/5">
+      <div className="bg-gradient-to-r from-[#FAF3EA] via-[#F8EDE0] to-[#F1DFC9] p-5 sm:p-6 rounded-2xl border border-[#E9DFD3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs text-[#211B17]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-mono text-[10px] font-bold uppercase tracking-wider border border-blue-500/20">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FAF0E6] text-[#75401F] font-mono text-[10px] font-bold uppercase tracking-wider border border-[#E7DED5]">
               CRM → Project Handover Hub
             </span>
           </div>
-          <h1 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="w-5 h-5 text-blue-600" />
+          <h1 className="text-lg font-black text-[#211B17] flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#FAF0E6] text-[#75401F] flex items-center justify-center border border-[#E7DED5] shadow-xs">
+              <Layers className="w-4.5 h-4.5" />
+            </div>
             Confirmed Sales Orders Master
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
-            Click &ldquo;Create Project / Job&rdquo; to instantly generate linked Project (`PRJ-2026-XXXX`) and Shop Floor Job Number (`JOB-2026-XXXX`).
+          <p className="text-[#70665F] mt-1 text-xs">
+            Approved client contracts initiating engineering jobs, BOM release, and shop floor procurement. Click &ldquo;Create Project / Job&rdquo; to instantly generate linked Project (`PRJ-2026-XXXX`) and Shop Floor Job Number (`JOB-2026-XXXX`).
           </p>
         </div>
       </div>

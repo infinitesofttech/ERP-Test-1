@@ -195,9 +195,9 @@ function QuotationFormContent() {
               <button
                 type="button"
                 onClick={addItem}
-                className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold text-xs flex items-center gap-1"
+                className="px-3 py-1.5 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" /> + Add Line Item
+                <Plus className="w-3.5 h-3.5" /> Add Line Item
               </button>
             </div>
 

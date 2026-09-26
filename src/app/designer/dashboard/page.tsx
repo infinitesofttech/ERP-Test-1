@@ -164,7 +164,7 @@ export default function DesignerDashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-[#070A14] text-slate-100 min-h-screen">
+    <div className="space-y-5 text-xs pb-12 text-[#211B17]">
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
         <div>
@@ -172,12 +172,12 @@ export default function DesignerDashboardPage() {
             <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-mono font-bold">
               MODULE 3
             </span>
-            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-black text-[#211B17] tracking-tight flex items-center gap-2">
               <Palette className="w-7 h-7 text-cyan-400" />
               Designer & Engineering Management
             </h1>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#70665F] mt-1">
             Machine CAD Drawings, Multi-Level BOM Hierarchy, Technical Specs, 4-Tier Approvals & Shop Floor Release
           </p>
         </div>
@@ -186,14 +186,14 @@ export default function DesignerDashboardPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/designer/jobs"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-lg shadow-cyan-600/30 transition"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-[#211B17] text-xs font-bold shadow-lg shadow-cyan-600/30 transition"
           >
             <Plus className="w-4 h-4" />
             New Design Job
           </Link>
           <Link
             href="/designer/bom"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold transition"
           >
             <FileSpreadsheet className="w-4 h-4" />
             Master BOM
@@ -211,79 +211,79 @@ export default function DesignerDashboardPage() {
       {/* 10 KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
         {/* KPI 1 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Total Design Jobs</span>
             <Palette className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-black text-white mt-2 font-mono">{totalJobs}</div>
+          <div className="text-2xl font-bold text-[#211B17] mt-1.5 font-mono">{totalJobs}</div>
           <div className="text-[10px] text-cyan-400/80 mt-1">Active Machine Designs</div>
           <div className="absolute -right-2 -bottom-2 w-12 h-12 bg-cyan-500/10 rounded-full blur-lg group-hover:scale-150 transition" />
         </div>
 
         {/* KPI 2 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>New Requests</span>
             <Clock className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-2xl font-black text-blue-400 mt-2 font-mono">{newRequests}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Awaiting Assignment</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Awaiting Assignment</div>
         </div>
 
         {/* KPI 3 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>In Progress</span>
             <Compass className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="text-2xl font-black text-indigo-400 mt-2 font-mono">{inProgress}</div>
-          <div className="text-[10px] text-slate-400 mt-1">CAD & 2D Drafting</div>
+          <div className="text-[10px] text-[#70665F] mt-1">CAD & 2D Drafting</div>
         </div>
 
         {/* KPI 4 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Engineering Review</span>
             <ShieldCheck className="w-4 h-4 text-purple-400" />
           </div>
           <div className="text-2xl font-black text-purple-400 mt-2 font-mono">{inReview}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Tech Checklists</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Tech Checklists</div>
         </div>
 
         {/* KPI 5 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Approved Designs</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-black text-emerald-400 mt-2 font-mono">{approvedDesigns}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Ready for Production</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Ready for Production</div>
         </div>
 
         {/* KPI 6 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Pending BOM</span>
             <FileSpreadsheet className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-2xl font-black text-amber-400 mt-2 font-mono">{pendingBOM}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Item Structuring</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Item Structuring</div>
         </div>
 
         {/* KPI 7 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>BOM Approved</span>
             <FileCheck className="w-4 h-4 text-teal-400" />
           </div>
           <div className="text-2xl font-black text-teal-400 mt-2 font-mono">{bomApprovedCount}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Locked Master BOM</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Locked Master BOM</div>
         </div>
 
         {/* KPI 8 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Released to Prod</span>
             <Zap className="w-4 h-4 text-emerald-400" />
           </div>
@@ -292,18 +292,18 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* KPI 9 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Design Revisions</span>
             <RotateCcw className="w-4 h-4 text-pink-400" />
           </div>
           <div className="text-2xl font-black text-pink-400 mt-2 font-mono">{totalRevisions}</div>
-          <div className="text-[10px] text-slate-400 mt-1">ECN / ECO Changes</div>
+          <div className="text-[10px] text-[#70665F] mt-1">ECN / ECO Changes</div>
         </div>
 
         {/* KPI 10 */}
-        <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 shadow-xl relative overflow-hidden group">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs hover:border-[#D5CAC0] transition-colors relative overflow-hidden group">
+          <div className="flex items-center justify-between text-[#70665F] text-xs font-semibold">
             <span>Delayed Designs</span>
             <AlertTriangle className="w-4 h-4 text-rose-500" />
           </div>
@@ -313,13 +313,13 @@ export default function DesignerDashboardPage() {
       </div>
 
       {/* Interactive Pipeline Stepper */}
-      <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-3">
+      <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+          <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
             <Cpu className="w-4 h-4 text-cyan-400" />
             Engineering & Design End-to-End Workflow Pipeline
           </h3>
-          <span className="text-xs text-slate-400 font-mono">Reference: Project ID + Job Number</span>
+          <span className="text-xs text-[#70665F] font-mono">Reference: Project ID + Job Number</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 pt-2">
@@ -334,7 +334,7 @@ export default function DesignerDashboardPage() {
           ].map((s, idx) => (
             <div key={idx} className={`p-3 rounded-xl border ${s.color} flex flex-col justify-between text-center relative`}>
               <div className="text-xs font-bold truncate">{s.step}</div>
-              <div className="text-[10px] text-slate-400 mt-1">{s.desc}</div>
+              <div className="text-[10px] text-[#70665F] mt-1">{s.desc}</div>
             </div>
           ))}
         </div>
@@ -343,9 +343,9 @@ export default function DesignerDashboardPage() {
       {/* 6 Recharts Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Chart 1: Design Status Distribution */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <PieChart className="w-4 h-4 text-cyan-400" />
               Design Job Status Distribution
             </h4>
@@ -376,9 +376,9 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Chart 2: BOM Component Breakdown */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <FileSpreadsheet className="w-4 h-4 text-amber-400" />
               Master BOM Component Types
             </h4>
@@ -396,9 +396,9 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Chart 3: Machine Type Breakdown */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <Box className="w-4 h-4 text-indigo-400" />
               Machine & Equipment Portfolio
             </h4>
@@ -416,9 +416,9 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Chart 4: Revision Trends */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-pink-400" />
               Monthly Design Revisions (ECN)
             </h4>
@@ -436,9 +436,9 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Chart 5: Drawing Vault Artifacts Growth */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <Layers className="w-4 h-4 text-emerald-400" />
               CAD Drawing Vault Growth
             </h4>
@@ -457,9 +457,9 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Chart 6: Cycle Time (Days) */}
-        <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+        <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-[#211B17] uppercase tracking-wider flex items-center gap-2">
               <Clock className="w-4 h-4 text-cyan-400" />
               Avg Engineering Lead Days by Stage
             </h4>
@@ -478,9 +478,9 @@ export default function DesignerDashboardPage() {
       </div>
 
       {/* 6 Filter Dropdowns & Design Jobs Control Bar */}
-      <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
+      <div className="p-5 rounded-2xl bg-white border border-[#E7DED5] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+          <h3 className="text-sm font-extrabold text-[#211B17] flex items-center gap-2">
             <Filter className="w-4 h-4 text-cyan-400" />
             Active Design Jobs Registry ({filteredJobs.length})
           </h3>
@@ -493,7 +493,7 @@ export default function DesignerDashboardPage() {
                 placeholder="Search job, project, customer..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-64"
+                className="pl-9 pr-3 py-1.5 rounded-xl bg-white/80 border border-slate-700 text-xs text-[#211B17] placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-64"
               />
             </div>
           </div>
@@ -503,11 +503,11 @@ export default function DesignerDashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-1">
           {/* Filter 1: Status */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">Status</label>
+            <label className="text-[10px] font-bold text-[#70665F] block mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-white border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-[#211B17] focus:outline-none focus:border-cyan-500"
             >
               <option value="all">All Statuses</option>
               <option value="pending">Pending</option>
@@ -523,11 +523,11 @@ export default function DesignerDashboardPage() {
 
           {/* Filter 2: Priority */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">Priority</label>
+            <label className="text-[10px] font-bold text-[#70665F] block mb-1">Priority</label>
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-white border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-[#211B17] focus:outline-none focus:border-cyan-500"
             >
               <option value="all">All Priorities</option>
               <option value="urgent">Urgent</option>
@@ -539,11 +539,11 @@ export default function DesignerDashboardPage() {
 
           {/* Filter 3: Assigned Designer */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">Assigned Designer</label>
+            <label className="text-[10px] font-bold text-[#70665F] block mb-1">Assigned Designer</label>
             <select
               value={designerFilter}
               onChange={(e) => setDesignerFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-white border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-[#211B17] focus:outline-none focus:border-cyan-500"
             >
               <option value="all">All Designers</option>
               <option value="Dharmesh Joshi">Dharmesh Joshi</option>
@@ -553,11 +553,11 @@ export default function DesignerDashboardPage() {
 
           {/* Filter 4: Machine Type */}
           <div>
-            <label className="text-[10px] font-bold text-slate-400 block mb-1">Machine Type</label>
+            <label className="text-[10px] font-bold text-[#70665F] block mb-1">Machine Type</label>
             <select
               value={machineFilter}
               onChange={(e) => setMachineFilter(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-500"
+              className="w-full bg-white border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-[#211B17] focus:outline-none focus:border-cyan-500"
             >
               <option value="all">All Machine Types</option>
               <option value="Reaction Vessel">Reaction Vessel</option>
@@ -576,7 +576,7 @@ export default function DesignerDashboardPage() {
                 setDesignerFilter('all');
                 setMachineFilter('all');
               }}
-              className="w-full px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center justify-center gap-1.5 transition"
+              className="w-full px-3 py-1.5 rounded-lg bg-white hover:bg-slate-700 text-[#544B45] text-xs font-medium flex items-center justify-center gap-1.5 transition"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Reset Filters
@@ -585,10 +585,10 @@ export default function DesignerDashboardPage() {
         </div>
 
         {/* Data Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
+        <div className="overflow-x-auto rounded-xl border border-[#E7DED5]">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-950 text-slate-400 border-b border-slate-800">
+              <tr className="bg-[#FAF7F2] text-[#70665F] border-b border-[#E7DED5]">
                 <th className="p-3">Design Job ID</th>
                 <th className="p-3">Project ID / Job No</th>
                 <th className="p-3">Customer & Machine Product</th>
@@ -601,7 +601,7 @@ export default function DesignerDashboardPage() {
                 <th className="p-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
+            <tbody className="divide-y divide-[#EFE8DE] bg-white text-[#211B17]">
               {filteredJobs.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="p-6 text-center text-slate-500">
@@ -610,18 +610,18 @@ export default function DesignerDashboardPage() {
                 </tr>
               ) : (
                 filteredJobs.map((j) => (
-                  <tr key={j.id} className="hover:bg-slate-800/40 transition group">
+                  <tr key={j.id} className="hover:bg-white/40 transition group">
                     <td className="p-3 font-mono font-bold text-cyan-400">{j.designJobNumber}</td>
                     <td className="p-3">
-                      <div className="font-mono font-bold text-white">{j.projectId}</div>
+                      <div className="font-mono font-bold text-[#211B17]">{j.projectId}</div>
                       <div className="font-mono text-[10px] text-amber-400">{j.jobNumber}</div>
                     </td>
                     <td className="p-3">
-                      <div className="font-bold text-white">{j.productName}</div>
-                      <div className="text-[10px] text-slate-400">{j.customerName}</div>
+                      <div className="font-bold text-[#211B17]">{j.productName}</div>
+                      <div className="text-[10px] text-[#70665F]">{j.customerName}</div>
                     </td>
-                    <td className="p-3 font-mono text-slate-300">{j.quantity}</td>
-                    <td className="p-3 text-slate-300">{j.assignedDesigner}</td>
+                    <td className="p-3 font-mono text-[#544B45]">{j.quantity}</td>
+                    <td className="p-3 text-[#544B45]">{j.assignedDesigner}</td>
                     <td className="p-3 font-mono text-cyan-300 font-bold">{j.activeRevision}</td>
                     <td className="p-3">
                       <span
@@ -636,7 +636,7 @@ export default function DesignerDashboardPage() {
                         {j.priority.toUpperCase()}
                       </span>
                     </td>
-                    <td className="p-3 font-mono text-slate-400">{j.requiredDate}</td>
+                    <td className="p-3 font-mono text-[#70665F]">{j.requiredDate}</td>
                     <td className="p-3">
                       <span
                         className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -655,7 +655,7 @@ export default function DesignerDashboardPage() {
                     <td className="p-3 text-right">
                       <Link
                         href={`/designer/jobs?id=${j.id}`}
-                        className="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white text-[11px] font-semibold transition"
+                        className="px-2.5 py-1 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-[#211B17] text-[11px] font-semibold transition"
                       >
                         Manage
                       </Link>

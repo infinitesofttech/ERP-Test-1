@@ -75,7 +75,7 @@ export default function AccountingDashboardPage() {
   if (!hasMounted) {
     return (
       <div className="p-6 bg-slate-950 min-h-screen text-slate-100 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-400">
+        <div className="flex items-center gap-3 text-[#70665F]">
           <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm font-medium">Loading Accounting Dashboard...</span>
         </div>
@@ -151,17 +151,17 @@ export default function AccountingDashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-slate-950 min-h-screen text-slate-100">
+    <div className="space-y-5 text-xs pb-12 text-[#211B17]">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-emerald-950/40 to-slate-900 p-6 rounded-2xl border border-emerald-500/20 shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#FAF3EA] via-[#F8EDE0] to-[#F1DFC9] p-5 sm:p-6 rounded-2xl border border-[#E9DFD3] text-[#211B17] shadow-xs">
         <div>
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-500/20 rounded-xl text-emerald-400">
               <Landmark className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight">Accounting & Finance Control Center</h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h1 className="text-2xl font-bold text-[#211B17] tracking-tight">Accounting & Finance Control Center</h1>
+              <p className="text-xs text-[#70665F] mt-0.5">
                 Uma Techno Fab ERP • General Ledger, Indian GST/TDS Compliance, Invoicing, Banking & Job Costing
               </p>
             </div>
@@ -172,7 +172,7 @@ export default function AccountingDashboardPage() {
           <select
             value={selectedFY}
             onChange={(e) => setSelectedFY(e.target.value)}
-            className="bg-slate-800/80 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 font-mono font-medium focus:ring-2 focus:ring-emerald-500"
+            className="bg-[#FAF7F2] border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 font-mono font-medium focus:ring-2 focus:ring-emerald-500"
           >
             <option value="FY 2025-26">FY 2025-26 (Active)</option>
             <option value="FY 2024-25">FY 2024-25 (Closed)</option>
@@ -189,7 +189,7 @@ export default function AccountingDashboardPage() {
 
           <Link
             href="/accounting/journal-entries"
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700 transition"
+            className="flex items-center gap-2 bg-white hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2.5 rounded-xl border border-slate-700 transition"
           >
             <FileSpreadsheet className="w-4 h-4 text-amber-400" />
             <span>New Journal Voucher</span>
@@ -200,8 +200,8 @@ export default function AccountingDashboardPage() {
       {/* 14 KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {/* KPI 1: Total Sales Invoiced */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-emerald-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Sales Invoiced</span>
             <Receipt className="w-4 h-4 text-emerald-400" />
           </div>
@@ -213,8 +213,8 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* KPI 2: Total Purchase Invoiced */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-purple-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-purple-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Purchase Invoiced</span>
             <FileText className="w-4 h-4 text-purple-400" />
           </div>
@@ -226,38 +226,38 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* KPI 3: Customer Receipts */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-emerald-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Collected Receipts</span>
             <Coins className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-lg font-bold text-emerald-400 font-mono">₹{(totalReceiptsValue / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1 font-mono">Realized Cash Inflow</div>
+          <div className="text-[10px] text-[#70665F] mt-1 font-mono">Realized Cash Inflow</div>
         </div>
 
         {/* KPI 4: Supplier Payments */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-rose-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-rose-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Vendor Payments</span>
             <CreditCard className="w-4 h-4 text-rose-400" />
           </div>
           <div className="text-lg font-bold text-rose-400 font-mono">₹{(totalPaymentsValue / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1 font-mono">Total Paid Out</div>
+          <div className="text-[10px] text-[#70665F] mt-1 font-mono">Total Paid Out</div>
         </div>
 
         {/* KPI 5: Bank & Cash Balance */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-blue-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-blue-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Bank Balance</span>
             <Landmark className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-lg font-bold text-blue-400 font-mono">₹{(totalBankBalance / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1">Across 3 Accounts</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Across 3 Accounts</div>
         </div>
 
         {/* KPI 6: Accounts Receivable (AR) */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-amber-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider font-mono">Total AR</span>
             <TrendingUp className="w-4 h-4 text-amber-400" />
           </div>
@@ -266,8 +266,8 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* KPI 7: Accounts Payable (AP) */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-indigo-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-indigo-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider font-mono">Total AP</span>
             <TrendingDown className="w-4 h-4 text-indigo-400" />
           </div>
@@ -276,86 +276,86 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* KPI 8: Gross Profit */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-emerald-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Gross Profit</span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-lg font-bold text-emerald-400 font-mono">₹{(grossProfit / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1 font-mono">{grossMarginPercent}% Margin</div>
+          <div className="text-[10px] text-[#70665F] mt-1 font-mono">{grossMarginPercent}% Margin</div>
         </div>
 
         {/* KPI 9: Net Operating Profit */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-teal-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-teal-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Net Profit</span>
             <Sparkles className="w-4 h-4 text-teal-400" />
           </div>
           <div className="text-lg font-bold text-teal-400 font-mono">₹{(netProfit / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1">Post Op Expenses</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Post Op Expenses</div>
         </div>
 
         {/* KPI 10: GST Tax Liability */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-yellow-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-yellow-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">GST Output Tax</span>
             <Scale className="w-4 h-4 text-yellow-400" />
           </div>
           <div className="text-lg font-bold text-yellow-400 font-mono">₹{(totalGSTLiability / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1">CGST + SGST + IGST</div>
+          <div className="text-[10px] text-[#70665F] mt-1">CGST + SGST + IGST</div>
         </div>
 
         {/* KPI 11: Input Tax Credit (ITC) */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-cyan-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-cyan-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Input Tax Credit</span>
             <CheckCircle2 className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="text-lg font-bold text-cyan-400 font-mono">₹{(inputTaxCredit / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1">GSTR-2B Matched</div>
+          <div className="text-[10px] text-[#70665F] mt-1">GSTR-2B Matched</div>
         </div>
 
         {/* KPI 12: Net GST Cash Payable */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-amber-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-amber-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Net GST Cash</span>
             <Coins className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-lg font-bold text-amber-400 font-mono">₹{(netGSTPayable / 100000).toFixed(2)}L</div>
-          <div className="text-[10px] text-slate-400 mt-1">Electronic Ledger</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Electronic Ledger</div>
         </div>
 
         {/* KPI 13: Total TDS Deducted */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-violet-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-violet-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">TDS Deducted</span>
             <Calculator className="w-4 h-4 text-violet-400" />
           </div>
           <div className="text-lg font-bold text-violet-400 font-mono">₹{(purchaseInvoices.reduce((a, b) => a + (b.tdsAmount || 0), 0) / 1000).toFixed(1)}k</div>
-          <div className="text-[10px] text-slate-400 mt-1">Sec 194C / 194J</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Sec 194C / 194J</div>
         </div>
 
         {/* KPI 14: Job Margin Average */}
-        <div className="bg-slate-900/90 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/40 transition">
-          <div className="flex items-center justify-between text-slate-400 mb-2">
+        <div className="bg-slate-900/90 p-4 rounded-xl border border-[#E7DED5] hover:border-emerald-500/40 transition">
+          <div className="flex items-center justify-between text-[#70665F] mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Job Margin Avg</span>
             <Briefcase className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-lg font-bold text-emerald-400 font-mono">31.4%</div>
-          <div className="text-[10px] text-slate-400 mt-1">Across Active Jobs</div>
+          <div className="text-[10px] text-[#70665F] mt-1">Across Active Jobs</div>
         </div>
       </div>
 
       {/* 8 Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Revenue vs Cost vs Net Profit */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-emerald-400" />
               Monthly Revenue vs Direct Cost (₹ Lacs)
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Apr 2025 - Sep 2025</span>
+            <span className="text-[11px] text-[#70665F] font-mono">Apr 2025 - Sep 2025</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -376,13 +376,13 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* Chart 2: Cash Flow Trend */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-blue-400" />
               Cash Inflow vs Outflow Trend (₹ Lacs)
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Net Liquidity Surge</span>
+            <span className="text-[11px] text-[#70665F] font-mono">Net Liquidity Surge</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -403,9 +403,9 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* Chart 3: Accounts Receivable Aging Breakdown */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Clock className="w-4 h-4 text-amber-400" />
               Accounts Receivable (AR) Aging Buckets
             </h3>
@@ -430,13 +430,13 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* Chart 4: Expense Category Breakdown */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <PieIcon className="w-4 h-4 text-purple-400" />
               Manufacturing Expense Category Breakdown
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono font-bold">Cost Center View</span>
+            <span className="text-[11px] text-[#70665F] font-mono font-bold">Cost Center View</span>
           </div>
           <div className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -456,9 +456,9 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* Chart 5: AP Aging Breakdown */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-400" />
               Accounts Payable (AP) Supplier Aging
             </h3>
@@ -481,13 +481,13 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* Chart 6: Job Financial Profitability Comparison */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Briefcase className="w-4 h-4 text-emerald-400" />
               Job-wise Revenue vs Budgeted Cost (MTO)
             </h3>
-            <span className="text-[11px] text-slate-400 font-mono">Job 360° Costing</span>
+            <span className="text-[11px] text-[#70665F] font-mono">Job 360° Costing</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -511,9 +511,9 @@ export default function AccountingDashboardPage() {
       {/* Quick Action Matrix & Bank Account Status Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Bank & Cash Balances Summary */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E7DED5] pb-3">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Landmark className="w-4 h-4 text-blue-400" />
               Bank & Cash Account Live Status
             </h3>
@@ -524,17 +524,17 @@ export default function AccountingDashboardPage() {
 
           <div className="space-y-3">
             {bankAccounts.map((b) => (
-              <div key={b.id} className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div key={b.id} className="p-3.5 bg-slate-950/70 rounded-xl border border-[#E7DED5] flex items-center justify-between">
                 <div className="space-y-0.5">
                   <div className="text-xs font-bold text-white flex items-center gap-2">
                     <span>{b.bankName}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono font-medium">{b.accountType}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white text-[#544B45] font-mono font-medium">{b.accountType}</span>
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono">Acc: {b.accountNumber} • IFSC: {b.ifscCode}</div>
+                  <div className="text-[11px] text-[#70665F] font-mono">Acc: {b.accountNumber} • IFSC: {b.ifscCode}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-bold text-emerald-400 font-mono">₹{b.currentBalance.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500 font-mono">Reconciled</div>
+                  <div className="text-[10px] text-[#8D827A] font-mono">Reconciled</div>
                 </div>
               </div>
             ))}
@@ -542,9 +542,9 @@ export default function AccountingDashboardPage() {
         </div>
 
         {/* GST & Tax Compliance Summary */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E7DED5] pb-3">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Scale className="w-4 h-4 text-yellow-400" />
               Indian GST Compliance Ledger (24AAACX0000X1Z1)
             </h3>
@@ -554,38 +554,38 @@ export default function AccountingDashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-              <div className="text-slate-400 text-[10px] uppercase font-semibold">GSTR-1 Sales Output</div>
+            <div className="p-3 bg-slate-950/70 rounded-xl border border-[#E7DED5]">
+              <div className="text-[#70665F] text-[10px] uppercase font-semibold">GSTR-1 Sales Output</div>
               <div className="text-base font-bold text-white font-mono mt-1">₹{totalGSTLiability.toLocaleString()}</div>
               <div className="text-[10px] text-emerald-400 mt-1 font-mono">Ready to File</div>
             </div>
 
-            <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-              <div className="text-slate-400 text-[10px] uppercase font-semibold">GSTR-2B Input Credit</div>
+            <div className="p-3 bg-slate-950/70 rounded-xl border border-[#E7DED5]">
+              <div className="text-[#70665F] text-[10px] uppercase font-semibold">GSTR-2B Input Credit</div>
               <div className="text-base font-bold text-cyan-400 font-mono mt-1">₹{inputTaxCredit.toLocaleString()}</div>
               <div className="text-[10px] text-cyan-400 mt-1 font-mono">100% Matched</div>
             </div>
 
-            <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-              <div className="text-slate-400 text-[10px] uppercase font-semibold">Net Cash Liability</div>
+            <div className="p-3 bg-slate-950/70 rounded-xl border border-[#E7DED5]">
+              <div className="text-[#70665F] text-[10px] uppercase font-semibold">Net Cash Liability</div>
               <div className="text-base font-bold text-amber-400 font-mono mt-1">₹{netGSTPayable.toLocaleString()}</div>
-              <div className="text-[10px] text-slate-400 mt-1">Due by 20th</div>
+              <div className="text-[10px] text-[#70665F] mt-1">Due by 20th</div>
             </div>
 
-            <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-              <div className="text-slate-400 text-[10px] uppercase font-semibold">TDS Deducted</div>
+            <div className="p-3 bg-slate-950/70 rounded-xl border border-[#E7DED5]">
+              <div className="text-[#70665F] text-[10px] uppercase font-semibold">TDS Deducted</div>
               <div className="text-base font-bold text-violet-400 font-mono mt-1">
                 ₹{purchaseInvoices.reduce((a, b) => a + (b.tdsAmount ?? b.tdsDeducted ?? 0), 0).toLocaleString()}
               </div>
-              <div className="text-[10px] text-slate-400 mt-1">Form 26Q Ready</div>
+              <div className="text-[10px] text-[#70665F] mt-1">Form 26Q Ready</div>
             </div>
           </div>
         </div>
 
         {/* Recent Invoices & Vouchers */}
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+        <div className="bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E7DED5] pb-3">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Receipt className="w-4 h-4 text-emerald-400" />
               Recent Posted Vouchers
             </h3>
@@ -596,10 +596,10 @@ export default function AccountingDashboardPage() {
 
           <div className="space-y-3">
             {salesInvoices.slice(0, 3).map((inv) => (
-              <div key={inv.id} className="p-3 bg-slate-950/70 rounded-xl border border-slate-800 flex items-center justify-between">
+              <div key={inv.id} className="p-3 bg-slate-950/70 rounded-xl border border-[#E7DED5] flex items-center justify-between">
                 <div>
                   <div className="text-xs font-bold text-white font-mono">{inv.invoiceNumber}</div>
-                  <div className="text-[11px] text-slate-400">{inv.customerName}</div>
+                  <div className="text-[11px] text-[#70665F]">{inv.customerName}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-xs font-bold text-emerald-400 font-mono">₹{inv.grandTotal.toLocaleString()}</div>

@@ -99,7 +99,9 @@ export default function ProjectReportsPage() {
           <h3 className="font-bold text-slate-900 dark:text-white text-sm">
             {reportTypes.find((r) => r.id === activeReport)?.label}
           </h3>
-          <span className="text-slate-400 font-mono text-xs">Generated on: {new Date().toLocaleDateString()}</span>
+          <span className="text-slate-400 font-mono text-xs" suppressHydrationWarning>
+            Generated on: {new Date().toLocaleDateString()}
+          </span>
         </div>
 
         <div className="overflow-x-auto">

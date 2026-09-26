@@ -47,12 +47,12 @@ export function Topbar() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <header className="h-16 bg-bg-app border-b border-border px-4 sm:px-6 flex items-center justify-between gap-4 z-20 sticky top-0 flex-shrink-0 transition-all">
+    <header className="h-16 bg-[#FCFAF7] border-b border-[#EDE5DC] px-4 sm:px-6 flex items-center justify-between gap-4 z-20 sticky top-0 flex-shrink-0 transition-all">
       {/* Left: Mobile Toggle & Global Search Bar */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="p-2 rounded-xl text-text-secondary hover:bg-primary-light sm:hidden transition"
+          className="p-2 rounded-xl text-[#6E5D53] hover:bg-[#F3EDE4] sm:hidden transition"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -60,11 +60,11 @@ export function Topbar() {
         {/* Global Search Button Trigger (Ctrl+K) */}
         <button
           onClick={() => setIsSearchOpen(true)}
-          className="flex items-center gap-2.5 px-4 py-2 w-full bg-bg-surface hover:bg-white border border-border rounded-xl text-xs text-text-muted transition-all text-left group shadow-xs cursor-pointer"
+          className="flex items-center gap-2.5 px-4 py-2 w-full bg-[#FAF7F2] hover:bg-white border border-[#E5DDD0] rounded-full text-xs text-[#8C7D72] transition-all text-left group shadow-xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#75401F]"
         >
-          <Search className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-          <span className="flex-1 truncate">Search jobs, customers, products...</span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold text-text-muted bg-bg-app border border-border rounded-md shadow-xs">
+          <Search className="w-3.5 h-3.5 text-[#8C7D72] group-hover:text-[#3E2723] transition-colors" />
+          <span className="flex-1 truncate text-xs">Search jobs, customers, products...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-bold text-[#8C7D72] bg-white border border-[#E5DDD0] rounded-md shadow-xs">
             Ctrl K
           </kbd>
         </button>
@@ -75,7 +75,7 @@ export function Topbar() {
         {/* Quick Action: + New Lead */}
         <Link
           href="/crm/leads/new"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-contrast text-xs font-bold transition shadow-sm"
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#3E2723] hover:bg-[#2C1810] text-white text-xs font-bold transition shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>New Lead</span>
@@ -89,11 +89,11 @@ export function Topbar() {
               setShowRoleMenu(false);
               setShowUserMenu(false);
             }}
-            className="p-2 rounded-xl text-text-secondary hover:bg-primary-light relative border border-border transition cursor-pointer"
+            className="p-2 rounded-xl text-[#6E5D53] hover:bg-[#F3EDE4] relative border border-[#E5DDD0] transition cursor-pointer"
           >
-            <Bell className="w-4 h-4 text-text-secondary" />
+            <Bell className="w-4 h-4 text-[#6E5D53]" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-danger text-white font-black rounded-full text-[9px] flex items-center justify-center shadow-xs">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#D9383A] text-white font-black rounded-full text-[9px] flex items-center justify-center shadow-xs">
                 {unreadCount}
               </span>
             )}
@@ -153,14 +153,14 @@ export function Topbar() {
               setShowRoleMenu(false);
               setShowNotificationMenu(false);
             }}
-            className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-primary-light transition cursor-pointer"
+            className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-[#F3EDE4] transition cursor-pointer"
           >
-            <div className="w-8 h-8 rounded-full bg-[#1b5c8c] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-[#182B49] text-white font-bold text-xs flex items-center justify-center shadow-xs">
               JD
             </div>
             <div className="text-left hidden md:block">
-              <div className="font-bold text-text-primary text-xs leading-tight">Durgesh Jadav</div>
-              <div className="text-[10px] text-text-muted leading-tight font-medium">Admin</div>
+              <div className="font-bold text-[#211B17] text-xs leading-tight">Durgesh Jadav</div>
+              <div className="text-[10px] text-[#70665F] leading-tight font-medium">Admin</div>
             </div>
           </button>
 

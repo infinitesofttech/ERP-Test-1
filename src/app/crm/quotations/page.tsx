@@ -22,61 +22,61 @@ export default function QuotationsListPage() {
 
   const columns: Column<Quotation>[] = [
     {
-      header: 'Quotation #',
+      header: 'QUOTATION #',
       accessorKey: 'quotationNumber',
       cell: (q) => (
-        <span className="font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 text-xs">
+        <span className="font-mono font-bold text-[#0E91B2] bg-[#E0F2FE] px-2.5 py-1 rounded-lg border border-[#BAE6FD] text-xs whitespace-nowrap inline-block">
           {q.quotationNumber}
         </span>
       ),
     },
     {
-      header: 'Active Revision',
+      header: 'ACTIVE REVISION',
       cell: (q) => (
-        <span className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-300 font-mono text-[10px] font-bold border border-purple-500/20">
+        <span className="px-2.5 py-1 rounded-lg bg-[#FAF0E6] text-[#75401F] font-mono text-[10px] font-bold border border-[#E7DED5] whitespace-nowrap inline-block">
           {q.currentRevision} ({q.revisions.length} Revs)
         </span>
       ),
     },
     {
-      header: 'Customer & Contact',
+      header: 'CUSTOMER & CONTACT',
       cell: (q) => (
-        <div>
-          <span className="font-bold text-slate-900 dark:text-white block">{q.customerName}</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">{q.contactPerson}</span>
+        <div className="min-w-[180px]">
+          <span className="font-bold text-[#211B17] block">{q.customerName}</span>
+          <span className="text-[11px] text-[#70665F]">{q.contactPerson}</span>
         </div>
       ),
     },
     {
-      header: 'Equipment Scope',
+      header: 'EQUIPMENT SCOPE',
       cell: (q) => (
-        <span className="font-bold text-slate-800 dark:text-slate-200 block truncate max-w-xs">
+        <span className="font-semibold text-[#544B45] block max-w-sm truncate" title={q.latestSummary.machineProduct}>
           {q.latestSummary.machineProduct}
         </span>
       ),
     },
     {
-      header: 'Grand Total (INR)',
+      header: 'GRAND TOTAL (INR)',
       cell: (q) => (
-        <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono text-xs">
+        <span className="font-bold text-[#169B62] font-mono text-xs whitespace-nowrap inline-block">
           {formatCurrency(q.latestSummary.grandTotal)}
         </span>
       ),
     },
     {
-      header: 'Date',
-      cell: (q) => <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{formatDate(q.date)}</span>,
+      header: 'DATE',
+      cell: (q) => <span className="text-[#70665F] font-mono text-[11px] whitespace-nowrap inline-block">{formatDate(q.date)}</span>,
     },
     {
-      header: 'Status',
-      cell: (q) => <StatusBadge status={q.latestSummary.status as any} />,
+      header: 'STATUS',
+      cell: (q) => <div className="whitespace-nowrap"><StatusBadge status={q.latestSummary.status as any} /></div>,
     },
     {
-      header: 'Actions',
+      header: 'ACTIONS',
       cell: (q) => (
         <Link
           href={`/crm/quotations/${q.id}`}
-          className="px-3 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg font-bold text-xs flex items-center gap-1 transition"
+          className="px-3 py-1 bg-[#FAF7F2] hover:bg-[#F3ECE4] text-[#75401F] border border-[#E7DED5] rounded-lg font-bold text-xs inline-flex items-center gap-1 transition shadow-2xs whitespace-nowrap cursor-pointer"
         >
           <span>View / Revs</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -87,23 +87,25 @@ export default function QuotationsListPage() {
 
   return (
     <div className="space-y-5 text-xs pb-10">
-      <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md shadow-slate-900/5">
+      <div className="bg-gradient-to-r from-[#FAF3EA] via-[#F8EDE0] to-[#F1DFC9] p-5 sm:p-6 rounded-2xl border border-[#E9DFD3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
         <div>
-          <h1 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <FileCheck2 className="w-5 h-5 text-purple-600" />
+          <h1 className="text-lg font-black text-[#211B17] flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#FAF0E6] text-[#75401F] flex items-center justify-center border border-[#E7DED5] shadow-xs">
+              <FileCheck2 className="w-4.5 h-4.5" />
+            </div>
             Engineering Quotations & Multi-Revision Master
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[#70665F] mt-1 text-xs">
             Prepare technical & commercial proposals with revision control (Rev-00, Rev-01), BOM pricing, and approval workflows.
           </p>
         </div>
 
         <Link
           href="/crm/quotations/new"
-          className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-md shadow-purple-600/30 cursor-pointer"
+          className="px-4 py-2.5 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-xl font-bold transition flex items-center gap-2 shadow-xs cursor-pointer whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Create New Quotation</span>
+          <span>Create New Quotation</span>
         </Link>
       </div>
 

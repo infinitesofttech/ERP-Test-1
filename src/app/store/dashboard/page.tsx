@@ -134,17 +134,17 @@ export default function StoreDashboardPage() {
   ];
 
   return (
-    <div className="p-6 space-y-6 bg-slate-950 text-slate-100 min-h-screen">
+    <div className="space-y-5 text-xs pb-12 text-[#211B17]">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E7DED5] shadow-xs backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded-md bg-sky-500/20 text-sky-400 border border-sky-500/30 text-xs font-mono font-semibold">
               MODULE 5
             </span>
-            <h1 className="text-2xl font-black text-white tracking-tight">Store & Warehouse Dashboard</h1>
+            <h1 className="text-2xl font-bold font-mono text-[#211B17] tracking-tight">Store & Warehouse Dashboard</h1>
           </div>
-          <p className="text-slate-400 text-xs mt-1">
+          <p className="text-[#70665F] text-xs mt-1">
             Real-time physical inventory source of truth, GRN inward, usable stock matrix, job reservations, and store ledgers.
           </p>
         </div>
@@ -153,7 +153,7 @@ export default function StoreDashboardPage() {
           <select
             value={selectedWarehouse}
             onChange={(e) => setSelectedWarehouse(e.target.value)}
-            className="bg-slate-800 text-slate-200 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-sky-500"
+            className="bg-white text-slate-200 border border-slate-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:border-sky-500"
           >
             <option value="all">All Warehouses (5 Yards)</option>
             {warehouses.map((w) => (
@@ -184,146 +184,146 @@ export default function StoreDashboardPage() {
       {/* 12 KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5">
         {/* Card 1 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Total Items</span>
             <Package className="w-4 h-4 text-blue-400" />
           </div>
           <div className="text-xl font-black text-white mt-1.5">{totalItems}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Master catalog items</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Master catalog items</div>
         </div>
 
         {/* Card 2 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Total Stock Value</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-xl font-black text-emerald-400 mt-1.5">
             ₹{(totalStockValue / 100000).toFixed(2)} L
           </div>
-          <div className="text-[10px] text-slate-500 mt-1">Physical stock valuation</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Physical stock valuation</div>
         </div>
 
         {/* Card 3 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Warehouses</span>
             <Building className="w-4 h-4 text-indigo-400" />
           </div>
           <div className="text-xl font-black text-white mt-1.5">{totalWarehousesCount}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Active storage yards</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Active storage yards</div>
         </div>
 
         {/* Card 4 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Active Bins</span>
             <MapPin className="w-4 h-4 text-teal-400" />
           </div>
           <div className="text-xl font-black text-white mt-1.5">{totalBinsCount}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Rack & shelf locations</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Rack & shelf locations</div>
         </div>
 
         {/* Card 5 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Pending QC GRNs</span>
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="text-xl font-black text-amber-400 mt-1.5">{pendingQCGRNCount}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Awaiting inspection</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Awaiting inspection</div>
         </div>
 
         {/* Card 6 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Issues Today</span>
             <Truck className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="text-xl font-black text-white mt-1.5">{todayIssuesCount}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Material issue slips</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Material issue slips</div>
         </div>
 
         {/* Card 7 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Reserved Stock</span>
             <Lock className="w-4 h-4 text-rose-400" />
           </div>
           <div className="text-xl font-black text-rose-400 mt-1.5">
             ₹{(reservedStockValue / 100000).toFixed(2)} L
           </div>
-          <div className="text-[10px] text-slate-500 mt-1">Locked for active jobs</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Locked for active jobs</div>
         </div>
 
         {/* Card 8 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Usable Stock</span>
             <Box className="w-4 h-4 text-sky-400" />
           </div>
           <div className="text-xl font-black text-sky-400 mt-1.5">
             ₹{(usableStockValue / 100000).toFixed(2)} L
           </div>
-          <div className="text-[10px] text-slate-500 mt-1">Unreserved & ready</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Unreserved & ready</div>
         </div>
 
         {/* Card 9 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Low Stock Alerts</span>
             <AlertTriangle className="w-4 h-4 text-red-500" />
           </div>
           <div className="text-xl font-black text-red-400 mt-1.5">{lowStockItemsCount}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Below reorder level</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Below reorder level</div>
         </div>
 
         {/* Card 10 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Adjustments</span>
             <RotateCcw className="w-4 h-4 text-purple-400" />
           </div>
           <div className="text-xl font-black text-white mt-1.5">
             ₹{(monthAdjustmentsValue / 1000).toFixed(1)} K
           </div>
-          <div className="text-[10px] text-slate-500 mt-1">Month variance value</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Month variance value</div>
         </div>
 
         {/* Card 11 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Scrap Value</span>
             <Trash2 className="w-4 h-4 text-yellow-500" />
           </div>
           <div className="text-xl font-black text-yellow-400 mt-1.5">
             ₹{(scrapValueTotal / 1000).toFixed(1)} K
           </div>
-          <div className="text-[10px] text-slate-500 mt-1">Offcuts & rejections</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Offcuts & rejections</div>
         </div>
 
         {/* Card 12 */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl shadow-md">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="bg-slate-900/90 border border-[#E7DED5] p-4 rounded-xl shadow-md">
+          <div className="flex items-center justify-between text-[#70665F] text-xs">
             <span>Stock Accuracy</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-xl font-black text-emerald-400 mt-1.5">{stockAccuracyRate}%</div>
-          <div className="text-[10px] text-slate-500 mt-1">Audit reconciliation</div>
+          <div className="text-[10px] text-[#8D827A] mt-1">Audit reconciliation</div>
         </div>
       </div>
 
       {/* Recharts Analytics Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Chart 1: Warehouse Stock Valuation */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-400" />
               Warehouse Stock Valuation (₹ Lakhs)
             </h3>
-            <span className="text-[10px] text-slate-400">Yard Distribution</span>
+            <span className="text-[10px] text-[#70665F]">Yard Distribution</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -339,13 +339,13 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Chart 2: Category Distribution */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Box className="w-4 h-4 text-sky-400" />
               Category Inventory Distribution (₹ Lakhs)
             </h3>
-            <span className="text-[10px] text-slate-400">By Value Share</span>
+            <span className="text-[10px] text-[#70665F]">By Value Share</span>
           </div>
           <div className="h-64 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -371,13 +371,13 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Chart 3: Daily Inward vs Issue Movement */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Truck className="w-4 h-4 text-emerald-400" />
               Daily GRN Inward vs Production Material Issue (₹ Lakhs)
             </h3>
-            <span className="text-[10px] text-slate-400">7-Day Trend</span>
+            <span className="text-[10px] text-[#70665F]">7-Day Trend</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -394,13 +394,13 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Chart 4: Fast-Moving Materials */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-amber-400" />
               Fast-Moving Materials Velocity (Turnover Ratio)
             </h3>
-            <span className="text-[10px] text-slate-400">Annual Turnover Rate</span>
+            <span className="text-[10px] text-[#70665F]">Annual Turnover Rate</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -416,13 +416,13 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Chart 5: Job-wise Reservation vs Consumption */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <Lock className="w-4 h-4 text-rose-400" />
               Job-wise Stock Reservation vs Actual Consumption (₹ Lakhs)
             </h3>
-            <span className="text-[10px] text-slate-400">Job Locking</span>
+            <span className="text-[10px] text-[#70665F]">Job Locking</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -439,13 +439,13 @@ export default function StoreDashboardPage() {
         </div>
 
         {/* Chart 6: Valuation Trend */}
-        <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
+        <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
               <LineChart className="w-4 h-4 text-cyan-400" />
               Monthly Total Stock Valuation Trend (₹ Lakhs)
             </h3>
-            <span className="text-[10px] text-slate-400">5-Month Trend</span>
+            <span className="text-[10px] text-[#70665F]">5-Month Trend</span>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -462,61 +462,61 @@ export default function StoreDashboardPage() {
       </div>
 
       {/* Quick Access Matrix Links */}
-      <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-md">
-        <h3 className="text-sm font-bold text-white mb-3">Store Quick Operations</h3>
+      <div className="bg-slate-900/80 p-5 rounded-2xl border border-[#E7DED5] shadow-md">
+        <h3 className="text-sm font-bold text-[#211B17] mb-3">Store Quick Operations</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
           <Link
             href="/store/items"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <Package className="w-5 h-5 text-blue-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Item Master</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Catalog & Rates</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">Catalog & Rates</span>
           </Link>
 
           <Link
             href="/store/stock"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <Box className="w-5 h-5 text-sky-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Stock Matrix</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Usable Quantities</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">Usable Quantities</span>
           </Link>
 
           <Link
             href="/store/reservations"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <Lock className="w-5 h-5 text-rose-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Stock Reservation</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Job-wise Locking</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">Job-wise Locking</span>
           </Link>
 
           <Link
             href="/store/ledger"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <RotateCcw className="w-5 h-5 text-indigo-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Stock Ledger</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">Audit History</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">Audit History</span>
           </Link>
 
           <Link
             href="/store/reorder"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <AlertTriangle className="w-5 h-5 text-red-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Low Stock Reorder</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">1-Click PR</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">1-Click PR</span>
           </Link>
 
           <Link
             href="/store/reports"
-            className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50 hover:bg-slate-800 hover:border-sky-500/50 transition flex flex-col items-center text-center group"
+            className="p-3 bg-white/60 rounded-xl border border-slate-700/50 hover:bg-white hover:border-sky-500/50 transition flex flex-col items-center text-center group"
           >
             <FileSpreadsheet className="w-5 h-5 text-teal-400 mb-1.5 group-hover:scale-110 transition-transform" />
             <span className="text-xs font-bold text-slate-200">Store Reports</span>
-            <span className="text-[10px] text-slate-400 mt-0.5">21 Export Formats</span>
+            <span className="text-[10px] text-[#70665F] mt-0.5">21 Export Formats</span>
           </Link>
         </div>
       </div>

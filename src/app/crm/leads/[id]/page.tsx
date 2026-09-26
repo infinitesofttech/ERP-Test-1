@@ -113,7 +113,7 @@ export default function LeadDetailPage() {
               className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl font-bold flex items-center gap-1.5 transition"
             >
               <PhoneCall className="w-4 h-4 text-amber-500" />
-              <span>+ Schedule Follow-up</span>
+              <span>Schedule Follow-up</span>
             </button>
 
             {!lead.convertedCustomerId ? (
@@ -233,9 +233,10 @@ export default function LeadDetailPage() {
               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Scheduled Follow-ups & Call Logs</h3>
               <button
                 onClick={() => setShowFlwModal(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold"
+                className="px-3 py-1.5 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
               >
-                + Add Follow-up
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Follow-up</span>
               </button>
             </div>
             {relatedFollowUps.length === 0 ? (
@@ -262,9 +263,10 @@ export default function LeadDetailPage() {
               <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100">Linked Commercial Quotations</h3>
               <Link
                 href="/crm/quotations/new"
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg font-bold"
+                className="px-3 py-1.5 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
               >
-                + Create Quotation
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create Quotation</span>
               </Link>
             </div>
             {relatedQuotations.length === 0 ? (

@@ -153,10 +153,10 @@ export default function UsersPage() {
 
         <Link
           href="/users/new"
-          className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+          className="px-4 py-2 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs"
         >
           <UserPlus className="w-4 h-4" />
-          <span>+ Add Employee</span>
+          <span>Add Employee</span>
         </Link>
       </div>
 

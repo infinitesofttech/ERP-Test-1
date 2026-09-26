@@ -56,6 +56,7 @@ import {
 } from '../types/crm';
 import {
   DesignJob,
+  DesignJobStatus,
   CustomerRequirement,
   DesignTask,
   Drawing2D,
@@ -398,6 +399,11 @@ import {
   INITIAL_RECEIVABLE_AGING,
   INITIAL_PAYABLE_AGING,
 } from '../data/mockAccountingData';
+import {
+  create16PlanningStagesForProject,
+  createDefaultMilestonesForProject,
+  createDefaultDepartmentAssignments,
+} from '../lib/projectPlanningHelper';
 
 interface ERPContextType {
   // Auth & Session
@@ -498,6 +504,11 @@ interface ERPContextType {
 
   projectPlanningStages: ProjectPlanningStage[];
   updatePlanningStage: (id: string, stage: Partial<ProjectPlanningStage>) => void;
+  generateDefaultPlanningStages: (projectId: string) => ProjectPlanningStage[];
+  addPlanningStage: (stage: Omit<ProjectPlanningStage, 'id'>) => ProjectPlanningStage;
+  deletePlanningStage: (id: string) => void;
+  reorderPlanningStages: (projectId: string, newOrderedStages: ProjectPlanningStage[]) => void;
+  markPlanningStageCompleted: (id: string, completedBy?: string, completionNotes?: string) => void;
 
   departmentAssignments: DepartmentAssignment[];
   assignDepartment: (assignment: Omit<DepartmentAssignment, 'id'>) => DepartmentAssignment;
@@ -1140,6 +1151,299 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Cross-Department Automatic Synchronization:
+  // When a project is created or planned, it automatically creates/syncs:
+  // 1. Engineering & Design (designJobs & customerRequirements) with assigned designers!
+  // 2. Production & Fabrication (manufacturingJobs) with assigned production supervisors!
+  useEffect(() => {
+    if (!projectJobs || projectJobs.length === 0) return;
+
+    projectJobs.forEach((prj) => {
+      // Find all planning stages for this project
+      const prjStages = projectPlanningStages.filter(
+        (s) => s.projectId === prj.id || s.jobNumber === prj.jobNumber
+      );
+
+      // 1. SYNC WITH ENGINEERING & DESIGN MODULE (designJobs)
+      const designStage = prjStages.find(
+        (s) =>
+          s.responsibleDepartment?.toLowerCase().includes('design') ||
+          s.stageName?.toLowerCase().includes('design') ||
+          s.stageName?.toLowerCase().includes('cad')
+      );
+
+      const assignedDesignerNames =
+        designStage?.assignedEmployees && designStage.assignedEmployees.length > 0
+          ? designStage.assignedEmployees.map((a) => a.name).join(', ')
+          : designStage?.responsibleEmployee || 'Dharmesh Joshi';
+
+      const designStatus: DesignJobStatus =
+        designStage?.status === 'completed'
+          ? 'approved'
+          : designStage?.status === 'in_progress'
+          ? 'in_progress'
+          : 'assigned';
+
+      let currentDesignJobId = '';
+
+      setDesignJobs((prev) => {
+        const existingIdx = prev.findIndex(
+          (j) => j.projectId === prj.id || j.jobNumber === prj.jobNumber
+        );
+
+        if (existingIdx >= 0) {
+          const existing = prev[existingIdx];
+          currentDesignJobId = existing.id;
+          if (
+            existing.assignedDesigner !== assignedDesignerNames ||
+            existing.status !== designStatus ||
+            existing.requiredDate !== (designStage?.plannedEnd || prj.deliveryDate)
+          ) {
+            const updated = [...prev];
+            updated[existingIdx] = {
+              ...existing,
+              assignedDesigner: assignedDesignerNames,
+              status: designStatus,
+              requiredDate: designStage?.plannedEnd || prj.deliveryDate,
+              remarks: designStage?.remarks || existing.remarks,
+            };
+            return updated;
+          }
+          return prev;
+        } else {
+          const desNumber = `DES-2026-${String(prev.length + 1).padStart(4, '0')}`;
+          currentDesignJobId = desNumber;
+          const newDesJob: DesignJob = {
+            id: desNumber,
+            designJobNumber: desNumber,
+            projectId: prj.id,
+            projectNumber: prj.projectNumber,
+            jobNumber: prj.jobNumber,
+            customerId: prj.customerId,
+            customerName: prj.customerName,
+            customerPoNumber: prj.customerPoNumber,
+            salesOrderNumber: prj.salesOrderNumber,
+            productName: prj.productName,
+            machineType: prj.productName.includes('Reactor')
+              ? 'Chemical Reaction Pressure Vessel'
+              : 'Process Equipment Unit',
+            quantity: prj.quantity,
+            deliveryDate: prj.deliveryDate,
+            designManager: 'Dharmesh Joshi',
+            assignedDesigner: assignedDesignerNames,
+            priority: (prj.priority as any) || 'high',
+            requiredDate: designStage?.plannedEnd || prj.deliveryDate,
+            status: designStatus,
+            activeRevision: 'REV-00',
+            createdDate: prj.startDate,
+            remarks: `Auto-synchronized from ${prj.projectNumber} Planning Matrix (${designStage?.stageName || 'Design Phase'})`,
+          };
+          return [newDesJob, ...prev];
+        }
+      });
+
+      // 2. SYNC WITH CUSTOMER REQUIREMENTS SHEET
+      setCustomerRequirements((prev) => {
+        const existing = prev.find(
+          (r) => r.projectId === prj.id || r.jobNumber === prj.jobNumber
+        );
+        if (!existing) {
+          const reqNo = `REQ-2026-${String(prev.length + 1).padStart(3, '0')}`;
+          const newReq: CustomerRequirement = {
+            id: reqNo,
+            designJobId: currentDesignJobId || `DES-2026-000${prev.length + 1}`,
+            projectId: prj.id,
+            jobNumber: prj.jobNumber,
+            customerName: prj.customerName,
+            contactPerson: prj.customerName,
+            contactMobile: '+91 98250 00000',
+            machineName: prj.productName,
+            machineType: 'Custom MTO Equipment',
+            model: `MOD-${prj.jobNumber.slice(-4)}`,
+            quantity: prj.quantity,
+            capacity: prj.specification || 'As per Customer PO',
+            application: 'Industrial Manufacturing',
+            productionRequirement: 'Standard Operating Capacity',
+            dimensions: 'As per GA Drawing',
+            material: 'SS 316L / SS 304',
+            powerRequirement: '15 HP / 3-Phase 415V',
+            speed: 'As per gear ratio',
+            output: 'Continuous batch',
+            automationLevel: 'Semi-Automatic PLC',
+            controlSystem: 'Flameproof Control Panel',
+            safetyRequirements: 'Emergency stop, PRV, rupture disc',
+            specialRequirements: 'Hydro-tested at 8 bar',
+            status: 'approved',
+          };
+          return [newReq, ...prev];
+        }
+        return prev;
+      });
+
+      // 3. SYNC WITH PRODUCTION MODULE (manufacturingJobs)
+      const prodStage = prjStages.find(
+        (s) =>
+          s.responsibleDepartment?.toLowerCase().includes('production') ||
+          s.stageName?.toLowerCase().includes('fabrication')
+      );
+
+      const prodSupervisor =
+        prodStage?.assignedEmployees && prodStage.assignedEmployees.length > 0
+          ? prodStage.assignedEmployees.map((a) => a.name).join(', ')
+          : prodStage?.responsibleEmployee || prj.projectManager || 'Bhavin Shah';
+
+      setManufacturingJobs((prev) => {
+        const existingIdx = prev.findIndex(
+          (j) => j.projectId === prj.id || j.jobNumber === prj.jobNumber
+        );
+
+        if (existingIdx >= 0) {
+          const existing = prev[existingIdx];
+          if (
+            existing.productionManager !== prodSupervisor ||
+            existing.productionProgress !== prj.progressPercent
+          ) {
+            const updated = [...prev];
+            updated[existingIdx] = {
+              ...existing,
+              productionManager: prodSupervisor,
+              productionProgress: prj.progressPercent,
+              status: prj.progressPercent >= 100 ? 'Completed' : prj.progressPercent > 50 ? 'In Production' : 'Planning',
+            };
+            return updated;
+          }
+          return prev;
+        } else {
+          const mjNo = `MJ-2026-${String(prev.length + 1).padStart(3, '0')}`;
+          const newMfgJob: ManufacturingJob = {
+            id: mjNo,
+            jobNumber: prj.jobNumber,
+            projectId: prj.id,
+            projectNumber: prj.projectNumber,
+            customerId: prj.customerId,
+            customerName: prj.customerName,
+            salesOrderId: prj.salesOrderId,
+            salesOrderNumber: prj.salesOrderNumber,
+            customerPoNumber: prj.customerPoNumber,
+            productName: prj.productName,
+            specification: prj.specification,
+            quantity: prj.quantity,
+            unit: prj.unit || 'Unit',
+            designRevision: 'REV-00',
+            bomRevision: 'REV-00',
+            projectManager: prj.projectManager || 'Bhavin Shah',
+            productionManager: prodSupervisor,
+            plannedStartDate: prodStage?.plannedStart || prj.startDate,
+            plannedCompletionDate: prodStage?.plannedEnd || prj.deliveryDate,
+            productionProgress: prj.progressPercent || 0,
+            status: 'Planning',
+            createdAt: prj.startDate,
+          };
+          return [newMfgJob, ...prev];
+        }
+      });
+
+      // 4. SYNC WITH DESIGN PLANNING TASKS (designTasks)
+      if (designStage?.assignedEmployees && designStage.assignedEmployees.length > 0) {
+        setDesignTasks((prev) => {
+          const hasTasks = prev.some((t) => t.projectId === prj.id || t.jobNumber === prj.jobNumber);
+          if (hasTasks) return prev;
+
+          const newTasks: DesignTask[] = (designStage.assignedEmployees || []).map((emp, idx) => {
+            const taskTitles = [
+              '3D Mechanical Modeling & CAD Layout',
+              '2D GA (General Arrangement) Drawings',
+              'Engineering BOM & Technical Specs',
+              'Fabrication & Nozzle Detail Drawings',
+            ];
+            const taskTitle = taskTitles[idx % taskTitles.length];
+            return {
+              id: `DSK-${prj.jobNumber.slice(-4)}-${idx + 1}`,
+              designJobId: currentDesignJobId || `DES-${prj.jobNumber.slice(-4)}`,
+              projectId: prj.id,
+              jobNumber: prj.jobNumber,
+              taskName: `${taskTitle} - ${prj.productName}`,
+              customerName: prj.customerName,
+              machineName: prj.productName,
+              designer: emp.name,
+              startDate: designStage.plannedStart || prj.startDate,
+              targetDate: designStage.plannedEnd || prj.deliveryDate,
+              dueDate: designStage.plannedEnd || prj.deliveryDate,
+              priority: (prj.priority as any) || 'high',
+              estimatedHours: 24,
+              actualHours: 0,
+              progressPercent: designStage.status === 'completed' ? 100 : designStage.status === 'in_progress' ? 40 : 0,
+              status: designStage.status === 'completed' ? 'completed' : designStage.status === 'in_progress' ? 'in_progress' : 'pending',
+              remarks: `Assigned in Project Planning for ${prj.projectNumber}`,
+            };
+          });
+          return [...newTasks, ...prev];
+        });
+      }
+
+      // 5. SYNC WITH PRODUCTION WORK ORDERS (workOrders)
+      setWorkOrders((prev) => {
+        const existing = prev.find((w) => w.projectId === prj.id || w.jobNumber === prj.jobNumber);
+        if (!existing) {
+          const woNo = `WO-2026-${String(prev.length + 1).padStart(3, '0')}`;
+          const newWO: WorkOrder = {
+            id: woNo,
+            workOrderNumber: woNo,
+            jobId: prj.id,
+            jobNumber: prj.jobNumber,
+            projectId: prj.id,
+            customerId: prj.customerId,
+            customerName: prj.customerName,
+            salesOrderNumber: prj.salesOrderNumber,
+            designRevision: 'REV-00',
+            bomRevision: 'REV-00',
+            productName: prj.productName,
+            productionQuantity: prj.quantity,
+            uom: prj.unit || 'Unit',
+            plannedStartDate: prodStage?.plannedStart || prj.startDate,
+            plannedEndDate: prodStage?.plannedEnd || prj.deliveryDate,
+            productionManager: prodSupervisor,
+            priority: (prj.priority as any) || 'High',
+            status: prj.progressPercent >= 100 ? 'Completed' : 'Planned',
+            remarks: `Auto-generated from Project Planning (${prj.projectNumber})`,
+            createdAt: prj.startDate,
+          };
+          return [newWO, ...prev];
+        }
+        return prev;
+      });
+
+      // 6. SYNC WITH PRODUCTION PLANS (productionPlans)
+      setProductionPlans((prev) => {
+        const existing = prev.find((p) => p.projectId === prj.id || p.jobNumber === prj.jobNumber);
+        if (!existing) {
+          const planNo = `PLAN-2026-${String(prev.length + 1).padStart(3, '0')}`;
+          const newPlan: ProductionPlan = {
+            id: planNo,
+            planNumber: planNo,
+            jobId: prj.id,
+            jobNumber: prj.jobNumber,
+            projectId: prj.id,
+            productName: prj.productName,
+            requiredQuantity: prj.quantity,
+            bomId: `BOM-${prj.jobNumber.slice(-4)}`,
+            bomRevision: 'REV-00',
+            materialAvailabilityStatus: 'Fully Available',
+            plannedStartDate: prodStage?.plannedStart || prj.startDate,
+            plannedCompletionDate: prodStage?.plannedEnd || prj.deliveryDate,
+            assignedWorkCenters: ['WC-001 Fabrication Shop', 'WC-002 Welding & Fitting'],
+            plannedManpowerCount: 6,
+            productionManager: prodSupervisor,
+            status: 'Approved',
+            createdAt: prj.startDate,
+          };
+          return [newPlan, ...prev];
+        }
+        return prev;
+      });
+    });
+  }, [projectJobs, projectPlanningStages]);
+
   // Numbering Generator Helper
   const getNextDocNumber = (docType: NumberingSetting['docType']): string => {
     const numConfig = numbering.find((n) => n.docType === docType);
@@ -1698,11 +2002,26 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       priority: 'high',
       startDate: new Date().toISOString().split('T')[0],
       deliveryDate: so.deliveryDate,
-      projectManager: so.assignedProjectManager,
+      projectManager: so.assignedProjectManager || 'Bhavin Shah',
       status: 'planning',
       progressPercent: 10,
     };
 
+    // Auto-generate 16 planning stages, milestones and department assignments for MTO execution
+    const newStages = create16PlanningStagesForProject(newProject);
+    const newMilestones = createDefaultMilestonesForProject(newProject);
+    const newDeptAssignments = createDefaultDepartmentAssignments(newProject);
+
+    if (newStages.length > 0) {
+      const avgProgress = Math.round(
+        newStages.reduce((sum, s) => sum + (s.progressPercent || 0), 0) / newStages.length
+      );
+      newProject.progressPercent = avgProgress;
+    }
+
+    setProjectPlanningStages((prev) => [...prev, ...newStages]);
+    setProjectMilestones((prev) => [...prev, ...newMilestones]);
+    setDepartmentAssignments((prev) => [...prev, ...newDeptAssignments]);
     setProjectJobs((prev) => [newProject, ...prev]);
 
     // Update Sales Order with Project Link
@@ -1854,9 +2173,139 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePlanningStage = (id: string, stageUpdates: Partial<ProjectPlanningStage>) => {
-    setProjectPlanningStages((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...stageUpdates } : s))
+    setProjectPlanningStages((prev) => {
+      const updated = prev.map((s) => (s.id === id ? { ...s, ...stageUpdates } : s));
+      const targetStage = updated.find((s) => s.id === id);
+      if (targetStage) {
+        const prjStages = updated.filter(
+          (s) => s.projectId === targetStage.projectId || s.jobNumber === targetStage.jobNumber
+        );
+        if (prjStages.length > 0) {
+          const avgProgress = Math.round(
+            prjStages.reduce((sum, s) => sum + (s.progressPercent || 0), 0) / prjStages.length
+          );
+          setProjectJobs((prjList) =>
+            prjList.map((p) =>
+              p.id === targetStage.projectId || p.jobNumber === targetStage.jobNumber
+                ? { ...p, progressPercent: avgProgress }
+                : p
+            )
+          );
+        }
+      }
+      return updated;
+    });
+  };
+
+  const addPlanningStage = (stageData: Omit<ProjectPlanningStage, 'id'>): ProjectPlanningStage => {
+    const newStage: ProjectPlanningStage = {
+      ...stageData,
+      id: `STG-${stageData.projectId}-${Date.now().toString().slice(-4)}`,
+    };
+    setProjectPlanningStages((prev) => [...prev, newStage]);
+    logProjectActivity(stageData.projectId, stageData.jobNumber, 'Stage Added', `Added planning stage: ${stageData.stageName}`);
+    return newStage;
+  };
+
+  const deletePlanningStage = (id: string) => {
+    setProjectPlanningStages((prev) => {
+      const target = prev.find((s) => s.id === id);
+      const remaining = prev.filter((s) => s.id !== id);
+      if (!target) return remaining;
+
+      // Auto-renumber remaining stages for this project sequentially
+      let count = 1;
+      const updated = remaining.map((s) => {
+        if (s.projectId === target.projectId || s.jobNumber === target.jobNumber) {
+          const updatedStage = { ...s, stageNumber: count };
+          count++;
+          return updatedStage;
+        }
+        return s;
+      });
+
+      // Recalculate overall project progress
+      const prjStages = updated.filter(
+        (s) => s.projectId === target.projectId || s.jobNumber === target.jobNumber
+      );
+      if (prjStages.length > 0) {
+        const avgProgress = Math.round(
+          prjStages.reduce((sum, s) => sum + (s.progressPercent || 0), 0) / prjStages.length
+        );
+        setProjectJobs((prjList) =>
+          prjList.map((p) =>
+            p.id === target.projectId || p.jobNumber === target.jobNumber
+              ? { ...p, progressPercent: avgProgress }
+              : p
+          )
+        );
+      }
+
+      logProjectActivity(
+        target.projectId,
+        target.jobNumber,
+        'Stage Removed',
+        `Removed stage "${target.stageName}". Remaining active stages: ${prjStages.length}`
+      );
+      return updated;
+    });
+  };
+
+  const reorderPlanningStages = (projectId: string, newOrderedStages: ProjectPlanningStage[]) => {
+    setProjectPlanningStages((prev) => {
+      const otherStages = prev.filter(
+        (s) => s.projectId !== projectId && s.jobNumber !== newOrderedStages[0]?.jobNumber
+      );
+      const renumbered = newOrderedStages.map((stg, idx) => ({
+        ...stg,
+        stageNumber: idx + 1,
+      }));
+      return [...otherStages, ...renumbered];
+    });
+  };
+
+  const markPlanningStageCompleted = (id: string, completedBy?: string, completionNotes?: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const user = completedBy || `${currentUser.firstName} ${currentUser.lastName}`;
+
+    updatePlanningStage(id, {
+      status: 'completed',
+      progressPercent: 100,
+      actualEnd: today,
+      completedBy: user,
+      completedAt: today,
+      remarks: completionNotes || undefined,
+    });
+
+    sendNotification({
+      title: 'Planning Stage Handover Completed',
+      message: `Stage has been marked completed by ${user}. Handover to next stage.`,
+      type: 'success',
+      department: 'project',
+      linkUrl: '/projects/planning',
+      priority: 'normal',
+    });
+  };
+
+  const generateDefaultPlanningStages = (projectId: string): ProjectPlanningStage[] => {
+    const prj = projectJobs.find((p) => p.id === projectId);
+    if (!prj) return [];
+
+    const newStages = create16PlanningStagesForProject(prj);
+    setProjectPlanningStages((prev) => [
+      ...prev.filter((s) => s.projectId !== projectId && s.jobNumber !== prj.jobNumber),
+      ...newStages,
+    ]);
+
+    const avgProgress = Math.round(
+      newStages.reduce((sum, s) => sum + (s.progressPercent || 0), 0) / newStages.length
     );
+    setProjectJobs((prev) =>
+      prev.map((p) => (p.id === projectId ? { ...p, progressPercent: avgProgress } : p))
+    );
+
+    logProjectActivity(prj.id, prj.jobNumber, 'Planning Matrix Generated', 'Generated full 16-stage MTO execution plan');
+    return newStages;
   };
 
   const assignDepartment = (data: Omit<DepartmentAssignment, 'id'>): DepartmentAssignment => {
@@ -3617,6 +4066,11 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         deleteProjectTask,
         projectPlanningStages,
         updatePlanningStage,
+        generateDefaultPlanningStages,
+        addPlanningStage,
+        deletePlanningStage,
+        reorderPlanningStages,
+        markPlanningStageCompleted,
         departmentAssignments,
         assignDepartment,
         projectMilestones,

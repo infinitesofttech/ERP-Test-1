@@ -161,8 +161,8 @@ export default function QuotationDetailPage() {
                   onClick={() => setSelectedRevNum(rev.revisionNumber)}
                   className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition ${
                     selectedRevNum === rev.revisionNumber
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[#3E2723] text-white shadow-xs'
+                      : 'bg-[#FAF7F2] border border-[#E7DED5] text-[#70665F] hover:bg-[#F3ECE4]'
                   }`}
                 >
                   {rev.revisionNumber}
@@ -171,7 +171,7 @@ export default function QuotationDetailPage() {
             </div>
             <button
               onClick={handleCreateNextRevision}
-              className="px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg font-bold text-xs flex items-center gap-1 border border-purple-200"
+              className="px-2.5 py-1 bg-[#FAF0E6] text-[#75401F] hover:bg-[#F3ECE4] rounded-lg font-bold text-xs flex items-center gap-1 border border-[#E7DED5] transition cursor-pointer"
             >
               <Plus className="w-3 h-3" />
               <span>Create Next Rev</span>

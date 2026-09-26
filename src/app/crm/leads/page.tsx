@@ -43,75 +43,75 @@ export default function LeadsListPage() {
 
   const columns: Column<Lead>[] = [
     {
-      header: 'Lead No.',
+      header: 'LEAD NO.',
       accessorKey: 'leadNo',
       cell: (lead) => (
-        <span className="font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-lg border border-blue-500/20 text-xs">
+        <span className="font-mono font-bold text-[#0E91B2] bg-[#E0F2FE] px-2.5 py-1 rounded-lg border border-[#BAE6FD] text-xs whitespace-nowrap inline-block">
           {lead.leadNo}
         </span>
       ),
     },
     {
-      header: 'Company & Contact',
+      header: 'COMPANY & CONTACT',
       cell: (lead) => (
-        <div>
-          <span className="font-bold text-slate-900 dark:text-white block">{lead.companyName}</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+        <div className="min-w-[180px]">
+          <span className="font-bold text-[#211B17] block">{lead.companyName}</span>
+          <span className="text-[11px] text-[#70665F] flex items-center gap-1">
             {lead.contactPerson} ({lead.designation})
           </span>
         </div>
       ),
     },
     {
-      header: 'Equipment / Machine Requirement',
+      header: 'EQUIPMENT / MACHINE REQUIREMENT',
       cell: (lead) => (
         <div className="max-w-xs">
-          <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">{lead.productName}</span>
-          <span className="text-[11px] text-slate-400 block truncate font-mono">Qty: {lead.quantity} • {lead.capacity || 'Custom Spec'}</span>
+          <span className="font-bold text-[#544B45] block truncate">{lead.productName}</span>
+          <span className="text-[11px] text-[#70665F] block truncate font-mono">Qty: {lead.quantity} • {lead.capacity || 'Custom Spec'}</span>
         </div>
       ),
     },
     {
-      header: 'Est. Budget',
+      header: 'EST. BUDGET',
       cell: (lead) => (
-        <span className="font-bold text-slate-900 dark:text-white font-mono">
+        <span className="font-bold text-[#211B17] font-mono whitespace-nowrap">
           {lead.budget ? formatCurrency(lead.budget) : 'TBD'}
         </span>
       ),
     },
     {
-      header: 'Assigned Sales Person',
+      header: 'ASSIGNED SALES PERSON',
       cell: (lead) => (
-        <span className="font-bold text-slate-700 dark:text-slate-300">{lead.assignedSalesPersonName}</span>
+        <span className="font-bold text-[#544B45] whitespace-nowrap">{lead.assignedSalesPersonName}</span>
       ),
     },
     {
-      header: 'Lead Source',
+      header: 'LEAD SOURCE',
       cell: (lead) => (
-        <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[10px] font-bold uppercase">
+        <span className="px-2 py-0.5 rounded-md bg-[#FAF0E6] text-[#75401F] font-mono text-[10px] font-bold uppercase border border-[#E7DED5] whitespace-nowrap">
           {lead.source.replace('_', ' ')}
         </span>
       ),
     },
     {
-      header: 'Lead Status',
-      cell: (lead) => <StatusBadge status={lead.status as any} />,
+      header: 'LEAD STATUS',
+      cell: (lead) => <div className="whitespace-nowrap"><StatusBadge status={lead.status as any} /></div>,
     },
     {
-      header: 'Next Follow-up',
+      header: 'NEXT FOLLOW-UP',
       cell: (lead) => (
-        <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+        <span className="text-[#70665F] font-mono text-[11px] whitespace-nowrap">
           {lead.nextFollowUpDate ? formatDate(lead.nextFollowUpDate) : '-'}
         </span>
       ),
     },
     {
-      header: 'Actions',
+      header: 'ACTIONS',
       cell: (lead) => (
-        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
           <Link
             href={`/crm/leads/${lead.id}`}
-            className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg font-bold text-xs flex items-center gap-1 transition"
+            className="px-2.5 py-1 bg-[#FAF7F2] hover:bg-[#F3ECE4] text-[#75401F] border border-[#E7DED5] rounded-lg font-bold text-xs inline-flex items-center gap-1 transition shadow-2xs cursor-pointer"
           >
             <span>360° View</span>
             <ArrowUpRight className="w-3 h-3" />
@@ -120,7 +120,7 @@ export default function LeadsListPage() {
             <button
               onClick={(e) => handleConvert(lead.id, e)}
               title="Convert to Customer Master"
-              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-lg font-bold text-xs transition cursor-pointer"
+              className="px-2.5 py-1 bg-[#DCFCE7] hover:bg-[#BBF7D0] text-[#15803D] border border-[#86EFAC] rounded-lg font-bold text-xs transition cursor-pointer"
             >
               Convert
             </button>
@@ -133,23 +133,25 @@ export default function LeadsListPage() {
   return (
     <div className="space-y-5 text-xs pb-10">
       {/* Top Banner */}
-      <div className="bg-white dark:bg-[#0B1120] p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md shadow-slate-900/5">
+      <div className="bg-gradient-to-r from-[#FAF3EA] via-[#F8EDE0] to-[#F1DFC9] p-5 sm:p-6 rounded-2xl border border-[#E9DFD3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs text-[#211B17]">
         <div>
-          <h1 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-blue-600" />
+          <h1 className="text-lg font-black text-[#211B17] flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-[#FAF0E6] text-[#75401F] flex items-center justify-center border border-[#E7DED5] shadow-xs">
+              <UserPlus className="w-4.5 h-4.5" />
+            </div>
             Leads & Enquiry Acquisition Management
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[#70665F] mt-1 text-xs">
             Capture and qualify commercial enquiries from Exhibitions, Inbound calls, WhatsApp, and Website.
           </p>
         </div>
 
         <Link
           href="/crm/leads/new"
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition flex items-center gap-2 shadow-md shadow-blue-600/30 cursor-pointer"
+          className="px-4 py-2.5 bg-[#3E2723] hover:bg-[#2C1810] text-white rounded-xl font-bold transition flex items-center gap-2 shadow-xs cursor-pointer whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Register New Lead</span>
+          <span>Register New Lead</span>
         </Link>
       </div>
 
