@@ -9109,7 +9109,16 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addGRN = (data: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => {
-    const grnNumber = `GRN-${new Date().getFullYear()}-${String((goodsReceipts?.length || 0) + 1).padStart(4, '0')}`;
+    const existingSeqNumbers = (goodsReceipts || [])
+      .map((g) => {
+        const raw = String(g.grnNumber || g.id || '');
+        const match = raw.match(/GRN-\d{4}-(\d+)/i) || raw.match(/(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter((n) => !isNaN(n) && n > 0);
+    const maxSeq = existingSeqNumbers.length > 0 ? Math.max(...existingSeqNumbers) : 0;
+    const nextSeq = Math.max(maxSeq + 1, (goodsReceipts?.length || 0) + 1);
+    const grnNumber = (data as any).grnNumber || `GRN-${new Date().getFullYear()}-${String(nextSeq).padStart(4, '0')}`;
     const isDirectInward = (data as any).directInward === true || (data as any).status === 'Accepted';
     const newGrn: GoodsReceiptNote = {
       ...data,
@@ -9329,11 +9338,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       linkUrl: `/store/qc-inspection?grn=${grnNumber}`,
     });
 
-    const grnPayload = {
+    const grnPayload: any = {
       ...newGrn,
-      id: grnNumber,
-      grnNumber: newGrn.grnNumber || grnNumber,
-      grn_number: newGrn.grnNumber || grnNumber,
       date: (newGrn as any).grnDate || newGrn.createdAt || new Date().toISOString().split('T')[0],
       po_id: (newGrn as any).poId || '',
       po_number: (newGrn as any).poNumber || '',
@@ -9345,16 +9351,52 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       received_by: (newGrn as any).receivedBy || 'Store Officer',
       warehouse_id: (newGrn as any).warehouseId || '',
       notes: (newGrn as any).remarks || '',
-      items: newGrn.items || [],
+      items: (newGrn.items || []).map((itm: any) => ({
+        item_id: itm.itemId || itm.id || '',
+        item_code: itm.itemCode || itm.partNumber || '',
+        item_name: itm.itemName || itm.description || 'Material Item',
+        received_qty: Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.quantity ?? 1),
+        accepted_qty: Number(itm.acceptedQuantity ?? itm.acceptedQty ?? itm.quantity ?? 1),
+        rejected_qty: Number(itm.rejectedQuantity ?? itm.rejectedQty ?? 0),
+        unit: itm.uom || itm.unit || 'PCS',
+        unit_rate: Number(itm.unitPrice ?? itm.unitRate ?? itm.rate ?? 0),
+        total_amount: Number(itm.totalAmount ?? 0),
+        location_code: itm.locationCode || 'WH-MAIN-BAY-01',
+      })),
       status: (newGrn as any).status || 'received',
     };
+    // Let backend assign its authoritative sequence without duplicate ID errors
+    delete grnPayload.id;
+    delete grnPayload.grnNumber;
+    delete grnPayload.grn_number;
+
     api.store.grns.create(grnPayload).then((res) => {
-      if (res && res.id) {
+      if (res && (res.id || res.grnNumber)) {
+        const authId = res.id || res.grnNumber;
+        const authGrnNo = res.grnNumber || res.id;
         setGoodsReceipts((prev) => {
-          const synced = prev.map((g) => (g.id === grnNumber ? { ...g, ...res } : g));
+          const synced = prev.map((g) => (g.id === grnNumber || g.grnNumber === grnNumber ? {
+            ...g,
+            ...res,
+            id: authId,
+            grnNumber: authGrnNo,
+          } : g));
           try { localStorage.setItem('UMA_ERP_goodsReceipts', JSON.stringify(synced)); } catch (_) {}
           return synced;
         });
+
+        // Sync auto-generated QC inspections to authoritative GRN number
+        if (authGrnNo && authGrnNo !== grnNumber) {
+          setQcInspections((prev) => {
+            const synced = prev.map((q) => (q.grnId === grnNumber || q.grnNumber === grnNumber ? {
+              ...q,
+              grnId: authId,
+              grnNumber: authGrnNo,
+            } : q));
+            try { localStorage.setItem('UMA_ERP_qcInspections', JSON.stringify(synced)); } catch (_) {}
+            return synced;
+          });
+        }
       }
     }).catch((err) => console.warn('Failed to sync GRN to backend:', err));
   };

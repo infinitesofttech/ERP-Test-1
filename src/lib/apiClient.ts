@@ -71,7 +71,9 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
 
   // Only assign fallback ID for POST (creation) requests, NEVER for PATCH/PUT updates!
   if (!isPatchOrPut) {
-    d.id = d.id || d.salesOrderNumber || d.sales_order_number || d.code || d.departmentCode || d.department_code || d.leadNumber || d.leadNo || d.customerCode || d.enquiryNo || d.opportunityNo || d.quotationNumber || d.poNumber || d.soNumber || d.job_number || d.designJobNumber || d.bomNumber || d.supplierCode || d.vendorCode || d.requisitionNumber || d.rfqNumber || d.itemCode || d.warehouseCode || d.grnNumber || d.inspectionNumber || d.issueNumber || d.transferNumber || d.workCenterCode || d.planNumber || d.workOrderNumber || d.assetCode || d.requestNumber || d.designationCode || d.leaveNumber || d.loanNumber || d.invoiceNumber || d.receiptNumber || d.paymentNumber || d.expenseNumber || `DOC-${Date.now().toString().slice(-6)}`;
+    if (!ep.includes('/grns')) {
+      d.id = d.id || d.salesOrderNumber || d.sales_order_number || d.code || d.departmentCode || d.department_code || d.leadNumber || d.leadNo || d.customerCode || d.enquiryNo || d.opportunityNo || d.quotationNumber || d.poNumber || d.soNumber || d.job_number || d.designJobNumber || d.bomNumber || d.supplierCode || d.vendorCode || d.requisitionNumber || d.rfqNumber || d.itemCode || d.warehouseCode || d.inspectionNumber || d.issueNumber || d.transferNumber || d.workCenterCode || d.planNumber || d.workOrderNumber || d.assetCode || d.requestNumber || d.designationCode || d.leaveNumber || d.loanNumber || d.invoiceNumber || d.receiptNumber || d.paymentNumber || d.expenseNumber || `DOC-${Date.now().toString().slice(-6)}`;
+    }
   }
 
   // Organization & Employees
@@ -396,9 +398,15 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
   }
   // Store
   else if (ep.includes('/grns')) {
-    d.grnNumber = d.grnNumber || d.grn_number || d.id || `GRN-2026-${Date.now().toString().slice(-4)}`;
-    d.grn_number = d.grnNumber;
-    d.id = d.id || d.grnNumber;
+    if (isPatchOrPut) {
+      d.grnNumber = d.grnNumber || d.grn_number || d.id;
+      d.grn_number = d.grnNumber;
+    } else {
+      // On POST creation, let Django backend generate the authoritative sequential GRN ID
+      delete d.id;
+      delete d.grnNumber;
+      delete d.grn_number;
+    }
     d.date = d.date || d.grnDate || d.receiptDate || nowStr;
     d.po_id = d.po_id || d.poId || '';
     d.po_number = d.po_number || d.poNumber || '';
@@ -409,7 +417,24 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.vehicle_number = d.vehicle_number || d.vehicleNumber || '';
     d.warehouse_id = d.warehouse_id || d.warehouseId || 'WH-001';
     d.received_by = d.received_by || d.receivedBy || 'Store Officer';
-    d.items = d.items || [];
+    if (Array.isArray(d.items)) {
+      d.items = d.items.map((itm: any) => ({
+        item_id: itm.itemId || itm.id || '',
+        item_code: itm.itemCode || itm.partNumber || '',
+        item_name: itm.itemName || itm.description || 'Material Item',
+        received_qty: Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.quantity ?? 1),
+        accepted_qty: Number(itm.acceptedQuantity ?? itm.acceptedQty ?? itm.quantity ?? 1),
+        rejected_qty: Number(itm.rejectedQuantity ?? itm.rejectedQty ?? 0),
+        unit: itm.uom || itm.unit || 'PCS',
+        unit_rate: Number(itm.unitPrice ?? itm.unitRate ?? itm.rate ?? 0),
+        total_amount: Number(itm.totalAmount ?? 0),
+        itemName: itm.itemName || itm.description || 'Material Item',
+        receivedQty: Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.quantity ?? 1),
+        unitRate: Number(itm.unitPrice ?? itm.unitRate ?? itm.rate ?? 0),
+      }));
+    } else {
+      d.items = [];
+    }
   } else if (ep.includes('/warehouses')) {
     d.warehouseCode = d.warehouseCode || d.warehouse_code || d.code || d.id || 'WH-001';
     d.warehouse_code = d.warehouseCode;
@@ -923,6 +948,26 @@ async function fetchNetworkRequest<T>(
     // If the record with this ID already exists, the data is already stored in the database!
     const errString = typeof errData === 'object' ? JSON.stringify(errData) : String(errData);
     if (response.status === 400 && errString.includes('already exists')) {
+      // If POST to /grns failed because of duplicate ID, retry immediately by omitting id / grnNumber
+      if (options.method === 'POST' && endpoint.includes('/grns')) {
+        try {
+          const retryBody: any = body && typeof body === 'string' ? JSON.parse(body) : (typeof body === 'object' && body !== null ? { ...(body as any) } : {});
+          delete retryBody.id;
+          delete retryBody.grnNumber;
+          delete retryBody.grn_number;
+          const retryRes = await fetch(url, {
+            ...options,
+            method: 'POST',
+            headers,
+            body: JSON.stringify(retryBody),
+          });
+          if (retryRes.ok) {
+            const retryJson = await retryRes.json();
+            return (retryJson && typeof retryJson === 'object' && Array.isArray(retryJson.results)) ? retryJson.results : retryJson;
+          }
+        } catch (_) {}
+      }
+
       // If POST conflict on duplicate ID, attempt a PATCH update to the existing record
       if (options.method === 'POST') {
         const id = (body && typeof body === 'string') ? (() => {
