@@ -292,6 +292,40 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
       d.estimatedTotalCost = d.totalEstimatedCost;
     }
   }
+  // Material Requirements (MRP)
+  else if (ep.includes('/material-requirements')) {
+    d.id = d.id || `MRP-${d.jobId || d.jobNumber || 'REQ'}-${Date.now().toString().slice(-4)}`;
+    d.itemName = d.itemName || d.item_name || d.materialName || d.material_name || d.partName || 'Required Material';
+    d.item_name = d.itemName;
+    d.jobId = d.jobId || d.job_id || d.jobNumber || d.job_number || '';
+    d.job_id = d.jobId;
+    d.jobNumber = d.jobNumber || d.job_number || d.jobId || '';
+    d.job_number = d.jobNumber;
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.project_id = d.projectId;
+    d.bomId = d.bomId || d.bom_id || d.bomNumber || '';
+    d.bom_id = d.bomId;
+    d.bomNumber = d.bomNumber || d.bom_number || d.bomId || '';
+    d.bom_number = d.bomNumber;
+    d.bomRevision = d.bomRevision || d.bom_revision || 'V1';
+    d.bom_revision = d.bomRevision;
+    d.partNumber = d.partNumber || d.part_number || d.itemCode || d.item_code || '';
+    d.part_number = d.partNumber;
+    d.itemCode = d.itemCode || d.item_code || d.partNumber || '';
+    d.item_code = d.itemCode;
+    d.requiredQuantity = Number(d.requiredQuantity ?? d.required_quantity ?? d.quantity ?? 1);
+    d.required_quantity = d.requiredQuantity;
+    d.availableStock = Number(d.availableStock ?? d.available_stock ?? 0);
+    d.available_stock = d.availableStock;
+    d.shortageQuantity = Number(d.shortageQuantity ?? d.shortage_quantity ?? Math.max(0, d.requiredQuantity - d.availableStock));
+    d.shortage_quantity = d.shortageQuantity;
+    d.unitOfMeasure = d.unitOfMeasure || d.unit_of_measure || d.unit || 'NOS';
+    d.unit_of_measure = d.unitOfMeasure;
+    d.category = d.category || 'Raw Material';
+    d.procurementType = d.procurementType || d.procurement_type || 'Purchase';
+    d.procurement_type = d.procurementType;
+    d.status = d.status || (d.shortageQuantity > 0 ? 'shortage' : 'covered');
+  }
   // Purchase
   else if (ep.includes('/suppliers')) {
     d.vendorCode = d.vendorCode || d.supplierCode || d.code || d.id || 'SUP-001';

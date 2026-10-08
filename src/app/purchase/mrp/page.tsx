@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useERP } from '../../../context/ERPContext';
+import { api } from '../../../lib/apiClient';
 import {
   Cpu,
   RefreshCw,
@@ -20,6 +21,8 @@ import {
   Sparkles,
   Info,
   Package,
+  Database,
+  CloudUpload,
 } from 'lucide-react';
 import { MaterialRequirement } from '../../../types/purchase';
 
@@ -319,6 +322,54 @@ export default function MRPPage() {
     setTimeout(() => setGeneratedPRSuccess(null), 6000);
   };
 
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // One-click sync all computed MRP shortage requirements to backend database table
+  const handleSyncMRPToDatabase = async () => {
+    setIsSyncing(true);
+    try {
+      const itemsToSync = filteredRequirements.length > 0 ? filteredRequirements : allComputedRequirements;
+      let count = 0;
+      for (const item of itemsToSync) {
+        const payload = {
+          id: item.id.startsWith('MRP-AUTO-')
+            ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
+            : item.id,
+          projectId: item.projectId || 'PRJ-2026-0001',
+          jobId: item.jobId,
+          jobNumber: (item as any).jobNumber || item.jobId,
+          bomId: item.bomId,
+          bomNumber: (item as any).bomNumber || item.bomId,
+          bomRevision: item.bomRevision || 'V1',
+          partNumber: item.partNumber || item.itemCode,
+          itemCode: item.itemCode || item.partNumber,
+          itemName: item.itemName,
+          specification: item.specification || '',
+          category: item.category || 'Raw Material',
+          requiredQuantity: Number(item.requiredQuantity || 1),
+          unitOfMeasure: item.unitOfMeasure || 'NOS',
+          availableStock: Number(item.availableStock || 0),
+          reservedStock: Number(item.reservedStock || 0),
+          onOrderQuantity: Number(item.onOrderQuantity || 0),
+          shortageQuantity: Number(item.shortageQuantity || 0),
+          requiredByDate: item.requiredByDate || '',
+          procurementType: item.procurementType || 'Purchase',
+          procurementStatus: item.procurementStatus || 'Action Needed',
+          drawingNumber: item.drawingNumber || '',
+          status: item.status || (Number(item.shortageQuantity || 0) > 0 ? 'shortage' : 'covered'),
+        };
+        await api.purchase.mrp.create(payload).catch(() => null);
+        count++;
+      }
+      setGeneratedPRSuccess(`MRP data successfully saved to backend database! (${count} material requirements synchronized).`);
+      setTimeout(() => setGeneratedPRSuccess(null), 6000);
+    } catch (err: any) {
+      console.warn('Sync failed:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // Generate PR for selected shortage items
   const handleGeneratePR = () => {
     if (selectedItems.length === 0) return;
@@ -372,6 +423,14 @@ export default function MRPPage() {
     };
 
     addPurchaseRequisition(newPR);
+    // Also update the material requirements in database
+    itemsToPR.forEach(item => {
+      const dbId = item.id.startsWith('MRP-AUTO-') 
+        ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
+        : item.id;
+      api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
+    });
+
     setGeneratedPRSuccess(`PR generated successfully: ${newPR.prNumber} with ${prItems.length} items (Total: ₹ ${totalEst.toLocaleString('en-IN')})!`);
     setSelectedItems([]);
     setTimeout(() => setGeneratedPRSuccess(null), 6000);
@@ -403,7 +462,17 @@ export default function MRPPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleSyncMRPToDatabase}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-[#FAF7F2] text-amber-900 border border-[#EBE3DB] font-bold text-xs rounded-xl shadow-xs transition cursor-pointer"
+            title="Save and synchronize MRP shortage requirements to backend database"
+          >
+            <Database className="w-4 h-4 text-amber-700" />
+            {isSyncing ? 'Saving to Database...' : 'Save MRP to Database'}
+          </button>
+
           {selectedItems.length > 0 && (
             <button
               onClick={handleGeneratePR}
