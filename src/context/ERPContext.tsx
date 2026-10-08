@@ -2619,7 +2619,18 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   const [purchaseReturns, setPurchaseReturns] = useState<PurchaseReturn[]>(MOCK_PURCHASE_RETURNS);
 
   // Module 5: Store & Warehouse Management States
-  const [itemMasters, setItemMasters] = useState<ItemMaster[]>(INITIAL_ITEM_MASTERS);
+  const [itemMasters, setItemMasters] = useState<ItemMaster[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('UMA_ERP_itemMasters');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (_) {}
+    }
+    return INITIAL_ITEM_MASTERS;
+  });
   const [itemCategories, setItemCategories] = useState<ItemCategory[]>(INITIAL_ITEM_CATEGORIES);
   const [uoms, setUoms] = useState<UOMMaster[]>(INITIAL_UOMS);
   const [warehouses, setWarehouses] = useState<Warehouse[]>(INITIAL_WAREHOUSES);
@@ -9206,10 +9217,15 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
           const nameLower = rawName.toLowerCase();
           const rate = Number(itm.unitPrice || itm.unitRate || 150);
 
+          const cleanCode = codeLower.replace(/^itm-/, '');
           const idx = updatedItems.findIndex((m) => {
             const mCode = String(m.itemCode || m.id || '').trim().toLowerCase();
+            const cleanMCode = mCode.replace(/^itm-/, '');
             const mName = String(m.itemName || '').trim().toLowerCase();
-            return (codeLower && mCode === codeLower) || (nameLower && mName === nameLower);
+            return (
+              (codeLower && (mCode === codeLower || cleanMCode === cleanCode || mCode === `itm-${cleanCode}`)) ||
+              (nameLower && (mName === nameLower || mName.includes(nameLower) || nameLower.includes(mName)))
+            );
           });
 
           if (idx >= 0) {
@@ -9220,9 +9236,10 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
               updatedAt: new Date().toISOString().split('T')[0],
             };
           } else {
+            const itmId = cleanCode ? (cleanCode.startsWith('itm-') ? cleanCode : `itm-${cleanCode}`) : `itm-${Date.now().toString().slice(-4)}`;
             const newItemObj: ItemMaster = {
-              id: rawCode || `ITM-${Date.now().toString().slice(-4)}`,
-              itemCode: rawCode || `ITM-${Date.now().toString().slice(-4)}`,
+              id: itmId,
+              itemCode: rawCode || itmId,
               itemName: rawName || 'Inward Material',
               itemType: 'Plate',
               category: 'Fasteners, Flanges & Hardware',
@@ -9502,10 +9519,15 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         const nameLower = rawName.toLowerCase();
         const rate = Number(itm.unitPrice || itm.unitRate || 150);
 
+        const cleanCode = codeLower.replace(/^itm-/, '');
         const idx = updatedItems.findIndex((m) => {
           const mCode = String(m.itemCode || m.id || '').trim().toLowerCase();
+          const cleanMCode = mCode.replace(/^itm-/, '');
           const mName = String(m.itemName || '').trim().toLowerCase();
-          return (codeLower && mCode === codeLower) || (nameLower && mName === nameLower);
+          return (
+            (codeLower && (mCode === codeLower || cleanMCode === cleanCode || mCode === `itm-${cleanCode}`)) ||
+            (nameLower && (mName === nameLower || mName.includes(nameLower) || nameLower.includes(mName)))
+          );
         });
 
         if (idx >= 0) {
@@ -9516,9 +9538,10 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
             updatedAt: new Date().toISOString().split('T')[0],
           };
         } else {
+          const itmId = cleanCode ? (cleanCode.startsWith('itm-') ? cleanCode : `itm-${cleanCode}`) : `itm-${Date.now().toString().slice(-4)}`;
           const newItemObj: ItemMaster = {
-            id: rawCode || `ITM-${Date.now().toString().slice(-4)}`,
-            itemCode: rawCode || `ITM-${Date.now().toString().slice(-4)}`,
+            id: itmId,
+            itemCode: rawCode || itmId,
             itemName: rawName || 'Inward Material',
             itemType: 'Plate',
             category: 'Fasteners, Flanges & Hardware',

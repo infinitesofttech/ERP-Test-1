@@ -968,8 +968,53 @@ async function fetchNetworkRequest<T>(
         } catch (_) {}
       }
 
+      // If POST to /items failed because of duplicate itemCode, resolve exact backend ID and PATCH
+      if (options.method === 'POST' && endpoint.includes('/items')) {
+        try {
+          const p = typeof body === 'string' ? JSON.parse(body) : (body || {});
+          const targetCode = String(p.itemCode || p.item_code || p.code || p.id || '').trim().toLowerCase();
+          const targetId = String(p.id || '').trim().toLowerCase();
+          
+          let matchedId: string | null = null;
+          try {
+            const listRes = await fetch(url, { headers });
+            if (listRes.ok) {
+              const listJson = await listRes.json();
+              const itemsList = Array.isArray(listJson) ? listJson : (listJson.results || []);
+              const matched = itemsList.find((i: any) => {
+                const c = String(i.itemCode || i.item_code || '').trim().toLowerCase();
+                const mid = String(i.id || '').trim().toLowerCase();
+                return (targetCode && (c === targetCode || mid === targetCode || mid === `itm-${targetCode}`)) ||
+                       (targetId && (mid === targetId || c === targetId));
+              });
+              if (matched && matched.id) {
+                matchedId = String(matched.id);
+              }
+            }
+          } catch (_) {}
+
+          if (!matchedId) {
+            matchedId = `itm-${targetCode.replace(/[^a-z0-9]/g, '-')}`;
+          }
+
+          if (matchedId) {
+            const patchRes = await fetch(`${url}${url.endsWith('/') ? '' : '/'}${encodeURIComponent(matchedId)}/`, {
+              ...options,
+              method: 'PATCH',
+              headers,
+              body,
+            });
+            if (patchRes.ok) {
+              const patchJson = await patchRes.json();
+              return (patchJson && typeof patchJson === 'object' && Array.isArray(patchJson.results)) ? patchJson.results : patchJson;
+            }
+          }
+          return p as T;
+        } catch (_) {}
+      }
+
       // If POST conflict on duplicate ID, attempt a PATCH update to the existing record
-      if (options.method === 'POST') {
+      if (options.method === 'POST' && !endpoint.includes('/items') && !endpoint.includes('/grns')) {
         const id = (body && typeof body === 'string') ? (() => {
           try {
             const p = JSON.parse(body);
