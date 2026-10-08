@@ -8,7 +8,24 @@ import { JobTraceabilityModal } from '../traceability/JobTraceabilityModal';
 import { GlobalSearchModal } from '../search/GlobalSearchModal';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = React.useState(false);
   const pathname = usePathname();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-[#F4EFEA] flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-9 h-9 border-3 border-[#D97706] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-[#8C7D72] tracking-wider uppercase">Loading Uma Techno Fab ERP...</span>
+        </div>
+      </div>
+    );
+  }
+
   const isAuthPage = pathname === '/login' || pathname === '/forgot-password';
 
   if (isAuthPage) {
