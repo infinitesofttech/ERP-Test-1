@@ -998,24 +998,29 @@ export const api = {
       update: (id: string, data: any) => request<any>(`/opportunities/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
     },
     quotations: {
-      list: () => request<any[]>('/quotations/'),
-      create: (data: any) => request<any>('/quotations/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/quotations/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      addRevision: (id: string, data: any) => request<any>(`/quotations/${id}/add-revision/`, { method: 'POST', body: JSON.stringify(data) }),
-      updateStatus: (id: string, data: { revisionNumber: string; status: string }) =>
-        request<any>(`/quotations/${id}/update-status/`, { method: 'POST', body: JSON.stringify(data) }),
-      convert: (id: string) => request<any>(`/quotations/${id}/convert/`, { method: 'POST' }),
+      list: () => request<any[]>('/crm/quotations/'),
+      get: (id: string) => request<any>(`/crm/quotations/${id}/`),
+      create: (data: any) => request<any>('/crm/quotations/', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request<any>(`/crm/quotations/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/crm/quotations/${id}/`, { method: 'DELETE' }),
+      addRevision: (id: string, data: any) => request<any>(`/crm/quotations/${id}/add-revision/`, { method: 'POST', body: JSON.stringify(data) }),
+      updateStatus: (id: string, data: { revisionNumber?: string; status: string }) =>
+        request<any>(`/crm/quotations/${id}/update-status/`, { method: 'POST', body: JSON.stringify(data) }),
+      convert: (id: string, revisionNumber?: string) =>
+        request<any>(`/crm/quotations/${id}/update-status/`, { method: 'POST', body: JSON.stringify({ revisionNumber: revisionNumber || 'Rev-00', status: 'accepted' }) }),
     },
     customerPos: {
-      list: () => request<any[]>('/customer-pos/'),
-      create: (data: any) => request<any>('/customer-pos/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/customer-pos/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      convertToSo: (id: string) => request<any>(`/customer-pos/${id}/convert-to-so/`, { method: 'POST' }),
+      list: () => request<any[]>('/crm/customer-pos/'),
+      get: (id: string) => request<any>(`/crm/customer-pos/${id}/`),
+      create: (data: any) => request<any>('/crm/customer-pos/', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request<any>(`/crm/customer-pos/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      convertToSo: (id: string) => request<any>(`/crm/customer-pos/${id}/convert-to-so/`, { method: 'POST' }),
     },
     salesOrders: {
-      list: () => request<any[]>('/sales-orders/'),
-      create: (data: any) => request<any>('/sales-orders/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/sales-orders/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      list: () => request<any[]>('/crm/sales-orders/'),
+      get: (id: string) => request<any>(`/crm/sales-orders/${id}/`),
+      create: (data: any) => request<any>('/crm/sales-orders/', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request<any>(`/crm/sales-orders/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
     },
     followUps: {
       list: () => request<any[]>('/crm/followups/'),

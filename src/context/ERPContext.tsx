@@ -6390,9 +6390,6 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.crm.quotations.updateStatus(quotationId, { revisionNumber, status }).catch((err) =>
       console.warn('Failed to update quotation status on backend:', err)
     );
-    if (status === 'accepted') {
-      api.crm.quotations.convert(quotationId).catch(() => {});
-    }
   };
 
   // Customer PO & Sales Order
