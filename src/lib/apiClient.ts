@@ -331,6 +331,29 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.vendorCode = d.vendorCode || d.supplierCode || d.code || d.id || 'SUP-001';
     d.contactPerson = d.contactPerson || d.contact_person || d.name || 'Vendor Rep';
     d.mobile = d.mobile || d.phone || '9999999999';
+  } else if (ep.includes('/purchase-requisitions')) {
+    d.prNumber = d.prNumber || d.pr_number || d.id || `PR-2026-${Date.now().toString().slice(-4)}`;
+    d.pr_number = d.prNumber;
+    d.id = d.id || d.prNumber;
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.project_id = d.projectId;
+    d.jobId = d.jobId || d.job_code || d.jobNumber || '';
+    d.job_code = d.jobId;
+    d.jobNumber = d.jobNumber || d.jobId || '';
+    d.requisitionDate = d.requisitionDate || d.prDate || d.request_date || nowStr;
+    d.prDate = d.requisitionDate;
+    d.request_date = d.requisitionDate;
+    d.requiredByDate = d.requiredByDate || d.required_by_date || nowStr;
+    d.required_by_date = d.requiredByDate;
+    d.priority = d.priority || 'High';
+    d.status = d.status || 'Submitted';
+    d.requestedBy = d.requestedBy || d.requested_by || 'Purchase Officer';
+    d.requested_by = d.requestedBy;
+    d.department = d.department || 'Purchase / Planning';
+    d.items = Array.isArray(d.items) ? d.items : [];
+    d.totalItems = Number(d.totalItems || d.items.length || 1);
+    d.estimatedCost = Number(d.estimatedCost ?? d.total_estimated_cost ?? 0);
+    d.total_estimated_cost = d.estimatedCost;
   } else if (ep.includes('/rfqs')) {
     const due = new Date();
     due.setDate(due.getDate() + 7);
@@ -1496,11 +1519,11 @@ export const api = {
     },
     requisitions: {
       list: () => request<any[]>('/purchase-requisitions/'),
-      get: (id: string) => request<any>(`/purchase-requisitions/${id}/`),
+      get: (id: string) => request<any>(`/purchase-requisitions/${encodeURIComponent(id)}/`),
       create: (data: any) => request<any>('/purchase-requisitions/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/purchase-requisitions/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      delete: (id: string) => request<any>(`/purchase-requisitions/${id}/`, { method: 'DELETE' }),
-      convertToRfq: (id: string) => request<any>(`/purchase-requisitions/${id}/convert-to-rfq/`, { method: 'POST' }),
+      update: (id: string, data: any) => request<any>(`/purchase-requisitions/${encodeURIComponent(id)}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/purchase-requisitions/${encodeURIComponent(id)}/`, { method: 'DELETE' }),
+      convertToRfq: (id: string) => request<any>(`/purchase-requisitions/${encodeURIComponent(id)}/convert-to-rfq/`, { method: 'POST' }),
     },
     rfqs: {
       list: () => request<any[]>('/rfqs/'),

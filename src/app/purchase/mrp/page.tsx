@@ -24,10 +24,19 @@ import {
   Database,
   CloudUpload,
 } from 'lucide-react';
-import { MaterialRequirement } from '../../../types/purchase';
+import { MaterialRequirement, PurchaseRequisition } from '../../../types/purchase';
 
 export default function MRPPage() {
-  const { materialRequirements, addPurchaseRequisition, projectJobs, boms, stockBalances, purchaseOrders, currentUser } = useERP();
+  const {
+    materialRequirements,
+    purchaseRequisitions,
+    addPurchaseRequisition,
+    projectJobs,
+    boms,
+    stockBalances,
+    purchaseOrders,
+    currentUser,
+  } = useERP();
   const [selectedJob, setSelectedJob] = useState<string>('ALL');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [shortageOnly, setShortageOnly] = useState<boolean>(true);
@@ -427,11 +436,20 @@ export default function MRPPage() {
 
     const totalEst = prItems.reduce((sum, item) => sum + item.estimatedTotalPrice, 0);
 
-    const newPR = {
-      id: `PR-${Date.now()}`,
-      prNumber: `PR-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+    // Check if a PR already exists for this job in Draft/Submitted status to prevent duplicate PR generation
+    const existingPrForJob = (purchaseRequisitions || []).find(
+      (p: PurchaseRequisition) => (p.jobId === firstItem.jobId || (p as any).jobNumber === firstItem.jobId) && (p.status === 'Submitted' || p.status === 'Draft')
+    );
+
+    const prNumber = existingPrForJob?.prNumber || `PR-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+    const prId = existingPrForJob?.id || `PR-${Date.now()}`;
+
+    const newPR: PurchaseRequisition = {
+      id: prId,
+      prNumber: prNumber,
       projectId: firstItem.projectId,
       jobId: firstItem.jobId,
+      jobNumber: firstItem.jobId,
       bomId: firstItem.bomId,
       bomRevision: firstItem.bomRevision,
       requisitionDate: new Date().toISOString().split('T')[0],
@@ -444,7 +462,7 @@ export default function MRPPage() {
       totalItems: prItems.length,
       estimatedCost: totalEst,
       remarks: `Generated via MRP calculation for ${firstItem.jobId}`,
-      createdAt: new Date().toISOString(),
+      createdAt: existingPrForJob?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 

@@ -610,6 +610,7 @@ interface ERPContextType {
   addMaterialRequirement: (mrp: Omit<MaterialRequirement, 'id'>) => void;
   purchaseRequisitions: PurchaseRequisition[];
   addPurchaseRequisition: (pr: Omit<PurchaseRequisition, 'id' | 'prDate'>) => void;
+  deletePurchaseRequisition: (id: string) => Promise<void>;
   approvePurchaseRequisition: (id: string, approvedBy: string) => void;
   rejectPurchaseRequisition: (id: string, remarks?: string) => void;
   updatePurchaseRequisitionStatus: (id: string, status: PurchaseRequisition['status'], remarks?: string, approvedBy?: string) => void;
@@ -8598,6 +8599,22 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       });
   };
 
+  const deletePurchaseRequisition = async (id: string) => {
+    setPurchaseRequisitions((prev) => {
+      const updated = prev.filter((pr) => pr.id !== id && pr.prNumber !== id && (pr as any).pr_number !== id);
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('UMA_ERP_purchaseRequisitions', JSON.stringify(updated)); } catch (_) {}
+      }
+      return updated;
+    });
+    logAction('DELETE', 'Purchase', 'Purchase Requisition', id, `Deleted PR ${id}`);
+    try {
+      await api.purchase.requisitions.delete(id);
+    } catch (err) {
+      console.warn('Failed to delete PR from backend:', err);
+    }
+  };
+
   const addRFQ = (data: Omit<RequestForQuotation, 'id' | 'rfqDate'>) => {
     const rfqNumber = data.rfqNumber || `RFQ-${new Date().getFullYear()}-${String(rfqs.length + 1).padStart(3, '0')}`;
     const newRfq: RequestForQuotation = {
@@ -12626,6 +12643,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         addMaterialRequirement,
         purchaseRequisitions: sortByLatestDesc(purchaseRequisitions),
         addPurchaseRequisition,
+        deletePurchaseRequisition,
         approvePurchaseRequisition,
         rejectPurchaseRequisition,
         updatePurchaseRequisitionStatus,
