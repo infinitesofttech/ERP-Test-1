@@ -227,6 +227,71 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
       d.customer_po_number = d.customerPoNumber;
     }
   }
+  // Designer BOMs
+  else if (ep.includes('/designer/boms') || ep.includes('/boms')) {
+    d.bomNumber = d.bomNumber || d.bom_number || d.bomNo || d.id || `BOM-${Date.now().toString().slice(-4)}`;
+    d.bom_number = d.bomNumber;
+    if (!isPatchOrPut && !d.id) {
+      d.id = d.bomNumber;
+    }
+    d.jobNumber = d.jobNumber || d.job_number || 'JOB-2026-001';
+    d.job_number = d.jobNumber;
+    d.designJobId = d.designJobId || d.design_job_id || d.jobNumber || 'DES-2026-001';
+    d.design_job_id = d.designJobId;
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.project_id = d.projectId;
+    d.preparedBy = d.preparedBy || d.prepared_by || 'Engineering Team';
+    d.prepared_by = d.preparedBy;
+    d.activeRevision = d.activeRevision || d.active_revision || d.revisionNumber || d.revision || d.version || 'V1';
+    d.active_revision = d.activeRevision;
+    d.status = d.status || 'draft';
+    if (d.items && Array.isArray(d.items)) {
+      d.items = d.items.map((itm: any, idx: number) => {
+        const rate = Number(itm.estimatedRate ?? itm.estimated_rate ?? itm.rate ?? itm.estRate ?? itm.unitPrice ?? itm.unitCost ?? 0);
+        const qty = Number(itm.quantity ?? itm.qty ?? 1);
+        const total = Number(itm.totalEstimatedAmount ?? itm.total_estimated_amount ?? itm.total_amount ?? itm.totalAmount ?? (qty * rate));
+        const itemType = itm.itemType || itm.item_type || 'RAW_MATERIAL';
+        const rawMat = itm.material || itm.partName || itm.itemName || `Item ${idx + 1}`;
+        const matParts = typeof rawMat === 'string' ? rawMat.split(' - ') : [];
+        const partNo = itm.partNumber || itm.part_number || (matParts.length > 1 ? matParts[0].trim() : `MAT-${String(idx + 1).padStart(3, '0')}`);
+        const name = itm.itemName || itm.item_name || itm.partName || (matParts.length > 1 ? matParts.slice(1).join(' - ').trim() : rawMat);
+        return {
+          id: itm.id || `bi-${Date.now()}-${idx + 1}`,
+          itemNo: itm.itemNo || itm.item_no || idx + 1,
+          itemNumber: itm.itemNumber || itm.item_number || `ITM-${String(idx + 1).padStart(3, '0')}`,
+          partNumber: partNo,
+          part_number: partNo,
+          itemName: name,
+          item_name: name,
+          partName: name,
+          itemType: itemType,
+          item_type: itm.item_type || itemType,
+          material: itm.material || name,
+          specification: itm.specification || itm.description || `Procurement: ${itm.procurement || 'PURCHASE'}`,
+          quantity: qty,
+          qty: qty,
+          unit: itm.unit || 'PCS',
+          procurement: itm.procurement || (itm.procurementType === 'In-House' ? 'FABRICATE' : 'PURCHASE'),
+          procurementType: itm.procurementType || (itm.procurement === 'FABRICATE' ? 'In-House' : 'Purchase'),
+          estimatedRate: rate,
+          estimated_rate: rate,
+          rate: rate,
+          unitCost: rate,
+          unitPrice: rate,
+          totalEstimatedAmount: total,
+          total_estimated_amount: total,
+          total_amount: total,
+          totalAmount: total,
+          extendedCost: total,
+        };
+      });
+      d.totalItems = d.items.length;
+      d.total_items = d.items.length;
+      d.totalEstimatedCost = d.items.reduce((sum: number, itm: any) => sum + (itm.totalEstimatedAmount || 0), 0);
+      d.total_estimated_cost = d.totalEstimatedCost;
+      d.estimatedTotalCost = d.totalEstimatedCost;
+    }
+  }
   // Purchase
   else if (ep.includes('/suppliers')) {
     d.vendorCode = d.vendorCode || d.supplierCode || d.code || d.id || 'SUP-001';

@@ -228,10 +228,16 @@ export default function MasterBOMPage() {
     e.preventDefault();
     const desJob = designJobs.find((j) => j.id === selectedProductId) || {
       id: selectedProductId,
-      jobNumber: `JOB-${newBomName.replace(/\s+/g, '-').slice(0, 10).toUpperCase()}`,
+      jobNumber: `JOB-${newBomName.replace(/\s+/g, '-').slice(0, 10).toUpperCase() || Date.now().toString().slice(-4)}`,
       projectId: 'PRJ-2026-001',
       productName: newBomName,
     };
+
+    const validJobNumber = desJob.jobNumber && desJob.jobNumber.trim()
+      ? desJob.jobNumber
+      : `JOB-${newBomName.replace(/\s+/g, '-').slice(0, 10).toUpperCase() || Date.now().toString().slice(-4)}`;
+    const fullBomNumber = `BOM-${validJobNumber}-${newVersion}`;
+    const uniqueBomId = fullBomNumber;
 
     const formattedItems: BOMItem[] = bomItemsList.map((itm, idx) => {
       const rate = Number(itm.estimatedRate ?? (itm as any).estimated_rate ?? (itm as any).rate ?? (itm as any).unitPrice ?? (itm as any).unitCost ?? 0);
@@ -285,17 +291,17 @@ export default function MasterBOMPage() {
       } as any;
     });
 
-    const bomId = `BOM-${desJob.jobNumber}`;
     addBOM({
-      bomNumber: `BOM-${desJob.jobNumber}-${newVersion}`,
+      id: uniqueBomId,
+      bomNumber: fullBomNumber,
       bomName: newBomName,
       bom_name: newBomName,
       product: selectedProductId,
       version: newVersion,
       quantity: newProductQuantity,
       projectId: desJob.projectId || 'PRJ-2026-001',
-      jobNumber: desJob.jobNumber,
-      designJobId: desJob.id,
+      jobNumber: validJobNumber,
+      designJobId: desJob.id || 'DES-2026-0001',
       machineName: newBomName,
       revision: newVersion,
       revisionNumber: newVersion,
@@ -310,7 +316,7 @@ export default function MasterBOMPage() {
       items: formattedItems,
     } as any);
 
-    setSelectedJobNumber(desJob.jobNumber);
+    setSelectedJobNumber(uniqueBomId);
     setIsCreateBOMModalOpen(false);
     setSuccessToast(`Master BOM "${newBomName}" (${newVersion}) created successfully with ${formattedItems.length} line items!`);
     setTimeout(() => setSuccessToast(''), 5000);
@@ -319,7 +325,11 @@ export default function MasterBOMPage() {
   // Add or Update Item in Active BOM
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeBOM || activeBOM.isLocked) return;
+    if (!activeBOM) return;
+    if (activeBOM.isLocked) {
+      alert('Cannot add item: this BOM is locked. Please click "Click to Unlock" button at top right to enable editing.');
+      return;
+    }
 
     const rate = Number(estimatedRate);
     const qty = Number(quantity);
@@ -405,7 +415,11 @@ export default function MasterBOMPage() {
   };
 
   const handleOpenEditItem = (item: BOMItem) => {
-    if (!activeBOM || activeBOM.isLocked) return;
+    if (!activeBOM) return;
+    if (activeBOM.isLocked) {
+      alert('Cannot edit line item: this BOM is locked. Please click "Click to Unlock" button above.');
+      return;
+    }
     setEditingItemId(item.id);
     setPartNumber(item.partNumber || '');
     setItemName(item.itemName || item.partName || (item as any).part_name || '');
@@ -422,7 +436,11 @@ export default function MasterBOMPage() {
   };
 
   const handleDeleteItem = (itemId: string) => {
-    if (!activeBOM || activeBOM.isLocked) return;
+    if (!activeBOM) return;
+    if (activeBOM.isLocked) {
+      alert('Cannot delete line item: this BOM is locked. Please click "Click to Unlock" button above.');
+      return;
+    }
     const itemToDelete = activeBOM.items.find((i) => i.id === itemId);
     if (!confirm(`Are you sure you want to remove "${itemToDelete?.itemName || 'this item'}" from the BOM?`)) return;
     const updatedItems = activeBOM.items.filter((i) => i.id !== itemId);
@@ -631,7 +649,20 @@ export default function MasterBOMPage() {
             <option value="Electrical">Electrical</option>
           </select>
 
-          {activeBOM && !activeBOM.isLocked && (
+          {activeBOM && activeBOM.isLocked ? (
+            <button
+              onClick={() => {
+                updateBOM(activeBOM.id, { isLocked: false, approvalStatus: 'draft' });
+                setSuccessToast(`BOM ${activeBOM.bomNumber} unlocked for editing.`);
+                setTimeout(() => setSuccessToast(''), 3000);
+              }}
+              title="Click to Unlock BOM for editing"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition shadow-xs whitespace-nowrap shrink-0"
+            >
+              <Unlock className="w-4 h-4 text-amber-600" />
+              Unlock to Add Material
+            </button>
+          ) : activeBOM ? (
             <button
               onClick={() => {
                 setEditingItemId(null);
@@ -653,9 +684,31 @@ export default function MasterBOMPage() {
               <PlusCircle className="w-4 h-4" />
               Add Material Line
             </button>
-          )}
+          ) : null}
         </div>
       </div>
+
+      {/* Locked Notice Banner */}
+      {activeBOM?.isLocked && (
+        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-amber-700 shrink-0" />
+            <span>
+              <strong>આ Master BOM Approved &amp; Locked છે.</strong> Locked હોવાથી સીધો ફેરફાર થઈ શકતો નથી. ફેરફાર કરવા કે નવી Material Line ઉમેરવા માટે <strong>Unlock</strong> કરો.
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              updateBOM(activeBOM.id, { isLocked: false, approvalStatus: 'draft' });
+              setSuccessToast(`BOM ${activeBOM.bomNumber} unlocked for editing.`);
+              setTimeout(() => setSuccessToast(''), 3000);
+            }}
+            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs shadow-xs transition shrink-0 ml-3"
+          >
+            Unlock Now
+          </button>
+        </div>
+      )}
 
       {/* BOM Multi-Level Hierarchy Table */}
       <div className="overflow-x-auto rounded-2xl border border-[#EBE3DB] bg-white shadow-md">
@@ -781,7 +834,20 @@ export default function MasterBOMPage() {
                           </button>
                         </div>
                       ) : (
-                        <span className="text-[10px] text-slate-400 font-mono">Locked</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (activeBOM) {
+                              updateBOM(activeBOM.id, { isLocked: false, approvalStatus: 'draft' });
+                              setSuccessToast(`BOM ${activeBOM.bomNumber} unlocked for editing.`);
+                              setTimeout(() => setSuccessToast(''), 3000);
+                            }
+                          }}
+                          title="Locked - Click to unlock for editing"
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 hover:bg-amber-100 text-[10px] text-emerald-800 hover:text-amber-900 border border-emerald-200 font-mono font-semibold transition cursor-pointer"
+                        >
+                          <Lock className="w-2.5 h-2.5 text-emerald-600" /> Locked
+                        </button>
                       )}
                     </td>
                   </tr>

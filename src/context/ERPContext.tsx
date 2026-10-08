@@ -8051,7 +8051,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addBOM = (data: Omit<BOMHeader, 'id'>) => {
-    const id = `BOM-${data.jobNumber}`;
+    const fallbackJob = data.jobNumber && data.jobNumber.trim() ? data.jobNumber : `JOB-${Date.now().toString().slice(-4)}`;
+    const versionStr = (data as any).revisionNumber || (data as any).revision || (data as any).version || 'V1';
+    const id = (data as any).id || (data.bomNumber && data.bomNumber.startsWith('BOM-') ? data.bomNumber : `BOM-${fallbackJob}-${versionStr}`);
     const rawItems = data.items || [];
     let calcTotal = 0;
     const normalizedItems = rawItems.map((itm: any, idx: number) => {
@@ -8078,7 +8080,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       id,
       bomNumber: data.bomNumber || id,
       projectId: data.projectId || '',
-      jobNumber: data.jobNumber || '',
+      jobNumber: fallbackJob,
       status: (data.status as any) || 'draft',
       totalItemCount: normalizedItems.length,
       totalItemsCount: normalizedItems.length,
@@ -8088,28 +8090,38 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     };
 
     setBoms((prev) => {
-      const updated = [newBom, ...prev.filter((b) => b.id !== id && b.jobNumber !== data.jobNumber)];
+      const updated = [newBom, ...prev.filter((b) => b.id !== id && b.bomNumber !== newBom.bomNumber)];
       if (typeof window !== 'undefined') {
         try { localStorage.setItem('UMA_ERP_boms', JSON.stringify(updated)); } catch (_) {}
       }
       return updated;
     });
 
-    logAction('CREATE', 'Designer', 'BOM Management', id, `Created Master BOM for ${data.jobNumber}`);
+    logAction('CREATE', 'Designer', 'BOM Management', id, `Created Master BOM for ${fallbackJob}`);
     const bomPayload = {
       ...newBom,
-      bomNumber: (newBom as any).bomNumber || id,
-      jobNumber: newBom.jobNumber || 'JOB-2026-0042',
-      designJobId: (newBom as any).designJobId || newBom.jobNumber || 'DJOB-DEFAULT',
+      id: newBom.id || id,
+      bomNumber: newBom.bomNumber || id,
+      bom_number: newBom.bomNumber || id,
+      jobNumber: newBom.jobNumber || fallbackJob,
+      job_number: newBom.jobNumber || fallbackJob,
+      designJobId: (newBom as any).designJobId || newBom.jobNumber || 'DES-2026-0001',
+      design_job_id: (newBom as any).designJobId || newBom.jobNumber || 'DES-2026-0001',
       preparedBy: (newBom as any).preparedBy || `${currentUser.firstName} ${currentUser.lastName}`.trim() || 'Design Engineer',
+      prepared_by: (newBom as any).preparedBy || `${currentUser.firstName} ${currentUser.lastName}`.trim() || 'Design Engineer',
+      activeRevision: versionStr,
+      active_revision: versionStr,
       items: normalizedItems,
+      totalItems: normalizedItems.length,
+      total_items: normalizedItems.length,
+      totalEstimatedCost: finalTotalCost,
       total_estimated_cost: finalTotalCost,
       status: newBom.status || 'draft',
     };
     api.designer.boms.create(bomPayload).then((res) => {
       if (res && res.id) {
         setBoms((prev) => {
-          const synced = prev.map((b) => (b.id === id ? { ...b, ...res, items: normalizedItems, totalEstimatedCost: finalTotalCost } : b));
+          const synced = prev.map((b) => (b.id === id || b.bomNumber === newBom.bomNumber ? { ...b, ...res, items: normalizedItems, totalEstimatedCost: finalTotalCost } : b));
           if (typeof window !== 'undefined') {
             try { localStorage.setItem('UMA_ERP_boms', JSON.stringify(synced)); } catch (_) {}
           }
@@ -8164,16 +8176,22 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
 
+    const targetBOM = boms.find(b => b.id === id || b.bomNumber === id || b.jobNumber === id);
+    const backendId = targetBOM?.id || id;
     const backendPayload: any = {
       ...normalizedUpdates,
       ...(normalizedUpdates.items ? {
         items: normalizedUpdates.items,
+        totalItems: normalizedUpdates.items.length,
         total_items: normalizedUpdates.items.length,
+        totalEstimatedCost: (normalizedUpdates as any).totalEstimatedCost || (normalizedUpdates as any).total_estimated_cost,
         total_estimated_cost: (normalizedUpdates as any).total_estimated_cost || (normalizedUpdates as any).totalEstimatedCost,
       } : {}),
-      ...(normalizedUpdates.revisionNumber ? { active_revision: normalizedUpdates.revisionNumber } : {}),
+      ...(normalizedUpdates.revisionNumber ? { activeRevision: normalizedUpdates.revisionNumber, active_revision: normalizedUpdates.revisionNumber } : {}),
+      ...(normalizedUpdates.approvalStatus ? { status: normalizedUpdates.approvalStatus } : {}),
+      ...(normalizedUpdates.approvedBy ? { approvedBy: normalizedUpdates.approvedBy, approved_by: normalizedUpdates.approvedBy } : {}),
     };
-    api.designer.boms.update(encodeURIComponent(id), backendPayload).catch((err) => console.warn('Failed to update BOM on backend:', err));
+    api.designer.boms.update(encodeURIComponent(backendId), backendPayload).catch((err) => console.warn('Failed to update BOM on backend:', err));
   };
 
   const addBOMRevision = (data: Omit<BOMRevision, 'id' | 'changedDate'>) => {
