@@ -1070,6 +1070,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       createdDate: new Date().toISOString().split('T')[0],
     };
     setBugTickets((prev) => [newBug, ...prev]);
+    api.core.bugTickets.create(newBug).catch((err) => console.warn('Failed to save bug ticket to backend:', err));
   };
 
   const updateBugTicketStatus = (id: string, status: BugTicket['status']) => {
@@ -1078,6 +1079,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         b.id === id ? { ...b, status, resolvedDate: status === 'Closed' || status === 'Fixed' ? new Date().toISOString().split('T')[0] : b.resolvedDate } : b
       )
     );
+    api.core.bugTickets.update(id, { status }).catch((err) => console.warn('Failed to update bug ticket on backend:', err));
   };
 
   const createBackupRecord = (type: BackupRecord['type']) => {
@@ -1094,6 +1096,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       location: 'Encrypted AWS Cloud S3 Storage / Mumbai',
     };
     setBackupRecords((prev) => [newBk, ...prev]);
+    api.core.backups.create(newBk).catch((err) => console.warn('Failed to save backup record to backend:', err));
   };
 
   const restoreBackupRecord = (id: string) => {
@@ -3042,6 +3045,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.roles.list(),
         api.employees.list(),
         api.hr.designations(),
+        api.core.auditLogs.list(),
+        api.core.notifications.list(),
       ]);
 
       const meRes = val<any>(results[0]);
@@ -3144,6 +3149,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
+      applyLive<AuditLogEntry>(val(results[7]), setAuditLogs, 'auditLogs');
+      applyLive<NotificationItem>(val(results[8]), setNotifications, 'notifications');
+
       lastSyncTimes.current['bootstrap'] = Date.now();
     } catch (err) {
       console.warn('Bootstrap load error:', err);
@@ -3169,6 +3177,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.crm.followUps.list(),
         api.crm.siteVisits.list(),
         api.crm.exhibitions.list(),
+        api.crm.activities.list(),
       ]);
 
       const rawLeads = val<any[]>(results[0]);
@@ -3499,6 +3508,18 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         })
         .catch(() => {});
 
+      const costsPromise = api.projects.costs.list()
+        .then((data) => applyLive<ProjectCostItem>(data, setProjectCosts, 'projectCosts'))
+        .catch(() => {});
+
+      const delaysPromise = api.projects.delays.list()
+        .then((data) => applyLive<ProjectDelay>(data, setProjectDelays, 'projectDelays'))
+        .catch(() => {});
+
+      const issuesPromise = api.projects.issues.list()
+        .then((data) => applyLive<ProjectIssue>(data, setProjectIssues, 'projectIssues'))
+        .catch(() => {});
+
       await Promise.allSettled([
         prjPromise,
         tasksPromise,
@@ -3507,6 +3528,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         deptPromise,
         docsPromise,
         crPromise,
+        costsPromise,
+        delaysPromise,
+        issuesPromise,
       ]);
 
       lastSyncTimes.current['projects'] = Date.now();
@@ -3530,6 +3554,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.designer.requirements.list(),
         api.designer.tasks.list(),
         api.designer.technicalDocuments.list(),
+        api.designer.assemblyDrawings.list(),
+        api.designer.revisions.list(),
       ]);
 
       const rawDesignJobs = val<any[]>(results[0]);
@@ -3809,6 +3835,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
           try { localStorage.setItem('UMA_ERP_technicalDocuments', JSON.stringify(normalizedDocs)); } catch (_) {}
         }
       }
+
+      applyLive<AssemblyDrawing>(val(results[7]), setAssemblyDrawings, 'assemblyDrawings');
+      applyLive<DesignRevisionLog>(val(results[8]), setDesignRevisions, 'designRevisions');
 
       lastSyncTimes.current['designer'] = Date.now();
     } catch (err) {
@@ -4094,6 +4123,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.store.materialIssues.list(),
         api.store.materialReturns.list(),
         api.store.qcInspections(),
+        api.store.reservations.list(),
+        api.store.locations.list(),
       ]);
 
       const rawItems = val<any[]>(results[0]);
@@ -4306,6 +4337,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
+      applyLive<StockReservation>(val(results[9]), setStockReservations, 'stockReservations');
+      applyLive<WarehouseLocation>(val(results[10]), setWarehouseLocations, 'warehouseLocations');
+
       lastSyncTimes.current['store'] = Date.now();
     } catch (err) {
       console.warn('Store sync error:', err);
@@ -4330,6 +4364,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.production.holds.list(),
         api.production.wip.list(),
         api.production.routingOperations.list(),
+        api.production.dispatch.list(),
       ]);
 
       applyLive<ManufacturingJob>(val(results[0]), setManufacturingJobs, 'manufacturingJobs');
@@ -4573,6 +4608,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         setRoutingOperations(normalizedOps);
       }
 
+      applyLive<DispatchOrder>(val(results[12]), setDispatchOrders, 'dispatchOrders');
+
       lastSyncTimes.current['production'] = Date.now();
     } catch (err) {
       console.warn('Production sync error:', err);
@@ -4641,6 +4678,10 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.hr.exits.list(),
         api.hr.wfhRequests.list(),
         api.hr.missedPunches.list(),
+        api.hr.employeeDocuments.list(),
+        api.hr.regularizations.list(),
+        api.hr.reimbursements.list(),
+        api.hr.salaryComponents.list(),
       ]);
 
       applyLive<ShiftMaster>(val(results[0]), setShiftMasters, 'shifts');
@@ -4657,6 +4698,10 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       applyLive<EmployeeExitItem>(val(results[11]), setEmployeeExits, 'employeeExits');
       applyLive<WFHRequest>(val(results[12]), setWFHRequests, 'wfhRequests');
       applyLive<MissedPunchRequest>(val(results[13]), setMissedPunchRequests, 'missedPunchRequests');
+      applyLive<EmployeeDocumentItem>(val(results[14]), setEmployeeDocuments, 'employeeDocuments');
+      applyLive<AttendanceRegularization>(val(results[15]), setAttendanceRegularizations, 'attendanceRegularizations');
+      applyLive<ReimbursementExpense>(val(results[16]), setReimbursementExpenses, 'reimbursementExpenses');
+      applyLive<SalaryComponent>(val(results[17]), setSalaryComponents, 'salaryComponents');
 
       lastSyncTimes.current['hr'] = Date.now();
     } catch (err) {
@@ -4774,14 +4819,46 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       const results = await Promise.allSettled([
         api.integration.approvals.list(),
         api.integration.alerts.list(),
+        api.integration.customer360(),
+        api.integration.supplier360(),
+        api.integration.item360(),
+        api.integration.employee360(),
+        api.integration.jobProfitability(),
       ]);
 
       applyLive<ApprovalItem>(val(results[0]), setCentralApprovals, 'approvals');
       applyLive<ERPAlertItem>(val(results[1]), setCentralAlerts, 'alerts');
+      applyLive<Customer360Summary>(val(results[2]), setCustomer360List, 'customer360List');
+      applyLive<Supplier360Summary>(val(results[3]), setSupplier360List, 'supplier360List');
+      applyLive<Item360Summary>(val(results[4]), setItem360List, 'item360List');
+      applyLive<Employee360Summary>(val(results[5]), setEmployee360List, 'employee360List');
+      applyLive<JobProfitabilityEntry>(val(results[6]), setJobProfitabilityList, 'jobProfitabilityList');
 
       lastSyncTimes.current['integration'] = Date.now();
     } catch (err) {
       console.warn('Integration sync error:', err);
+    }
+  }, []);
+
+  // 12. Core Testing & System Health Sync
+  const syncCoreTesting = useCallback(async (force = false) => {
+    const now = Date.now();
+    if (!force && lastSyncTimes.current['core_testing'] && now - lastSyncTimes.current['core_testing'] < STALE_TIME_MS) return;
+    try {
+      const results = await Promise.allSettled([
+        api.core.bugTickets.list(),
+        api.core.backups.list(),
+        api.core.dataImports.list(),
+        api.core.goLiveChecklist.list(),
+        api.core.securityChecks.list(),
+      ]);
+
+      applyLive<BugTicket>(val(results[0]), setBugTickets, 'bugTickets');
+      applyLive<BackupRecord>(val(results[1]), setBackupRecords, 'backupRecords');
+
+      lastSyncTimes.current['core_testing'] = Date.now();
+    } catch (err) {
+      console.warn('Core testing sync error:', err);
     }
   }, []);
 
@@ -4830,10 +4907,16 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       case 'admin':
       case 'dashboard':
         return syncIntegration(force);
+      case 'testing':
+      case 'settings':
+      case 'system':
+      case 'bugs':
+      case 'backups':
+        return syncCoreTesting(force);
       default:
         return Promise.resolve();
     }
-  }, [syncCRM, syncProjects, syncDesigner, syncPurchase, syncStore, syncProduction, syncMaintenance, syncHR, syncAccounting, syncIntegration]);
+  }, [syncCRM, syncProjects, syncDesigner, syncPurchase, syncStore, syncProduction, syncMaintenance, syncHR, syncAccounting, syncIntegration, syncCoreTesting]);
 
   // Initial Mount: FAST BOOTSTRAP ONLY (Only core session and masters)
   useEffect(() => {
@@ -4863,8 +4946,10 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       syncAccounting().catch(() => {});
     } else if (pathname.startsWith('/integration') || pathname.startsWith('/admin') || pathname === '/' || pathname === '/dashboard') {
       syncIntegration().catch(() => {});
+    } else if (pathname.startsWith('/testing') || pathname.startsWith('/settings')) {
+      syncCoreTesting().catch(() => {});
     }
-  }, [pathname, syncCRM, syncProjects, syncDesigner, syncPurchase, syncStore, syncProduction, syncMaintenance, syncHR, syncAccounting, syncIntegration]);
+  }, [pathname, syncCRM, syncProjects, syncDesigner, syncPurchase, syncStore, syncProduction, syncMaintenance, syncHR, syncAccounting, syncIntegration, syncCoreTesting]);
 
   // Cross-Department Automatic Synchronization:
   // When a project is created or planned, it automatically creates/syncs:
@@ -5614,20 +5699,31 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
 
     // Auto-schedule initial follow-up if nextFollowUpDate was provided during lead registration
     if (newLead.nextFollowUpDate) {
-      const flwNo = `FLW-2026-${String(followUps.length + 1).padStart(4, '0')}`;
+      const existingFlwNos = new Set(followUps.map((f) => f.followUpNo || f.id));
+      const maxNum = followUps.reduce((max, f) => {
+        const match = (f.followUpNo || f.id || '').match(/FLW-\d+-(\d+)/);
+        return match ? Math.max(max, parseInt(match[1], 10)) : max;
+      }, 50);
+      let nextNum = maxNum + 1;
+      let flwNo = `FLW-2026-${String(nextNum).padStart(4, '0')}`;
+      while (existingFlwNos.has(flwNo)) {
+        nextNum++;
+        flwNo = `FLW-2026-${String(nextNum).padStart(4, '0')}`;
+      }
+
       const initialFlw: FollowUp = {
         id: flwNo,
         followUpNo: flwNo,
         leadOrCustomerId: newLead.id,
-        leadOrCustomerName: `${newLead.companyName} (${newLead.contactPerson})`,
+        leadOrCustomerName: `${newLead.companyName || 'Prospect'} (${newLead.contactPerson || 'Contact'})`,
         entityType: 'lead',
         type: 'call',
-        assignedToId: newLead.assignedSalesPersonId,
-        assignedToName: newLead.assignedSalesPersonName,
+        assignedToId: newLead.assignedSalesPersonId || 'EMP-001',
+        assignedToName: newLead.assignedSalesPersonName || 'Sales Officer',
         date: newLead.nextFollowUpDate,
         time: '11:00 AM',
         priority: newLead.priority === 'urgent' ? 'high' : 'medium',
-        purpose: `Initial inquiry follow-up for ${newLead.productName}`,
+        purpose: `Initial inquiry follow-up for ${newLead.productName || 'Equipment'}`,
         notes: newLead.requirementDescription || 'Lead registration initial follow-up',
         status: 'pending',
       };
@@ -6294,6 +6390,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.crm.quotations.updateStatus(quotationId, { revisionNumber, status }).catch((err) =>
       console.warn('Failed to update quotation status on backend:', err)
     );
+    if (status === 'accepted') {
+      api.crm.quotations.convert(quotationId).catch(() => {});
+    }
   };
 
   // Customer PO & Sales Order
@@ -6427,6 +6526,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.crm.customerPos.update(poId, { status: 'converted_to_so', convertedSoId: soNo }).catch((err) =>
       console.warn('Failed to update customer PO on backend:', err)
     );
+    api.crm.customerPos.convertToSo(poId).catch(() => {});
     return newSO;
   };
 
@@ -7708,6 +7808,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         };
       })
     );
+    api.projects.costs.update(id, costUpdates).catch((err) => console.warn('Failed to update project cost on backend:', err));
   };
 
   const addProjectComment = (data: Omit<ProjectComment, 'id' | 'date' | 'time' | 'resolved'>): ProjectComment => {
@@ -10509,7 +10610,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     const newRec: CustomerReceipt = { ...rec, id: receiptNumber, receiptNumber };
     setCustomerReceipts((prev) => [newRec, ...prev]);
     logAction('CREATE', 'Accounting', 'Customer Receipts', newRec.id, `Recorded Receipt ${newRec.receiptNumber} from ${newRec.customerName} (₹${(newRec.amountPaid ?? 0)?.toLocaleString()})`);
-    api.post('/customer-receipts/', newRec).catch((err) => console.warn('Failed to add customer receipt:', err));
+    api.accounting.createReceipt(newRec).catch((err) => console.warn('Failed to add customer receipt:', err));
   };
 
   const addSupplierPayment = (pay: Omit<SupplierPayment, 'id' | 'paymentNumber'>) => {
@@ -10517,7 +10618,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     const newPay: SupplierPayment = { ...pay, id: paymentNumber, paymentNumber };
     setSupplierPayments((prev) => [newPay, ...prev]);
     logAction('CREATE', 'Accounting', 'Supplier Payments', newPay.id, `Recorded Payment ${newPay.paymentNumber} to ${newPay.supplierName} (₹${(newPay.amountPaid ?? 0)?.toLocaleString()})`);
-    api.post('/supplier-payments/', newPay).catch((err) => console.warn('Failed to add supplier payment:', err));
+    api.accounting.createPayment(newPay).catch((err) => console.warn('Failed to add supplier payment:', err));
   };
 
   const addJournalEntry = (jv: Omit<JournalEntry, 'id' | 'journalNumber'>) => {
@@ -11992,6 +12093,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   const updateAttendanceRegularizationStatus = (id: string, status: LeaveApprovalStatus) => {
     setAttendanceRegularizations((prev) => prev.map((r) => (r.id === id || r.regularizationNo === id ? { ...r, status } : r)));
     logAction('UPDATE', 'hr', 'attendance-regularization', id, `Regularization status updated to ${status}`);
+    api.hr.regularizations.update(id, { status }).catch((err) => console.warn('Failed to update regularization on backend:', err));
   };
 
   const addOvertimeRecord = (ot: Omit<OvertimeRecord, 'id' | 'overtimeNo' | 'status'>) => {
