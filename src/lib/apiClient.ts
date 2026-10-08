@@ -536,6 +536,14 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     const nextDue = new Date();
     nextDue.setDate(nextDue.getDate() + 30);
     d.nextDueDate = d.nextDueDate || nextDue.toISOString().split('T')[0];
+  } else if (ep.includes('/service-visits')) {
+    d.id = d.id || d.visitNumber || d.visit_number || `SRV-2026-${Date.now().toString().slice(-4)}`;
+    d.visitNumber = d.visitNumber || d.visit_number || d.id;
+    d.visit_number = d.visitNumber;
+    d.customerName = d.customerName || d.customer_name || 'Client';
+    d.customer_name = d.customerName;
+    d.visitDate = d.visitDate || d.visit_date || nowStr;
+    d.visit_date = d.visitDate;
   }
   // HR
   else if (ep.includes('/designations')) {
@@ -1798,7 +1806,15 @@ export const api = {
     },
     breakdowns: () => request<any[]>('/breakdowns/'),
     pmPlans: () => request<any[]>('/pm-plans/'),
-    serviceVisits: () => request<any[]>('/service-visits/'),
+    serviceVisits: Object.assign(
+      () => request<any[]>('/service-visits/'),
+      {
+        list: () => request<any[]>('/service-visits/'),
+        create: (data: any) => request<any>('/service-visits/', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: any) => request<any>(`/service-visits/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+        delete: (id: string) => request<any>(`/service-visits/${id}/`, { method: 'DELETE' }),
+      }
+    ),
     amcContracts: () => request<any[]>('/amc-contracts/'),
     serviceWorkOrders: {
       list: () => request<any[]>('/service-work-orders/'),
