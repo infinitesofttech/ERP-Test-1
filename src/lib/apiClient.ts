@@ -1473,10 +1473,20 @@ export const api = {
   purchase: {
     mrp: {
       list: () => request<any[]>('/material-requirements/'),
-      get: (id: string) => request<any>(`/material-requirements/${id}/`),
+      get: (id: string) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`),
       create: (data: any) => request<any>('/material-requirements/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/material-requirements/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      delete: (id: string) => request<any>(`/material-requirements/${id}/`, { method: 'DELETE' }),
+      update: (id: string, data: any) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      upsert: async (id: string, data: any) => {
+        try {
+          return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        } catch (err: any) {
+          if (err?.status === 404) {
+            return await request<any>('/material-requirements/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+          }
+          throw err;
+        }
+      },
+      delete: (id: string) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'DELETE' }),
     },
     suppliers: {
       list: () => request<any[]>('/suppliers/'),

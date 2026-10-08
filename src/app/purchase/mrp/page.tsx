@@ -328,13 +328,26 @@ export default function MRPPage() {
   const handleSyncMRPToDatabase = async () => {
     setIsSyncing(true);
     try {
+      // 1. Collect all known existing IDs in the database so we update existing items without triggering 400 Bad Request
+      const existingDbIds = new Set<string>(materialRequirements.map((m) => String(m.id)));
+      try {
+        const freshList = await api.purchase.mrp.list();
+        if (Array.isArray(freshList)) {
+          freshList.forEach((m: any) => {
+            if (m && m.id) existingDbIds.add(String(m.id));
+          });
+        }
+      } catch (_) {}
+
       const itemsToSync = filteredRequirements.length > 0 ? filteredRequirements : allComputedRequirements;
       let count = 0;
       for (const item of itemsToSync) {
+        const targetId = item.id.startsWith('MRP-AUTO-')
+          ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
+          : item.id;
+
         const payload = {
-          id: item.id.startsWith('MRP-AUTO-')
-            ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
-            : item.id,
+          id: targetId,
           projectId: item.projectId || 'PRJ-2026-0001',
           jobId: item.jobId,
           jobNumber: (item as any).jobNumber || item.jobId,
@@ -358,7 +371,20 @@ export default function MRPPage() {
           drawingNumber: item.drawingNumber || '',
           status: item.status || (Number(item.shortageQuantity || 0) > 0 ? 'shortage' : 'covered'),
         };
-        await api.purchase.mrp.create(payload).catch(() => null);
+
+        if (existingDbIds.has(targetId)) {
+          // Record already exists in backend database -> use PATCH (update) to avoid duplicate ID 400 error
+          await api.purchase.mrp.update(targetId, payload).catch(() => null);
+        } else {
+          // New requirement -> use POST (create)
+          try {
+            await api.purchase.mrp.create(payload);
+            existingDbIds.add(targetId);
+          } catch (createErr: any) {
+            // In case of race condition or duplicate ID constraint, smoothly fallback to PATCH update
+            await api.purchase.mrp.update(targetId, payload).catch(() => null);
+          }
+        }
         count++;
       }
       setGeneratedPRSuccess(`MRP data successfully saved to backend database! (${count} material requirements synchronized).`);
@@ -424,11 +450,45 @@ export default function MRPPage() {
 
     addPurchaseRequisition(newPR);
     // Also update the material requirements in database
-    itemsToPR.forEach(item => {
+    itemsToPR.forEach(async (item) => {
       const dbId = item.id.startsWith('MRP-AUTO-') 
         ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
         : item.id;
-      api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
+      const isExisting = materialRequirements.some((m) => m.id === dbId || m.id === item.id);
+      if (isExisting) {
+        api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
+      } else {
+        const payload = {
+          id: dbId,
+          projectId: item.projectId || firstItem.projectId || 'PRJ-2026-0001',
+          jobId: item.jobId,
+          jobNumber: (item as any).jobNumber || item.jobId,
+          bomId: item.bomId,
+          bomNumber: (item as any).bomNumber || item.bomId,
+          bomRevision: item.bomRevision || 'V1',
+          partNumber: item.partNumber || item.itemCode,
+          itemCode: item.itemCode || item.partNumber,
+          itemName: item.itemName,
+          specification: item.specification || '',
+          category: item.category || 'Raw Material',
+          requiredQuantity: Number(item.requiredQuantity || 1),
+          unitOfMeasure: item.unitOfMeasure || 'NOS',
+          availableStock: Number(item.availableStock || 0),
+          reservedStock: Number(item.reservedStock || 0),
+          onOrderQuantity: Number(item.onOrderQuantity || 0),
+          shortageQuantity: Number(item.shortageQuantity || 0),
+          requiredByDate: item.requiredByDate || '',
+          procurementType: item.procurementType || 'Purchase',
+          procurementStatus: 'PR Created',
+          drawingNumber: item.drawingNumber || '',
+          status: 'PR Generated',
+        };
+        try {
+          await api.purchase.mrp.create(payload);
+        } catch (_) {
+          api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
+        }
+      }
     });
 
     setGeneratedPRSuccess(`PR generated successfully: ${newPR.prNumber} with ${prItems.length} items (Total: ₹ ${totalEst.toLocaleString('en-IN')})!`);
