@@ -867,6 +867,29 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
     d.project_id = d.projectId;
     d.job_number = d.job_number || d.jobNumber || '';
+  } else if (ep.includes('fixed-assets')) {
+    d.id = d.id || d.assetCode || d.asset_code || `AST-${Date.now().toString().slice(-4)}`;
+    d.assetCode = d.assetCode || d.asset_code || d.id;
+    d.assetName = d.assetName || d.asset_name || 'Fixed Asset';
+    d.purchaseDate = d.purchaseDate || d.purchase_date || nowStr;
+    if (d.purchaseCost !== undefined || d.purchaseValue !== undefined) {
+      d.purchaseCost = Number(d.purchaseCost ?? d.purchaseValue ?? 0);
+    }
+    if (d.usefulLifeYears !== undefined) {
+      d.usefulLifeYears = parseInt(String(d.usefulLifeYears), 10) || 5;
+    }
+    if (d.depreciationRate !== undefined) {
+      d.depreciationRate = Number(d.depreciationRate);
+    }
+    if (d.residualValue !== undefined) {
+      d.residualValue = Number(d.residualValue);
+    }
+    if (d.accumulatedDepreciation !== undefined) {
+      d.accumulatedDepreciation = Number(d.accumulatedDepreciation);
+    }
+    if (d.currentBookValue !== undefined) {
+      d.currentBookValue = Number(d.currentBookValue);
+    }
   }
   // Sanitize: remove null and undefined values so DRF serializers never throw "This field may not be null"
   for (const k of Object.keys(d)) {
@@ -912,7 +935,13 @@ export function invalidateApiCache(endpointPrefix?: string) {
   }
 }
 
-export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export async function request<T>(rawEndpoint: string, options: RequestInit = {}): Promise<T> {
+  // Normalize legacy/mismatched endpoints (e.g. /fixed-assets/ -> /accounting/fixed-assets/)
+  let endpoint = rawEndpoint;
+  if (/^\/?fixed-assets(\/|\?|$)/.test(endpoint)) {
+    endpoint = endpoint.replace(/^\/?fixed-assets(\/|\?|$)/, '/accounting/fixed-assets$1');
+  }
+
   const method = (options.method || 'GET').toUpperCase();
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const cacheKey = `GET:${endpoint}`;
@@ -2430,10 +2459,10 @@ export const api = {
         request<any>(`/expenses/${id}/approve/`, { method: 'POST', body: JSON.stringify({ approved_by: approvedBy || 'Super Admin' }) }),
     },
     fixedAssets: {
-      list: () => request<any[]>('/fixed-assets/'),
-      create: (data: any) => request<any>('/fixed-assets/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/fixed-assets/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      delete: (id: string) => request<any>(`/fixed-assets/${id}/`, { method: 'DELETE' }),
+      list: () => request<any[]>('/accounting/fixed-assets/'),
+      create: (data: any) => request<any>('/accounting/fixed-assets/', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request<any>(`/accounting/fixed-assets/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/accounting/fixed-assets/${id}/`, { method: 'DELETE' }),
     },
     contraVouchers: {
       list: () => request<any[]>('/accounting/contra-vouchers/'),

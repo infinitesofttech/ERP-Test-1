@@ -11010,7 +11010,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
     logAction('CREATE', 'Accounting', 'Fixed Assets', id, `Registered Fixed Asset ${asset.assetCode} - ${asset.assetName}`);
-    api.post('/fixed-assets/', newAsset).catch((err) => console.warn('Failed to save fixed asset to DB:', err));
+    api.accounting.fixedAssets.create(newAsset).catch((err) => console.warn('Failed to save fixed asset to DB:', err));
   };
 
   const updateFixedAsset = (id: string, asset: Partial<FixedAsset>) => {
@@ -11020,7 +11020,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
     logAction('UPDATE', 'Accounting', 'Fixed Assets', id, `Updated Fixed Asset ${id}`);
-    api.patch(`/fixed-assets/${id}/`, asset).catch((err) => console.warn('Failed to update fixed asset in DB:', err));
+    api.accounting.fixedAssets.update(id, asset).catch((err) => console.warn('Failed to update fixed asset in DB:', err));
   };
 
   const deleteFixedAsset = (id: string) => {
@@ -11030,7 +11030,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
     logAction('DELETE', 'Accounting', 'Fixed Assets', id, `Deleted Fixed Asset ${id}`);
-    api.delete(`/fixed-assets/${id}/`).catch((err) => console.warn('Failed to delete fixed asset from DB:', err));
+    api.accounting.fixedAssets.delete(id).catch((err) => console.warn('Failed to delete fixed asset from DB:', err));
   };
 
   const runDepreciation = (assetId: string, period: string, amount: number) => {
