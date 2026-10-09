@@ -39,7 +39,9 @@ export default function FinishedGoodsPage() {
     isInitialLoading,
   } = useERP();
 
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterWarehouse, setFilterWarehouse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -165,12 +167,17 @@ export default function FinishedGoodsPage() {
       if (updateFinishedGoods) {
         updateFinishedGoods(editingFg.id, payload);
       }
+      setShowModal(false);
+      setEditingFg(null);
     } else {
       addFinishedGoods(payload);
+      setToastMessage(`✓ Finished Goods record added & marked Ready for Dispatch! Redirecting to Dispatch / Delivery Challan...`);
+      setShowModal(false);
+      setEditingFg(null);
+      setTimeout(() => {
+        router.push(`/dispatch?job=${encodeURIComponent(payload.jobNumber || '')}`);
+      }, 1200);
     }
-
-    setShowModal(false);
-    setEditingFg(null);
   };
 
   // Filtered Finished Goods
@@ -219,6 +226,13 @@ export default function FinishedGoodsPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 bg-[#FAF7F2] text-[#544B45]" suppressHydrationWarning>
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+          <span className="font-bold text-xs">{toastMessage}</span>
+        </div>
+      )}
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-[#EBE3DB] shadow-sm">
         <div className="flex items-center gap-3">

@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { SalesInvoice } from '../../../types/accounting';
 import { Receipt, Search, Plus, Filter, CheckCircle2, Clock, Eye, Download, FileSpreadsheet, Building, Users } from 'lucide-react';
 
 export default function SalesInvoicesPage() {
+  const router = useRouter();
   const { salesInvoices, addSalesInvoice, approveSalesInvoice, customers, salesOrders } = useERP();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // Form state
   const [selectedSoId, setSelectedSoId] = useState<string>(salesOrders[0]?.id || salesOrders[0]?.salesOrderNumber || '');
@@ -161,11 +164,22 @@ export default function SalesInvoicesPage() {
       createdBy: 'Rajesh Patel',
     });
 
+    setToastMessage(`✓ Tax Invoice created! Redirecting to Customer Receipts for payment recording...`);
     setIsModalOpen(false);
+    setTimeout(() => {
+      router.push('/accounting/customer-receipts');
+    }, 1200);
   };
 
   return (
     <div className="p-6 space-y-6 bg-[#FAF7F2]  text-[#211B17]">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+          <span className="font-bold text-xs">{toastMessage}</span>
+        </div>
+      )}
       <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-[#EBE3DB]">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-emerald-500/20 rounded-xl text-emerald-400">

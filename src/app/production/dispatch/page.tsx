@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { DispatchOrder, DispatchStatus } from '../../../types/production';
 import {
@@ -43,7 +44,9 @@ export default function DispatchPage() {
     openJobModal,
   } = useERP();
 
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [filterCustomer, setFilterCustomer] = useState<string>('ALL');
@@ -239,12 +242,17 @@ export default function DispatchPage() {
 
     if (editingDisp) {
       updateDispatchOrder(editingDisp.id, payload);
+      setShowModal(false);
+      setEditingDisp(null);
     } else {
       addDispatchOrder(payload);
+      setToastMessage(`✓ Delivery Challan & Dispatch Order created! Redirecting to Sales Invoices / Tax Invoices...`);
+      setShowModal(false);
+      setEditingDisp(null);
+      setTimeout(() => {
+        router.push(`/accounting/sales-invoices?job=${encodeURIComponent(payload.jobNumber || '')}`);
+      }, 1200);
     }
-
-    setShowModal(false);
-    setEditingDisp(null);
   };
 
   // Filtered Dispatches
@@ -285,6 +293,13 @@ export default function DispatchPage() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 bg-[#FAF7F2] text-[#544B45]" suppressHydrationWarning>
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-indigo-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-indigo-200" />
+          <span className="font-bold text-xs">{toastMessage}</span>
+        </div>
+      )}
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-[#EBE3DB] shadow-sm">
         <div className="flex items-center gap-3">
