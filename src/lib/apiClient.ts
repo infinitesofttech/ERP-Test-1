@@ -432,6 +432,7 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     deliv.setDate(deliv.getDate() + 14);
     d.poNumber = d.poNumber || d.po_number || d.id || `PO-2026-${Date.now().toString().slice(-4)}`;
     d.po_number = d.poNumber;
+    d.id = d.id || d.poNumber;
     d.supplierId = d.supplierId || d.supplier_id || 'SUP-001';
     d.supplier_id = d.supplierId;
     d.supplierName = d.supplierName || d.supplier_name || 'Supplier';
@@ -439,6 +440,81 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.deliveryDate = d.deliveryDate || d.delivery_date || deliv.toISOString().split('T')[0];
     d.preparedBy = d.preparedBy || d.prepared_by || 'Purchase Officer';
     d.date = d.date || d.poDate || nowStr;
+    d.contactPerson = d.contactPerson ?? d.contact_person ?? '';
+    d.supplierGstin = d.supplierGstin ?? d.supplier_gstin ?? '';
+    d.supplierAddress = d.supplierAddress ?? d.supplier_address ?? '';
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.jobCode = d.jobCode || d.job_code || d.jobId || d.job_id || d.jobNumber || 'JOB-2026-001';
+    d.paymentTerms = d.paymentTerms || d.payment_terms || '30 Days Credit';
+    d.deliveryTerms = d.deliveryTerms || d.delivery_terms || 'FOR Destination (Uma Techno Fab GIDC Works)';
+    d.dispatchMode = d.dispatchMode || d.dispatch_mode || 'By Road Truck';
+    d.currency = d.currency || 'INR';
+    d.status = d.status || 'Submitted';
+
+    if (typeof d.revisionNumber === 'number') {
+      d.revisionNumber = `Rev-${String(d.revisionNumber).padStart(2, '0')}`;
+    } else {
+      d.revisionNumber = d.revisionNumber || 'Rev-00';
+    }
+
+    const sub = Number(d.subTotal ?? d.sub_total ?? 0);
+    d.subTotal = isNaN(sub) ? 0 : sub;
+    d.sub_total = d.subTotal;
+
+    const disc = Number(d.discountAmount ?? d.discount_amount ?? 0);
+    d.discountAmount = isNaN(disc) ? 0 : disc;
+    d.discount_amount = d.discountAmount;
+
+    const tax = Number(d.taxAmount ?? d.tax_amount ?? d.taxTotal ?? d.tax_total ?? 0);
+    d.taxAmount = isNaN(tax) ? 0 : tax;
+    d.tax_amount = d.taxAmount;
+    d.taxTotal = d.taxAmount;
+    d.tax_total = d.taxAmount;
+
+    const freight = Number(d.freightCharges ?? d.freight_charges ?? 0);
+    d.freightCharges = isNaN(freight) ? 0 : freight;
+    d.freight_charges = d.freightCharges;
+
+    const grand = Number(d.grandTotal ?? d.grand_total ?? d.totalAmount ?? (d.subTotal + d.taxAmount + d.freightCharges - d.discountAmount));
+    d.grandTotal = isNaN(grand) ? (d.subTotal + d.taxAmount) : grand;
+    d.grand_total = d.grandTotal;
+    d.totalAmount = d.grandTotal;
+
+    d.items = (Array.isArray(d.items) ? d.items : []).map((it: any, idx: number) => {
+      if (!it || typeof it !== 'object') return it;
+      const q = Number(it.quantity ?? it.orderedQuantity ?? it.qty ?? 1);
+      const up = Number(it.unitPrice ?? it.unit_price ?? it.rate ?? it.unitRate ?? 0);
+      const tot = Number(it.totalAmount ?? it.totalPrice ?? it.total_amount ?? it.total_price ?? (q * up));
+      const uom = it.uom || it.unitOfMeasure || it.unit_of_measure || it.unit || 'NOS';
+      return {
+        ...it,
+        id: it.id || `POI-${d.poNumber}-${idx + 1}`,
+        poId: d.id || d.poNumber,
+        itemCode: it.itemCode || it.item_code || it.partNumber || `ITM-${idx + 1}`,
+        partNumber: it.partNumber || it.part_number || it.itemCode || '',
+        itemName: it.itemName || it.item_name || it.name || 'Material Item',
+        description: it.description || it.specification || it.itemName || '',
+        category: it.category || 'Raw Material',
+        quantity: isNaN(q) ? 1 : q,
+        orderedQuantity: isNaN(q) ? 1 : q,
+        uom: uom,
+        unitOfMeasure: uom,
+        unitPrice: isNaN(up) ? 0 : up,
+        unitRate: isNaN(up) ? 0 : up,
+        totalAmount: isNaN(tot) ? 0 : tot,
+        totalPrice: isNaN(tot) ? 0 : tot,
+      };
+    });
+
+    for (const key of Object.keys(d)) {
+      if (d[key] === null) {
+        if (['subTotal', 'discountAmount', 'taxAmount', 'grandTotal', 'freightCharges', 'taxTotal'].includes(key)) {
+          d[key] = 0;
+        } else if (key !== 'approvedBy') {
+          d[key] = '';
+        }
+      }
+    }
   } else if (ep.includes('/purchase-returns')) {
     d.returnNumber = d.returnNumber || d.return_number || d.id || `PRT-2026-${Date.now().toString().slice(-4)}`;
     d.return_number = d.returnNumber;
@@ -1959,7 +2035,22 @@ export const api = {
     orders: {
       list: () => request<any[]>('/purchase-orders/'),
       get: (id: string) => request<any>(`/purchase-orders/${id}/`),
-      create: (data: any) => request<any>('/purchase-orders/', { method: 'POST', body: JSON.stringify(data) }),
+      create: async (data: any) => {
+        const id = data?.id || data?.poNumber || data?.po_number;
+        try {
+          return await request<any>('/purchase-orders/', { method: 'POST', body: JSON.stringify(data) });
+        } catch (err: any) {
+          const isConflict =
+            err?.status === 400 ||
+            err?.status === 409 ||
+            err?.message?.includes('already exists') ||
+            JSON.stringify(err?.data || '').includes('already exists');
+          if (id && isConflict) {
+            return await request<any>(`/purchase-orders/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+          }
+          throw err;
+        }
+      },
       update: (id: string, data: any) => request<any>(`/purchase-orders/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
       delete: (id: string) => request<any>(`/purchase-orders/${id}/`, { method: 'DELETE' }),
     },

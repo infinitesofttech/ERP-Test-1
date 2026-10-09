@@ -8968,27 +8968,45 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
 
     logAction('CREATE', 'Purchase', 'Purchase Orders', newPo.id, `Created PO ${newPo.poNumber} for supplier ${newPo.supplierName}`);
 
+    const subTotalVal = Number(newPo.subTotal || 0);
+    const taxVal = Number(newPo.taxTotal ?? (newPo as any).taxAmount ?? 0);
+    const grandTotalVal = Number(newPo.grandTotal ?? (subTotalVal + taxVal));
     const poPayload = {
       ...newPo,
       id: poId,
       poNumber: poNumber,
       po_number: poNumber,
-      supplierId: newPo.supplierId,
-      supplier_id: newPo.supplierId,
-      supplierName: newPo.supplierName,
-      supplier_name: newPo.supplierName,
-      supplierGstin: newPo.supplierGstin,
-      supplier_gstin: newPo.supplierGstin,
+      revisionNumber: typeof (newPo as any).revisionNumber === 'number' ? `Rev-${String((newPo as any).revisionNumber).padStart(2, '0')}` : ((newPo as any).revisionNumber || 'Rev-00'),
+      supplierId: newPo.supplierId || 'SUP-001',
+      supplier_id: newPo.supplierId || 'SUP-001',
+      supplierName: newPo.supplierName || 'Supplier',
+      supplier_name: newPo.supplierName || 'Supplier',
+      supplierGstin: newPo.supplierGstin || '24AAAAA0000A1Z5',
+      supplier_gstin: newPo.supplierGstin || '24AAAAA0000A1Z5',
+      contactPerson: (newPo as any).contactPerson || '',
+      supplierAddress: (newPo as any).supplierAddress || '',
+      projectId: newPo.projectId || 'PRJ-2026-0001',
+      jobCode: (newPo as any).jobCode || newPo.jobId || 'JOB-2026-001',
+      jobId: (newPo as any).jobCode || newPo.jobId || 'JOB-2026-001',
       deliveryDate: (newPo as any).expectedDeliveryDate || (newPo as any).deliveryDate || '2026-10-25',
       delivery_date: (newPo as any).expectedDeliveryDate || (newPo as any).deliveryDate || '2026-10-25',
+      expectedDeliveryDate: (newPo as any).expectedDeliveryDate || (newPo as any).deliveryDate || '2026-10-25',
+      paymentTerms: newPo.paymentTerms || '30 Days Credit after GRN',
+      deliveryTerms: (newPo as any).deliveryTerms || 'FOR Destination (Uma Techno Fab GIDC Works)',
+      dispatchMode: (newPo as any).dispatchMode || 'By Road Truck',
+      currency: newPo.currency || 'INR',
       date: newPo.poDate || new Date().toISOString().split('T')[0],
+      poDate: newPo.poDate || new Date().toISOString().split('T')[0],
       items: newPo.items || [],
-      subTotal: newPo.subTotal || 0,
-      taxAmount: newPo.taxTotal || 0,
-      grandTotal: Number(newPo.grandTotal || 0),
-      totalAmount: Number(newPo.grandTotal || 0),
+      subTotal: isNaN(subTotalVal) ? 0 : subTotalVal,
+      taxAmount: isNaN(taxVal) ? 0 : taxVal,
+      taxTotal: isNaN(taxVal) ? 0 : taxVal,
+      discountAmount: Number((newPo as any).discountAmount || 0),
+      freightCharges: Number((newPo as any).freightCharges || 0),
+      grandTotal: isNaN(grandTotalVal) ? 0 : grandTotalVal,
+      totalAmount: isNaN(grandTotalVal) ? 0 : grandTotalVal,
       status: newPo.status || 'Submitted',
-      preparedBy: (newPo as any).createdBy || `${currentUser?.firstName || 'Admin'} ${currentUser?.lastName || 'User'}`,
+      preparedBy: (newPo as any).createdBy || `${currentUser?.firstName || 'Purchase'} ${currentUser?.lastName || 'Officer'}`,
     };
 
     api.purchase.orders.create(poPayload).then((res) => {

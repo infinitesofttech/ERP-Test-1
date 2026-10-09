@@ -199,6 +199,11 @@ export default function PurchaseOrderPage() {
         drawingNumber: (it as any).drawingNumber || 'DWG-REV01',
       }));
 
+      const sqSub = Number(sqObj.subTotal || sqObj.subtotal || 0);
+      const sqTax = Number(sqObj.taxTotal || 0);
+      const sqFreight = Number(sqObj.freightCharges || 0);
+      const sqGrand = Number(sqObj.grandTotal || (sqSub + sqTax + sqFreight));
+
       const newPO: PurchaseOrder = {
         id: `PO-2026-${Math.floor(1000 + Math.random() * 9000)}`,
         poNumber: `PO-2026-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -215,15 +220,15 @@ export default function PurchaseOrderPage() {
         deliveryTerms: newDeliveryTerms,
         dispatchMode: newDispatchMode,
         currency: 'INR',
-        subTotal: sqObj.subTotal || sqObj.subtotal || 0,
-        taxTotal: sqObj.taxTotal || 0,
-        freightCharges: sqObj.freightCharges || 0,
-        grandTotal: sqObj.grandTotal || (sqObj.subTotal || 0) + (sqObj.taxTotal || 0),
+        subTotal: isNaN(sqSub) ? 0 : sqSub,
+        taxTotal: isNaN(sqTax) ? 0 : sqTax,
+        freightCharges: isNaN(sqFreight) ? 0 : sqFreight,
+        grandTotal: isNaN(sqGrand) ? (sqSub + sqTax) : sqGrand,
         status: 'Submitted',
         items: poItems,
         approvalTier: 'Tier 1 - Executive',
         specialInstructions: newSpecialInstructions,
-        createdBy: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Super Admin',
+        createdBy: currentUser ? `${currentUser.firstName || 'Super'} ${currentUser.lastName || 'Admin'}`.trim() : 'Super Admin',
       };
 
       addPurchaseOrder(newPO);
@@ -263,6 +268,10 @@ export default function PurchaseOrderPage() {
       });
 
       const poCode = `PO-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const directSub = Number(totals.subTotal) || 0;
+      const directTax = Number(totals.taxTotal) || 0;
+      const directGrand = Number(totals.grandTotal) || (directSub + directTax);
+
       const newPO: PurchaseOrder = {
         id: poCode,
         poNumber: poCode,
@@ -278,15 +287,15 @@ export default function PurchaseOrderPage() {
         deliveryTerms: newDeliveryTerms,
         dispatchMode: newDispatchMode,
         currency: 'INR',
-        subTotal: totals.subTotal,
-        taxTotal: totals.taxTotal,
+        subTotal: isNaN(directSub) ? 0 : directSub,
+        taxTotal: isNaN(directTax) ? 0 : directTax,
         freightCharges: 0,
-        grandTotal: totals.grandTotal,
+        grandTotal: isNaN(directGrand) ? (directSub + directTax) : directGrand,
         status: 'Submitted',
         items: poItems,
         approvalTier: 'Tier 1 - Executive',
         specialInstructions: newSpecialInstructions,
-        createdBy: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Super Admin',
+        createdBy: currentUser ? `${currentUser.firstName || 'Super'} ${currentUser.lastName || 'Admin'}`.trim() : 'Super Admin',
       };
 
       addPurchaseOrder(newPO);
