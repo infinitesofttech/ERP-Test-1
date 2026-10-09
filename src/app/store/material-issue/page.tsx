@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import {
@@ -186,14 +187,13 @@ function MaterialIssueContent() {
         ],
       });
 
-      setSuccessMessage(`Material issue slip successfully created & stock deducted for Job ${selectedJob?.jobNumber || jobId}!`);
+      setSuccessMessage(`Material issue slip successfully created & stock deducted! Redirecting to Production Work Orders...`);
       setHasDismissedParam(true);
       setIsModalOpen(false);
-      router.replace('/store/material-issue');
-
+      const targetJob = selectedJob?.jobNumber || jobId || '';
       setTimeout(() => {
-        setSuccessMessage(null);
-      }, 6000);
+        router.push(`/production/work-orders?job=${encodeURIComponent(targetJob)}`);
+      }, 1200);
     } catch (err: any) {
       console.error('Error creating material issue:', err);
       alert(`Error creating material issue: ${err.message || 'Please check input data'}`);
@@ -441,6 +441,14 @@ function MaterialIssueContent() {
                               Trace
                             </button>
                           )}
+                          <Link
+                            href={`/production/work-orders?job=${encodeURIComponent(jobCode)}`}
+                            className="px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-[11px] font-bold transition flex items-center gap-1 shadow-xs"
+                            title="Proceed to Production Work Orders"
+                          >
+                            <span>Work Order</span>
+                            <span className="font-mono">➔</span>
+                          </Link>
                         </div>
                       </td>
                     </tr>

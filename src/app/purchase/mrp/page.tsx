@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { api } from '../../../lib/apiClient';
 import {
@@ -27,6 +28,7 @@ import {
 import { MaterialRequirement, PurchaseRequisition } from '../../../types/purchase';
 
 export default function MRPPage() {
+  const router = useRouter();
   const {
     materialRequirements,
     purchaseRequisitions,
@@ -44,6 +46,10 @@ export default function MRPPage() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [generatedPRSuccess, setGeneratedPRSuccess] = useState<string | null>(null);
   const [customGeneratedItems, setCustomGeneratedItems] = useState<Record<string, MaterialRequirement[]>>({});
+
+  useEffect(() => {
+    api.purchase.mrp.list().catch(() => {});
+  }, []);
 
   // Dynamic MRP items synthesis with Rate and Cost from BOM
   const allComputedRequirements = useMemo(() => {
@@ -338,12 +344,21 @@ export default function MRPPage() {
     setIsSyncing(true);
     try {
       // 1. Collect all known existing IDs in the database so we update existing items without triggering 400 Bad Request
-      const existingDbIds = new Set<string>(materialRequirements.map((m) => String(m.id)));
+      const existingDbIds = new Set<string>();
+      materialRequirements.forEach((m) => {
+        if (m?.id) {
+          existingDbIds.add(String(m.id));
+          existingDbIds.add(String(m.id).toLowerCase());
+        }
+      });
       try {
         const freshList = await api.purchase.mrp.list();
         if (Array.isArray(freshList)) {
           freshList.forEach((m: any) => {
-            if (m && m.id) existingDbIds.add(String(m.id));
+            if (m && m.id) {
+              existingDbIds.add(String(m.id));
+              existingDbIds.add(String(m.id).toLowerCase());
+            }
           });
         }
       } catch (_) {}
@@ -354,6 +369,7 @@ export default function MRPPage() {
         const targetId = item.id.startsWith('MRP-AUTO-')
           ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
           : item.id;
+        const lowerTargetId = String(targetId).toLowerCase();
 
         const payload = {
           id: targetId,
@@ -381,14 +397,15 @@ export default function MRPPage() {
           status: item.status || (Number(item.shortageQuantity || 0) > 0 ? 'shortage' : 'covered'),
         };
 
-        if (existingDbIds.has(targetId)) {
+        if (existingDbIds.has(targetId) || existingDbIds.has(lowerTargetId)) {
           // Record already exists in backend database -> use PATCH (update) to avoid duplicate ID 400 error
           await api.purchase.mrp.update(targetId, payload).catch(() => null);
         } else {
-          // New requirement -> use POST (create)
+          // New requirement -> use POST (create) with graceful update fallback
           try {
             await api.purchase.mrp.create(payload);
             existingDbIds.add(targetId);
+            existingDbIds.add(lowerTargetId);
           } catch (createErr: any) {
             // In case of race condition or duplicate ID constraint, smoothly fallback to PATCH update
             await api.purchase.mrp.update(targetId, payload).catch(() => null);
@@ -472,7 +489,11 @@ export default function MRPPage() {
       const dbId = item.id.startsWith('MRP-AUTO-') 
         ? `MRP-${item.jobId}-${item.partNumber || item.itemCode || Date.now()}`.replace(/[^a-zA-Z0-9-_]/g, '-')
         : item.id;
-      const isExisting = materialRequirements.some((m) => m.id === dbId || m.id === item.id);
+      const lowerDbId = String(dbId).toLowerCase();
+      const isExisting = materialRequirements.some((m) => 
+        String(m.id).toLowerCase() === lowerDbId || 
+        String(m.id).toLowerCase() === String(item.id).toLowerCase()
+      );
       if (isExisting) {
         api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
       } else {
@@ -501,17 +522,17 @@ export default function MRPPage() {
           drawingNumber: item.drawingNumber || '',
           status: 'PR Generated',
         };
-        try {
-          await api.purchase.mrp.create(payload);
-        } catch (_) {
+        api.purchase.mrp.upsert(dbId, payload).catch(() => {
           api.purchase.mrp.update(dbId, { status: 'PR Generated', procurementStatus: 'PR Created' }).catch(() => {});
-        }
+        });
       }
     });
 
-    setGeneratedPRSuccess(`PR generated successfully: ${newPR.prNumber} with ${prItems.length} items (Total: ₹ ${totalEst.toLocaleString('en-IN')})!`);
+    setGeneratedPRSuccess(`PR generated successfully: ${newPR.prNumber}! Redirecting to Purchase Orders...`);
     setSelectedItems([]);
-    setTimeout(() => setGeneratedPRSuccess(null), 6000);
+    setTimeout(() => {
+      router.push('/purchase/po');
+    }, 1200);
   };
 
   // Summary Metrics
@@ -560,6 +581,13 @@ export default function MRPPage() {
               Generate Purchase Requisition ({selectedItems.length} items)
             </button>
           )}
+          <Link
+            href="/purchase/po"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-[#FAF7F2] hover:bg-slate-200 text-[#211B17] border border-[#EBE3DB] font-bold text-xs rounded-xl shadow-xs transition"
+          >
+            <span>Purchase Orders</span>
+            <span className="font-mono">➔</span>
+          </Link>
         </div>
       </div>
 

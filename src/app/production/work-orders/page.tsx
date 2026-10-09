@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import {
   ClipboardList,
@@ -20,11 +22,13 @@ import {
 import { WorkOrder } from '../../../types/production';
 
 export default function WorkOrdersPage() {
+  const router = useRouter();
   const { workOrders, manufacturingJobs, addWorkOrder, releaseWorkOrder, openJobModal } = useERP();
 
   const [selectedWoForPrint, setSelectedWoForPrint] = useState<WorkOrder | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Form state
   const [jobNumber, setJobNumber] = useState(manufacturingJobs[0]?.jobNumber || '');
@@ -71,7 +75,10 @@ export default function WorkOrdersPage() {
     });
 
     setShowCreateModal(false);
-    alert('Work Order created successfully!');
+    setToastMessage(`Work Order created successfully! Redirecting to QC Inspection...`);
+    setTimeout(() => {
+      router.push(`/store/qc-inspection?job=${encodeURIComponent(jobNumber || targetJob?.jobNumber || '')}`);
+    }, 1200);
   };
 
   const filteredWorkOrders = (workOrders || []).filter((wo) => {
@@ -87,6 +94,14 @@ export default function WorkOrdersPage() {
 
   return (
     <div className="p-6 space-y-6 text-[#544B45]">
+      {/* Toast Feedback */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          <CheckCircle2 className="w-5 h-5 text-emerald-200" />
+          <span className="text-xs font-bold">{toastMessage}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-[#EBE3DB] shadow-md print:hidden">
         <div className="flex items-center gap-3">
@@ -231,13 +246,24 @@ export default function WorkOrdersPage() {
                   </button>
                 </div>
 
-                <button
-                  onClick={() => openJobModal(wo.jobNumber)}
-                  className="px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs border border-sky-200 transition flex items-center gap-1.5 whitespace-nowrap"
-                >
-                  <Search className="w-3.5 h-3.5 text-sky-600" />
-                  <span>360° Trace</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/store/qc-inspection?job=${encodeURIComponent(wo.jobNumber)}`}
+                    className="px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5 whitespace-nowrap"
+                    title="Proceed to QC Inspection"
+                  >
+                    <span>QC Inspection</span>
+                    <span className="font-mono">➔</span>
+                  </Link>
+
+                  <button
+                    onClick={() => openJobModal(wo.jobNumber)}
+                    className="px-3 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 font-bold text-xs border border-sky-200 transition flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <Search className="w-3.5 h-3.5 text-sky-600" />
+                    <span>360° Trace</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))

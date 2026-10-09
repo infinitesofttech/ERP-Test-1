@@ -136,7 +136,9 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.nextFollowUpDate = d.next_follow_up_date;
   } else if (ep.includes('/customers')) {
     d.companyName = d.companyName || d.company_name || d.name || 'Customer Co';
+    d.company_name = d.companyName;
     d.contactPerson = d.contactPerson || d.contact_person || d.name || 'Contact';
+    d.contact_person = d.contactPerson;
     d.mobile = d.mobile || d.phone || '9999999999';
   } else if (ep.includes('/enquiries')) {
     d.customerId = d.customerId || d.customer_id || 'CUST-001';
@@ -229,6 +231,46 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
       d.customer_po_number = d.customerPoNumber;
     }
   }
+  // Planning Stages
+  else if (ep.includes('/planning-stages')) {
+    d.id = d.id || `STG-${d.projectId || d.project_id || 'PRJ'}-${Date.now().toString().slice(-4)}`;
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.project_id = d.projectId;
+    d.stageNumber = Number(d.stageNumber ?? d.stage_number ?? 1);
+    d.stage_number = d.stageNumber;
+    d.name = d.name || d.stageName || d.stage_name || `Stage ${d.stageNumber}`;
+    d.stageName = d.name;
+    d.department = d.department || d.responsibleDepartment || 'production';
+    d.responsibleDepartment = d.department;
+    d.assignedEmployeeName = d.assignedEmployeeName || d.assigned_employee_name || d.responsibleEmployee || '';
+    d.responsibleEmployee = d.assignedEmployeeName;
+    d.assignees = Array.isArray(d.assignees) ? d.assignees : (Array.isArray(d.assignedEmployees) ? d.assignedEmployees : []);
+    d.assignedEmployees = d.assignees;
+    d.status = d.status || 'pending';
+    d.progress = Number(d.progress ?? d.progressPercent ?? 0);
+    d.progressPercent = d.progress;
+    d.startDate = d.startDate || d.start_date || d.plannedStart || '';
+    d.plannedStart = d.startDate;
+    d.endDate = d.endDate || d.end_date || d.plannedEnd || '';
+    d.plannedEnd = d.endDate;
+    d.description = d.description || d.remarks || d.deliverables || '';
+    d.remarks = d.description;
+  }
+  // Project Tasks
+  else if (ep.includes('/project-tasks')) {
+    d.id = d.id || d.taskId || `TSK-${Date.now().toString().slice(-4)}`;
+    d.projectId = d.projectId || d.project_id || 'PRJ-2026-0001';
+    d.project_id = d.projectId;
+    d.title = d.title || d.taskName || d.task_name || d.name || 'Project Task';
+    d.taskName = d.title;
+    d.department = d.department || 'production';
+    d.taskNumber = d.taskNumber || d.task_number || `TSK-${Date.now().toString().slice(-4)}`;
+    d.task_number = d.taskNumber;
+    d.status = d.status || 'pending';
+    d.priority = d.priority || 'medium';
+    d.assignedToName = d.assignedToName || d.assignedTo || d.assigned_to_name || '';
+    d.assignedTo = d.assignedToName;
+  }
   // Designer BOMs
   else if (ep.includes('/designer/boms') || ep.includes('/boms')) {
     d.bomNumber = d.bomNumber || d.bom_number || d.bomNo || d.id || `BOM-${Date.now().toString().slice(-4)}`;
@@ -315,11 +357,20 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.part_number = d.partNumber;
     d.itemCode = d.itemCode || d.item_code || d.partNumber || '';
     d.item_code = d.itemCode;
-    d.requiredQuantity = Number(d.requiredQuantity ?? d.required_quantity ?? d.quantity ?? 1);
+    const reqQ = Number(d.requiredQuantity ?? d.required_quantity ?? d.quantity ?? 1);
+    d.requiredQuantity = isNaN(reqQ) ? 1 : reqQ;
     d.required_quantity = d.requiredQuantity;
-    d.availableStock = Number(d.availableStock ?? d.available_stock ?? 0);
+    const avail = Number(d.availableStock ?? d.available_stock ?? 0);
+    d.availableStock = isNaN(avail) ? 0 : avail;
     d.available_stock = d.availableStock;
-    d.shortageQuantity = Number(d.shortageQuantity ?? d.shortage_quantity ?? Math.max(0, d.requiredQuantity - d.availableStock));
+    const resv = Number(d.reservedStock ?? d.reserved_stock ?? 0);
+    d.reservedStock = isNaN(resv) ? 0 : resv;
+    d.reserved_stock = d.reservedStock;
+    const onOrd = Number(d.onOrderQuantity ?? d.on_order_quantity ?? 0);
+    d.onOrderQuantity = isNaN(onOrd) ? 0 : onOrd;
+    d.on_order_quantity = d.onOrderQuantity;
+    const shortQ = Number(d.shortageQuantity ?? d.shortage_quantity ?? Math.max(0, d.requiredQuantity - d.availableStock));
+    d.shortageQuantity = isNaN(shortQ) ? Math.max(0, d.requiredQuantity - d.availableStock) : shortQ;
     d.shortage_quantity = d.shortageQuantity;
     d.unitOfMeasure = d.unitOfMeasure || d.unit_of_measure || d.unit || 'NOS';
     d.unit_of_measure = d.unitOfMeasure;
@@ -1082,6 +1133,30 @@ async function fetchNetworkRequest<T>(
   return resultData as T;
 }
 
+const knownPlanningStageIds = new Set<string>();
+const knownProjectTaskIds = new Set<string>();
+const knownMrpIds = new Set<string>();
+
+let mrpListPromise: Promise<void> | null = null;
+async function ensureMrpIdsLoaded(): Promise<void> {
+  if (knownMrpIds.size > 0) return;
+  if (!mrpListPromise) {
+    mrpListPromise = (async () => {
+      try {
+        const res = await request<any[]>('/material-requirements/');
+        const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+        for (const item of list) {
+          if (item?.id) knownMrpIds.add(String(item.id).toLowerCase());
+        }
+      } catch (_) {}
+      finally {
+        mrpListPromise = null;
+      }
+    })();
+  }
+  await mrpListPromise;
+}
+
 export const api = {
   // Generic HTTP verbs
   get: <T = any>(endpoint: string) => request<T>(endpoint, { method: 'GET' }),
@@ -1393,26 +1468,162 @@ export const api = {
   projects: {
     list: () => request<any[]>('/projects/'),
     get: (id: string) => request<any>(`/projects/${id}/`),
-    create: (data: any) => request<any>('/projects/', { method: 'POST', body: JSON.stringify(data) }),
+    create: async (data: any) => {
+      try {
+        return await request<any>('/projects/', { method: 'POST', body: JSON.stringify(data) });
+      } catch (err: any) {
+        const id = data.id || data.projectNumber || data.project_number;
+        const isConflict =
+          err?.status === 400 ||
+          err?.status === 409 ||
+          err?.message?.includes('already exists') ||
+          JSON.stringify(err?.data || '').includes('already exists');
+        if (id && isConflict) {
+          return await request<any>(`/projects/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        }
+        throw err;
+      }
+    },
     update: (id: string, data: any) => request<any>(`/projects/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
     delete: (id: string) => request<any>(`/projects/${id}/`, { method: 'DELETE' }),
-    planningStages: (projectId?: string) =>
-      request<any[]>(projectId ? `/planning-stages/?projectId=${projectId}` : '/planning-stages/'),
-    createPlanningStage: (data: any) =>
-      request<any>('/planning-stages/', { method: 'POST', body: JSON.stringify(data) }),
-    updatePlanningStage: (id: string, data: any) =>
-      request<any>(`/planning-stages/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-    deletePlanningStage: (id: string) =>
-      request<any>(`/planning-stages/${id}/`, { method: 'DELETE' }),
+    planningStages: async (projectId?: string) => {
+      const res = await request<any[]>(projectId ? `/planning-stages/?projectId=${projectId}` : '/planning-stages/');
+      const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+      for (const s of list) {
+        if (s?.id) knownPlanningStageIds.add(String(s.id).toLowerCase());
+      }
+      return res;
+    },
+    createPlanningStage: async (data: any) => {
+      const id = data.id;
+      try {
+        const res = await request<any>('/planning-stages/', { method: 'POST', body: JSON.stringify(data) });
+        if (id) knownPlanningStageIds.add(String(id).toLowerCase());
+        if (res?.id) knownPlanningStageIds.add(String(res.id).toLowerCase());
+        return res;
+      } catch (err: any) {
+        const isConflict =
+          err?.status === 400 ||
+          err?.status === 409 ||
+          err?.message?.includes('already exists') ||
+          JSON.stringify(err?.data || '').includes('already exists');
+        if (id && isConflict) {
+          knownPlanningStageIds.add(String(id).toLowerCase());
+          return await request<any>(`/planning-stages/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        }
+        throw err;
+      }
+    },
+    updatePlanningStage: async (id: string, data: any) => {
+      const lowerId = String(id).toLowerCase();
+      // If confirmed on backend, PATCH directly
+      if (knownPlanningStageIds.has(lowerId)) {
+        try {
+          return await request<any>(`/planning-stages/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        } catch (patchErr: any) {
+          if (patchErr?.status === 404) {
+            knownPlanningStageIds.delete(lowerId);
+            const res = await request<any>('/planning-stages/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+            knownPlanningStageIds.add(lowerId);
+            return res;
+          }
+          throw patchErr;
+        }
+      }
+
+      // If not yet confirmed on backend, try POST first to avoid 404 in browser console
+      try {
+        const res = await request<any>('/planning-stages/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+        knownPlanningStageIds.add(lowerId);
+        return res;
+      } catch (postErr: any) {
+        const isConflict =
+          postErr?.status === 400 ||
+          postErr?.status === 409 ||
+          postErr?.message?.includes('already exists') ||
+          JSON.stringify(postErr?.data || '').includes('already exists');
+        if (isConflict) {
+          knownPlanningStageIds.add(lowerId);
+          return await request<any>(`/planning-stages/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        }
+        throw postErr;
+      }
+    },
+    deletePlanningStage: (id: string) => {
+      knownPlanningStageIds.delete(String(id).toLowerCase());
+      return request<any>(`/planning-stages/${id}/`, { method: 'DELETE' });
+    },
     generatePlanningStages: (projectId: string) =>
       request<any>(`/projects/${projectId}/generate-stages/`, { method: 'POST' }),
     milestones: (projectId?: string) =>
       request<any[]>(projectId ? `/project-milestones/?projectId=${projectId}` : '/project-milestones/'),
-    tasks: (projectId?: string) =>
-      request<any[]>(projectId ? `/project-tasks/?projectId=${projectId}` : '/project-tasks/'),
-    createTask: (data: any) => request<any>('/project-tasks/', { method: 'POST', body: JSON.stringify(data) }),
-    updateTask: (id: string, data: any) => request<any>(`/project-tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-    deleteTask: (id: string) => request<any>(`/project-tasks/${id}/`, { method: 'DELETE' }),
+    tasks: async (projectId?: string) => {
+      const res = await request<any[]>(projectId ? `/project-tasks/?projectId=${projectId}` : '/project-tasks/');
+      const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+      for (const t of list) {
+        if (t?.id) knownProjectTaskIds.add(String(t.id).toLowerCase());
+      }
+      return res;
+    },
+    createTask: async (data: any) => {
+      const id = data.id || data.taskNumber || data.task_number;
+      try {
+        const res = await request<any>('/project-tasks/', { method: 'POST', body: JSON.stringify(data) });
+        if (id) knownProjectTaskIds.add(String(id).toLowerCase());
+        if (res?.id) knownProjectTaskIds.add(String(res.id).toLowerCase());
+        return res;
+      } catch (err: any) {
+        const isConflict =
+          err?.status === 400 ||
+          err?.status === 409 ||
+          err?.message?.includes('already exists') ||
+          JSON.stringify(err?.data || '').includes('already exists');
+        if (id && isConflict) {
+          knownProjectTaskIds.add(String(id).toLowerCase());
+          return await request<any>(`/project-tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        }
+        throw err;
+      }
+    },
+    updateTask: async (id: string, data: any) => {
+      const lowerId = String(id).toLowerCase();
+      // If confirmed on backend, PATCH directly
+      if (knownProjectTaskIds.has(lowerId)) {
+        try {
+          return await request<any>(`/project-tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        } catch (patchErr: any) {
+          if (patchErr?.status === 404) {
+            knownProjectTaskIds.delete(lowerId);
+            const res = await request<any>('/project-tasks/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+            knownProjectTaskIds.add(lowerId);
+            return res;
+          }
+          throw patchErr;
+        }
+      }
+
+      // If not yet confirmed on backend, try POST first to avoid 404 in browser console
+      try {
+        const res = await request<any>('/project-tasks/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+        knownProjectTaskIds.add(lowerId);
+        return res;
+      } catch (postErr: any) {
+        const isConflict =
+          postErr?.status === 400 ||
+          postErr?.status === 409 ||
+          postErr?.message?.includes('already exists') ||
+          JSON.stringify(postErr?.data || '').includes('already exists');
+        if (isConflict) {
+          knownProjectTaskIds.add(lowerId);
+          return await request<any>(`/project-tasks/${id}/`, { method: 'PATCH', body: JSON.stringify(data) });
+        }
+        throw postErr;
+      }
+    },
+    deleteTask: (id: string) => {
+      knownProjectTaskIds.delete(String(id).toLowerCase());
+      return request<any>(`/project-tasks/${id}/`, { method: 'DELETE' });
+    },
     departmentAssignments: (projectId?: string) =>
       request<any[]>(projectId ? `/department-assignments/?projectId=${projectId}` : '/department-assignments/'),
     createDepartmentAssignment: (data: any) =>
@@ -1453,7 +1664,15 @@ export const api = {
       update: (id: string, data: any) => request<any>(`/project-issues/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
       delete: (id: string) => request<any>(`/project-issues/${id}/`, { method: 'DELETE' }),
     },
-    saveProjectStages: (data: any) => request<any>('/projects/planning-stages/save-project-stages/', { method: 'POST', body: JSON.stringify(data) }),
+    saveProjectStages: async (data: any) => {
+      const res = await request<any>('/projects/planning-stages/save-project-stages/', { method: 'POST', body: JSON.stringify(data) });
+      if (Array.isArray(data?.stages)) {
+        for (const s of data.stages) {
+          if (s?.id) knownPlanningStageIds.add(String(s.id).toLowerCase());
+        }
+      }
+      return res;
+    },
     clearPlanningStages: (projectId: string) => request<any>('/projects/planning-stages/clear-and-reset/', { method: 'POST', body: JSON.stringify({ projectId }) }),
   },
 
@@ -1593,21 +1812,116 @@ export const api = {
   // Purchase Management
   purchase: {
     mrp: {
-      list: () => request<any[]>('/material-requirements/'),
+      list: async () => {
+        const res = await request<any[]>('/material-requirements/');
+        const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+        for (const item of list) {
+          if (item?.id) knownMrpIds.add(String(item.id).toLowerCase());
+        }
+        return res;
+      },
       get: (id: string) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`),
-      create: (data: any) => request<any>('/material-requirements/', { method: 'POST', body: JSON.stringify(data) }),
-      update: (id: string, data: any) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'PATCH', body: JSON.stringify(data) }),
-      upsert: async (id: string, data: any) => {
+      create: async (data: any) => {
+        await ensureMrpIdsLoaded();
+        const id = data?.id;
+        const lowerId = id ? String(id).toLowerCase() : '';
+        // If known to exist on backend, PATCH directly to prevent 400 Bad Request error in console
+        if (lowerId && knownMrpIds.has(lowerId)) {
+          return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+          });
+        }
         try {
-          return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'PATCH', body: JSON.stringify(data) });
+          const res = await request<any>('/material-requirements/', { method: 'POST', body: JSON.stringify(data) });
+          if (lowerId) knownMrpIds.add(lowerId);
+          if (res?.id) knownMrpIds.add(String(res.id).toLowerCase());
+          return res;
         } catch (err: any) {
-          if (err?.status === 404) {
-            return await request<any>('/material-requirements/', { method: 'POST', body: JSON.stringify({ ...data, id }) });
+          const isConflict =
+            err?.status === 400 ||
+            err?.status === 409 ||
+            err?.message?.includes('already exists') ||
+            JSON.stringify(err?.data || '').includes('already exists');
+          if (id && isConflict) {
+            if (lowerId) knownMrpIds.add(lowerId);
+            return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, {
+              method: 'PATCH',
+              body: JSON.stringify(data),
+            });
           }
           throw err;
         }
       },
-      delete: (id: string) => request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'DELETE' }),
+      update: async (id: string, data: any) => {
+        await ensureMrpIdsLoaded();
+        const lowerId = String(id).toLowerCase();
+        if (knownMrpIds.has(lowerId)) {
+          try {
+            return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, {
+              method: 'PATCH',
+              body: JSON.stringify(data),
+            });
+          } catch (patchErr: any) {
+            if (patchErr?.status === 404) {
+              knownMrpIds.delete(lowerId);
+              const res = await request<any>('/material-requirements/', {
+                method: 'POST',
+                body: JSON.stringify({ ...data, id }),
+              });
+              knownMrpIds.add(lowerId);
+              return res;
+            }
+            throw patchErr;
+          }
+        }
+        try {
+          const res = await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+          });
+          knownMrpIds.add(lowerId);
+          return res;
+        } catch (patchErr: any) {
+          if (patchErr?.status === 404) {
+            try {
+              const res = await request<any>('/material-requirements/', {
+                method: 'POST',
+                body: JSON.stringify({ ...data, id }),
+              });
+              knownMrpIds.add(lowerId);
+              return res;
+            } catch (postErr: any) {
+              const isConflict =
+                postErr?.status === 400 ||
+                postErr?.status === 409 ||
+                postErr?.message?.includes('already exists') ||
+                JSON.stringify(postErr?.data || '').includes('already exists');
+              if (isConflict) {
+                knownMrpIds.add(lowerId);
+                return await request<any>(`/material-requirements/${encodeURIComponent(id)}/`, {
+                  method: 'PATCH',
+                  body: JSON.stringify(data),
+                });
+              }
+              throw postErr;
+            }
+          }
+          throw patchErr;
+        }
+      },
+      upsert: async (id: string, data: any) => {
+        await ensureMrpIdsLoaded();
+        const lowerId = String(id).toLowerCase();
+        if (knownMrpIds.has(lowerId)) {
+          return await api.purchase.mrp.update(id, data);
+        }
+        return await api.purchase.mrp.create({ ...data, id });
+      },
+      delete: (id: string) => {
+        knownMrpIds.delete(String(id).toLowerCase());
+        return request<any>(`/material-requirements/${encodeURIComponent(id)}/`, { method: 'DELETE' });
+      },
     },
     suppliers: {
       list: () => request<any[]>('/suppliers/'),

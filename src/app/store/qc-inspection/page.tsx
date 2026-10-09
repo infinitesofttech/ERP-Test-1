@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { QCInspection, QCResult, GoodsReceiptNote } from '../../../types/store';
 import {
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function QualityInspectionPage() {
+  const router = useRouter();
   const { qcInspections, approveQCInspection, addQCInspection, goodsReceipts } = useERP();
   const [mounted, setMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -228,8 +230,11 @@ export default function QualityInspectionPage() {
     if (typeof window !== 'undefined') {
       window.history.replaceState({}, '', window.location.pathname);
     }
-    setToastMessage(`✓ QC Inspection ${inspName} cleared with result: ${result}! GRN status updated & stock synced.`);
-    setTimeout(() => setToastMessage(''), 5000);
+    setToastMessage(`✓ QC Inspection ${inspName} cleared with result: ${result}! Stock synced. Redirecting to Packing / Finished Goods...`);
+    const targetJob = selectedInspection.jobId || '';
+    setTimeout(() => {
+      router.push(`/production/finished-goods?job=${encodeURIComponent(targetJob)}`);
+    }, 1200);
   };
 
   const stats = useMemo(() => {
@@ -551,13 +556,25 @@ export default function QualityInspectionPage() {
                       </td>
                       <td className="p-3.5 text-[#544B45] text-xs">{inspLead}</td>
                       <td className="p-3.5 text-center">
-                        <button
-                          onClick={() => openInspectionModal(q)}
-                          className="px-3.5 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1 mx-auto"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>{isPending ? 'Perform QC' : 'Update QC'}</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => openInspectionModal(q)}
+                            className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>{isPending ? 'Perform QC' : 'Update QC'}</span>
+                          </button>
+                          {qcRes === 'Pass' && (
+                            <Link
+                              href={`/production/finished-goods?job=${encodeURIComponent(job)}`}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1"
+                              title="Proceed to Packing / Finished Goods"
+                            >
+                              <span>Packing</span>
+                              <span className="font-mono">➔</span>
+                            </Link>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

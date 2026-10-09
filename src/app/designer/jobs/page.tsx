@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { DesignJob, DesignJobStatus } from '../../../types/designer';
 import {
@@ -42,6 +43,7 @@ interface UploadedDesignFile {
 }
 
 export default function DesignJobsPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const {
     designJobs,
@@ -254,10 +256,12 @@ export default function DesignJobsPage() {
     }
 
     setNotificationMsg(
-      `Design Job "${desJobNumber}" created successfully${primaryFile ? ` with uploaded design "${primaryFile.name}"` : ''}!`
+      `Design Job "${desJobNumber}" created successfully! Redirecting to Master BOM...`
     );
-    setTimeout(() => setNotificationMsg(''), 7000);
     closeCreateModal();
+    setTimeout(() => {
+      router.push(`/designer/bom?job=${encodeURIComponent(proj.jobNumber || '')}`);
+    }, 1200);
   };
 
   const handleSaveUploadDesign = (e: React.FormEvent) => {

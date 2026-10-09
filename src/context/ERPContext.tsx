@@ -6454,7 +6454,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     // Idempotency: return existing Sales Order if one is already created for this PO
     const existingSO = salesOrders.find(
       (s) =>
-        (s.customerPoNumber && po.poNumber && s.customerPoNumber.toLowerCase() === po.poNumber.toLowerCase()) ||
+        (s.customerPoNumber && po.poNumber && s.customerPoNumber.toLowerCase() === po.poNumber.toLowerCase() && (s.customerName === po.customerName || s.customerId === po.customerId)) ||
         (s.customerPoId && s.customerPoId === po.id) ||
         (po.salesOrderId && (s.id === po.salesOrderId || s.salesOrderNumber === po.salesOrderId)) ||
         (s.customerName === po.customerName && s.customerPoNumber === po.poNumber)
@@ -6593,7 +6593,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       (pj) =>
         (pj.salesOrderId && (pj.salesOrderId === so.id || pj.salesOrderId === so.salesOrderNumber)) ||
         (pj.salesOrderNumber && (pj.salesOrderNumber === so.salesOrderNumber || pj.salesOrderNumber === so.id)) ||
-        (so.customerPoNumber && pj.customerPoNumber && pj.customerPoNumber === so.customerPoNumber) ||
+        (so.customerPoNumber && pj.customerPoNumber && pj.customerPoNumber === so.customerPoNumber && (pj.customerName === so.customerName || pj.customerId === so.customerId || pj.salesOrderId === so.id || pj.salesOrderNumber === so.salesOrderNumber)) ||
         (so.projectId && (pj.id === so.projectId || pj.projectNumber === so.projectId)) ||
         (so.jobNumber && (pj.jobNumber === so.jobNumber || pj.id === so.jobNumber))
     );
@@ -6785,6 +6785,11 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
           }
           return updated;
         });
+        // Auto-save initial 16 planning stages and tasks to backend immediately
+        api.projects.saveProjectStages({ projectId: prjNo, stages: newStages }).catch(() => {});
+        newTasks.forEach((tsk) => {
+          api.projects.createTask(tsk).catch(() => {});
+        });
       }
     }).catch((err) => console.warn('Failed to sync project to backend:', err));
 
@@ -6870,6 +6875,18 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       try { localStorage.setItem('UMA_ERP_projectJobs', JSON.stringify(updated)); } catch (_) {}
       return updated;
     });
+    if (prj.customerName) {
+      setSalesOrders((prev) => {
+        const updated = prev.map((so) => (so.projectId === id || (prj as any).salesOrderId === so.id || (prj as any).salesOrderNumber === so.salesOrderNumber ? { ...so, customerName: prj.customerName! } : so));
+        try { localStorage.setItem('UMA_ERP_salesOrders', JSON.stringify(updated)); } catch (_) {}
+        return updated;
+      });
+      setCustomerPOs((prev) => {
+        const updated = prev.map((cpo) => ((prj as any).customerPoNumber && cpo.poNumber === (prj as any).customerPoNumber ? { ...cpo, customerName: prj.customerName! } : cpo));
+        try { localStorage.setItem('UMA_ERP_customerPOs', JSON.stringify(updated)); } catch (_) {}
+        return updated;
+      });
+    }
     logAction('UPDATE', 'Project Management', 'Projects', id, `Updated project details for ${id}`);
     api.projects.update(id, prj).catch((err) => console.warn('Failed to update project in backend:', err));
   };
@@ -7037,12 +7054,13 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updatePlanningStage = (id: string, stageUpdates: Partial<ProjectPlanningStage>) => {
+    let targetStage: ProjectPlanningStage | undefined;
     setProjectPlanningStages((prev) => {
       const updated = prev.map((s) => (s.id === id ? { ...s, ...stageUpdates } : s));
-      const targetStage = updated.find((s) => s.id === id);
+      targetStage = updated.find((s) => s.id === id);
       if (targetStage) {
         const prjStages = updated.filter(
-          (s) => s.projectId === targetStage.projectId || s.jobNumber === targetStage.jobNumber
+          (s) => s.projectId === targetStage!.projectId || s.jobNumber === targetStage!.jobNumber
         );
         if (prjStages.length > 0) {
           const avgProgress = Math.round(
@@ -7050,7 +7068,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
           );
           setProjectJobs((prjList) =>
             prjList.map((p) =>
-              p.id === targetStage.projectId || p.jobNumber === targetStage.jobNumber
+              p.id === targetStage!.projectId || p.jobNumber === targetStage!.jobNumber
                 ? { ...p, progressPercent: avgProgress }
                 : p
             )
@@ -7061,54 +7079,54 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         setProjectTasks((prevTasks) => {
           const targetTaskId = `TSK-${id}`;
           const matchingIdx = prevTasks.findIndex(
-            (t) => t.id === targetTaskId || t.id === id || (t.projectId === targetStage.projectId && t.taskName === targetStage.stageName)
+            (t) => t.id === targetTaskId || t.id === id || (t.projectId === targetStage!.projectId && t.taskName === targetStage!.stageName)
           );
           let updatedTasks: ProjectTask[];
           if (matchingIdx >= 0) {
             updatedTasks = prevTasks.map((t, idx) => {
               if (idx !== matchingIdx) return t;
               const taskUp: Partial<ProjectTask> = {
-                taskName: targetStage.stageName,
-                department: targetStage.responsibleDepartment,
-                assignedTo: targetStage.responsibleEmployee,
-                startDate: targetStage.plannedStart,
-                dueDate: targetStage.plannedEnd,
-                completionPercent: targetStage.progressPercent ?? 0,
-                status: targetStage.status === 'completed'
+                taskName: targetStage!.stageName,
+                department: targetStage!.responsibleDepartment,
+                assignedTo: targetStage!.responsibleEmployee,
+                startDate: targetStage!.plannedStart,
+                dueDate: targetStage!.plannedEnd,
+                completionPercent: targetStage!.progressPercent ?? 0,
+                status: targetStage!.status === 'completed'
                   ? 'completed'
-                  : targetStage.status === 'in_progress'
+                  : targetStage!.status === 'in_progress'
                   ? 'in_progress'
-                  : targetStage.status === 'delayed'
+                  : targetStage!.status === 'delayed'
                   ? 'waiting'
                   : 'pending',
-                actualHours: Math.round(((targetStage.progressPercent || 0) / 100) * (t.estimatedHours || 40)),
+                actualHours: Math.round(((targetStage!.progressPercent || 0) / 100) * (t.estimatedHours || 40)),
               };
               return { ...t, ...taskUp };
             });
           } else {
             const newTask: ProjectTask = {
               id: targetTaskId,
-              taskNumber: `TSK-${String(targetStage.stageNumber || 1).padStart(2, '0')}`,
-              projectId: targetStage.projectId,
-              projectNumber: targetStage.projectId,
-              jobNumber: targetStage.jobNumber,
-              taskName: targetStage.stageName,
-              description: targetStage.remarks || targetStage.deliverables || `${targetStage.stageName} execution step`,
-              department: targetStage.responsibleDepartment,
-              assignedTo: targetStage.responsibleEmployee || 'Unassigned',
-              priority: (targetStage.stageNumber || 1) <= 4 ? 'high' : 'medium',
-              startDate: targetStage.plannedStart,
-              dueDate: targetStage.plannedEnd,
+              taskNumber: `TSK-${String(targetStage!.stageNumber || 1).padStart(2, '0')}`,
+              projectId: targetStage!.projectId,
+              projectNumber: targetStage!.projectId,
+              jobNumber: targetStage!.jobNumber,
+              taskName: targetStage!.stageName,
+              description: targetStage!.remarks || targetStage!.deliverables || `${targetStage!.stageName} execution step`,
+              department: targetStage!.responsibleDepartment,
+              assignedTo: targetStage!.responsibleEmployee || 'Unassigned',
+              priority: (targetStage!.stageNumber || 1) <= 4 ? 'high' : 'medium',
+              startDate: targetStage!.plannedStart,
+              dueDate: targetStage!.plannedEnd,
               estimatedHours: 40,
-              actualHours: Math.round(((targetStage.progressPercent || 0) / 100) * 40),
-              status: targetStage.status === 'completed'
+              actualHours: Math.round(((targetStage!.progressPercent || 0) / 100) * 40),
+              status: targetStage!.status === 'completed'
                 ? 'completed'
-                : targetStage.status === 'in_progress'
+                : targetStage!.status === 'in_progress'
                 ? 'in_progress'
-                : targetStage.status === 'delayed'
+                : targetStage!.status === 'delayed'
                 ? 'waiting'
                 : 'pending',
-              completionPercent: targetStage.progressPercent ?? 0,
+              completionPercent: targetStage!.progressPercent ?? 0,
             };
             updatedTasks = [newTask, ...prevTasks];
           }
@@ -7123,7 +7141,36 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       }
       return updated;
     });
-    api.projects.updatePlanningStage(id, stageUpdates).catch((err) => console.warn('Failed to update stage on backend:', err));
+
+    const backendPayload = targetStage
+      ? {
+          ...targetStage,
+          ...stageUpdates,
+          projectId: (targetStage as ProjectPlanningStage).projectId,
+          project_id: (targetStage as ProjectPlanningStage).projectId,
+          stageNumber: (targetStage as ProjectPlanningStage).stageNumber,
+          stage_number: (targetStage as ProjectPlanningStage).stageNumber,
+          name: stageUpdates.stageName || (targetStage as ProjectPlanningStage).stageName,
+          stageName: stageUpdates.stageName || (targetStage as ProjectPlanningStage).stageName,
+          department: stageUpdates.responsibleDepartment || (targetStage as ProjectPlanningStage).responsibleDepartment,
+          responsibleDepartment: stageUpdates.responsibleDepartment || (targetStage as ProjectPlanningStage).responsibleDepartment,
+          assignedEmployeeName: stageUpdates.responsibleEmployee || (targetStage as ProjectPlanningStage).responsibleEmployee || '',
+          assigned_employee_name: stageUpdates.responsibleEmployee || (targetStage as ProjectPlanningStage).responsibleEmployee || '',
+          responsibleEmployee: stageUpdates.responsibleEmployee || (targetStage as ProjectPlanningStage).responsibleEmployee || '',
+          assignees: stageUpdates.assignedEmployees || (targetStage as ProjectPlanningStage).assignedEmployees || [],
+          assignedEmployees: stageUpdates.assignedEmployees || (targetStage as ProjectPlanningStage).assignedEmployees || [],
+          status: stageUpdates.status || (targetStage as ProjectPlanningStage).status || 'pending',
+          progress: stageUpdates.progressPercent ?? (targetStage as ProjectPlanningStage).progressPercent ?? 0,
+          progressPercent: stageUpdates.progressPercent ?? (targetStage as ProjectPlanningStage).progressPercent ?? 0,
+          startDate: stageUpdates.plannedStart || (targetStage as ProjectPlanningStage).plannedStart || '',
+          start_date: stageUpdates.plannedStart || (targetStage as ProjectPlanningStage).plannedStart || '',
+          endDate: stageUpdates.plannedEnd || (targetStage as ProjectPlanningStage).plannedEnd || '',
+          end_date: stageUpdates.plannedEnd || (targetStage as ProjectPlanningStage).plannedEnd || '',
+          description: stageUpdates.remarks || (targetStage as ProjectPlanningStage).remarks || (targetStage as ProjectPlanningStage).deliverables || '',
+          remarks: stageUpdates.remarks || (targetStage as ProjectPlanningStage).remarks || '',
+        }
+      : stageUpdates;
+    api.projects.updatePlanningStage(id, backendPayload).catch((err) => console.warn('Failed to update stage on backend:', err));
   };
 
   const addPlanningStage = (stageData: Omit<ProjectPlanningStage, 'id'>): ProjectPlanningStage => {
@@ -7169,17 +7216,31 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     logProjectActivity(stageData.projectId, stageData.jobNumber, 'Stage Added', `Added planning stage: ${stageData.stageName}`);
     api.projects.createPlanningStage({
       ...newStage,
+      id: newStage.id,
+      projectId: stageData.projectId,
       project_id: stageData.projectId,
+      stageNumber: stageData.stageNumber,
       stage_number: stageData.stageNumber,
       name: stageData.stageName,
+      stageName: stageData.stageName,
       department: stageData.responsibleDepartment,
+      responsibleDepartment: stageData.responsibleDepartment,
+      assignedEmployeeName: stageData.responsibleEmployee || '',
       assigned_employee_name: stageData.responsibleEmployee || '',
+      responsibleEmployee: stageData.responsibleEmployee || '',
       assignees: stageData.assignedEmployees || [],
+      assignedEmployees: stageData.assignedEmployees || [],
       status: stageData.status || 'pending',
       progress: stageData.progressPercent || 0,
+      progressPercent: stageData.progressPercent || 0,
+      startDate: stageData.plannedStart || '',
       start_date: stageData.plannedStart || '',
+      plannedStart: stageData.plannedStart || '',
+      endDate: stageData.plannedEnd || '',
       end_date: stageData.plannedEnd || '',
+      plannedEnd: stageData.plannedEnd || '',
       description: stageData.remarks || '',
+      remarks: stageData.remarks || '',
     }).then((res: any) => {
       if (res && res.id) {
         setProjectPlanningStages((prev) => {
@@ -7191,6 +7252,16 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }).catch((err) => console.warn('Failed to add stage on backend:', err));
+
+    api.projects.createTask({
+      ...newTask,
+      id: newTask.id,
+      projectId: newStage.projectId,
+      title: newTask.taskName,
+      department: newTask.department,
+      status: newTask.status,
+    }).catch(() => {});
+
     return newStage;
   };
 
@@ -7265,23 +7336,25 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const reorderPlanningStages = (projectId: string, newOrderedStages: ProjectPlanningStage[]) => {
+    const renumbered = newOrderedStages.map((stg, idx) => ({
+      ...stg,
+      stageNumber: idx + 1,
+    }));
     setProjectPlanningStages((prev) => {
       const otherStages = prev.filter(
         (s) => s.projectId !== projectId && s.jobNumber !== newOrderedStages[0]?.jobNumber
       );
-      const renumbered = newOrderedStages.map((stg, idx) => ({
-        ...stg,
-        stageNumber: idx + 1,
-      }));
       const updated = [...otherStages, ...renumbered];
       if (typeof window !== 'undefined') {
         try { localStorage.setItem('UMA_ERP_projectPlanningStages', JSON.stringify(updated)); } catch (_) {}
       }
       return updated;
     });
-    // Sync each renumbered stage to backend
-    newOrderedStages.forEach((stg, idx) => {
-      api.projects.updatePlanningStage(stg.id, { stageNumber: idx + 1, stage_number: idx + 1 }).catch(() => {});
+    // Bulk sync reordered stages to backend
+    api.projects.saveProjectStages({ projectId, stages: renumbered }).catch(() => {
+      renumbered.forEach((stg, idx) => {
+        api.projects.updatePlanningStage(stg.id, { ...stg, stageNumber: idx + 1, stage_number: idx + 1 }).catch(() => {});
+      });
     });
   };
 
@@ -7443,46 +7516,86 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         console.warn('Backend cleanup error:', cleanupErr);
       }
 
-      // Second, save and update the active stages
-      for (const stg of stagesToSave) {
-        const payload = {
-          id: stg.id,
-          project_id: prj.id,
-          stage_number: stg.stageNumber,
-          name: stg.stageName,
-          stageName: stg.stageName,
-          department: stg.responsibleDepartment,
-          assigned_employee_name: stg.responsibleEmployee || '',
-          responsibleEmployee: stg.responsibleEmployee || '',
-          assignees: stg.assignedEmployees || [],
-          assignedEmployees: stg.assignedEmployees || [],
-          status: stg.status || 'pending',
-          progress: stg.progressPercent || 0,
-          progressPercent: stg.progressPercent || 0,
-          start_date: stg.plannedStart || '',
-          end_date: stg.plannedEnd || '',
-          plannedStart: stg.plannedStart || '',
-          plannedEnd: stg.plannedEnd || '',
-          description: stg.remarks || stg.deliverables || '',
-          remarks: stg.remarks || '',
-          deliverables: stg.deliverables || '',
-        };
+      // Second, save planning stages to backend
+      let bulkSuccess = false;
+      try {
+        const bulkRes = await api.projects.saveProjectStages({ projectId: prj.id, stages: stagesToSave });
+        if (bulkRes && (bulkRes.success || Array.isArray(bulkRes.stages))) {
+          bulkSuccess = true;
+        }
+      } catch (_) {}
 
-        try {
-          await api.projects.updatePlanningStage(stg.id, payload).catch(async () => {
-            await api.projects.createPlanningStage(payload);
-          });
-        } catch (err) {
-          console.warn(`Could not sync stage ${stg.id} to backend:`, err);
+      // If bulk wasn't supported, do precise item-level sync
+      if (!bulkSuccess) {
+        const existingBackendStages = await api.projects.planningStages(prj.id).catch(() => []);
+        const existingIds = new Set(
+          (Array.isArray(existingBackendStages) ? existingBackendStages : []).flatMap((s: any) => [
+            String(s.id || '').toLowerCase(),
+            String(s.id || '').toUpperCase(),
+            s.id
+          ]).filter(Boolean)
+        );
+
+        for (const stg of stagesToSave) {
+          const payload = {
+            id: stg.id,
+            projectId: prj.id,
+            project_id: prj.id,
+            stageNumber: stg.stageNumber,
+            stage_number: stg.stageNumber,
+            name: stg.stageName,
+            stageName: stg.stageName,
+            department: stg.responsibleDepartment,
+            responsibleDepartment: stg.responsibleDepartment,
+            assignedEmployeeName: stg.responsibleEmployee || '',
+            assigned_employee_name: stg.responsibleEmployee || '',
+            responsibleEmployee: stg.responsibleEmployee || '',
+            assignees: stg.assignedEmployees || [],
+            assignedEmployees: stg.assignedEmployees || [],
+            status: stg.status || 'pending',
+            progress: stg.progressPercent || 0,
+            progressPercent: stg.progressPercent || 0,
+            startDate: stg.plannedStart || '',
+            start_date: stg.plannedStart || '',
+            plannedStart: stg.plannedStart || '',
+            endDate: stg.plannedEnd || '',
+            end_date: stg.plannedEnd || '',
+            plannedEnd: stg.plannedEnd || '',
+            description: stg.remarks || stg.deliverables || '',
+            remarks: stg.remarks || '',
+            deliverables: stg.deliverables || '',
+          };
+
+          try {
+            if (existingIds.has(String(stg.id).toLowerCase())) {
+              await api.projects.updatePlanningStage(stg.id, payload).catch(() => {});
+            } else {
+              await api.projects.createPlanningStage(payload).catch(() => {});
+            }
+          } catch (_) {}
         }
       }
 
-      // Sync tasks to backend as well
-      syncedTasks.forEach((tsk) => {
-        api.projects.updateTask(tsk.id, tsk).catch(() => {
+      // Sync tasks: fetch existing tasks first so we never call PATCH on non-existent task
+      const existingBackendTasks = await api.projects.tasks(prj.id).catch(() => []);
+      const existingTaskMap = new Map<string, string>();
+      if (Array.isArray(existingBackendTasks)) {
+        for (const t of existingBackendTasks) {
+          if (t?.id) {
+            existingTaskMap.set(String(t.id).toLowerCase(), String(t.id));
+          }
+        }
+      }
+
+      for (const tsk of syncedTasks) {
+        const lowerId = String(tsk.id).toLowerCase();
+        if (existingTaskMap.has(lowerId)) {
+          const exactBackendId = existingTaskMap.get(lowerId)!;
+          api.projects.updateTask(exactBackendId, { ...tsk, id: exactBackendId }).catch(() => {});
+        } else {
           api.projects.createTask(tsk).catch(() => {});
-        });
-      });
+        }
+      }
 
       sendNotification({
         title: 'Planning Matrix Saved to Database',
@@ -7552,9 +7665,11 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Save fresh 16 stages to backend API
-    api.projects.generatePlanningStages(prj.id).catch(() => {
-      freshStages.forEach((stg) => {
-        api.projects.createPlanningStage(stg).catch(() => {});
+    api.projects.saveProjectStages({ projectId: prj.id, stages: freshStages }).catch(() => {
+      api.projects.generatePlanningStages(prj.id).catch(() => {
+        freshStages.forEach((stg) => {
+          api.projects.createPlanningStage(stg).catch(() => {});
+        });
       });
     });
 

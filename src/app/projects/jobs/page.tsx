@@ -82,14 +82,21 @@ export default function JobManagementPage() {
     {
       header: 'Actions',
       cell: (j) => (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => openJobModal(j.jobNumber)}
-            className="px-3 py-1.5 bg-crm-brand-700 hover:bg-crm-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm shadow-crm-brand-700/30 transition cursor-pointer"
+            className="px-3 py-1.5 bg-[#FAF7F2] hover:bg-slate-200 text-[#211B17] font-bold rounded-xl text-xs flex items-center gap-1.5 border border-[#EBE3DB] transition cursor-pointer"
           >
-            <Cpu className="w-3.5 h-3.5" />
+            <Cpu className="w-3.5 h-3.5 text-crm-brand-700" />
             <span>360° View</span>
           </button>
+          <Link
+            href={`/designer/jobs?job=${encodeURIComponent(j.jobNumber)}`}
+            className="px-3 py-1.5 bg-crm-brand-700 hover:bg-crm-brand-600 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm shadow-crm-brand-700/30 transition cursor-pointer"
+          >
+            <span>Design Jobs</span>
+            <span className="font-mono">➔</span>
+          </Link>
         </div>
       ),
     },

@@ -259,9 +259,12 @@ function GoodsReceiptContent() {
       } as any);
 
       closeModal();
-      setSuccessMessage('Goods Receipt Note (GRN) created successfully! Stock updated.');
+      setSuccessMessage('Goods Receipt Note (GRN) created successfully! Stock updated. Redirecting to Material Issue...');
       setStockAddedBanner(true);
-      setTimeout(() => setSuccessMessage(''), 6000);
+      const targetJob = currentPo?.jobId || currentPo?.jobNumber || '';
+      setTimeout(() => {
+        router.push(`/store/material-issue?jobId=${encodeURIComponent(targetJob)}`);
+      }, 1200);
     } catch (err: any) {
       console.error('Error submitting GRN:', err);
       alert('Error creating GRN: ' + (err?.message || err));
@@ -459,10 +462,20 @@ function GoodsReceiptContent() {
                               </Link>
                             </>
                           ) : (
-                            <span className="px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3 text-emerald-600" />
-                              Stock Added
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="px-2 py-0.5 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                Stock Added
+                              </span>
+                              <Link
+                                href={`/store/material-issue?jobId=${encodeURIComponent(g.jobId || '')}`}
+                                className="px-2 py-1 bg-crm-brand-700 hover:bg-crm-brand-600 text-white rounded-lg text-[11px] font-bold shadow-xs flex items-center gap-1 transition"
+                                title="Issue Material for Production"
+                              >
+                                <span>Issue</span>
+                                <span className="font-mono">➔</span>
+                              </Link>
+                            </div>
                           )}
                           <button
                             onClick={() => setSelectedGrnForDetails(g)}

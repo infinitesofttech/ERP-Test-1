@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import {
   ShoppingCart,
@@ -27,6 +29,7 @@ import {
 import { PurchaseOrder, POItem } from '../../../types/purchase';
 
 export default function PurchaseOrderPage() {
+  const router = useRouter();
   const {
     purchaseOrders,
     addPurchaseOrder,
@@ -224,8 +227,11 @@ export default function PurchaseOrderPage() {
       };
 
       addPurchaseOrder(newPO);
-      showToast(`✅ Purchase Order ${newPO.poNumber} created and saved to database successfully!`);
+      showToast(`✅ Purchase Order ${newPO.poNumber} created! Redirecting to Store GRN...`);
       setShowCreateModal(false);
+      setTimeout(() => {
+        router.push(`/store/grn?poNumber=${encodeURIComponent(newPO.poNumber)}`);
+      }, 1200);
     } else {
       // Direct Mode
       const supplierObj = suppliers.find(s => s.id === selectedSupplierId) || suppliers[0];
@@ -284,8 +290,11 @@ export default function PurchaseOrderPage() {
       };
 
       addPurchaseOrder(newPO);
-      showToast(`✅ Purchase Order ${newPO.poNumber} created and saved to database successfully!`);
+      showToast(`✅ Purchase Order ${newPO.poNumber} created! Redirecting to Store GRN...`);
       setShowCreateModal(false);
+      setTimeout(() => {
+        router.push(`/store/grn?poNumber=${encodeURIComponent(newPO.poNumber)}`);
+      }, 1200);
     }
   };
 
@@ -480,6 +489,14 @@ export default function PurchaseOrderPage() {
                               <CheckCircle2 className="w-4 h-4" />
                             </button>
                           )}
+                          <Link
+                            href={`/store/grn?poNumber=${encodeURIComponent(po.poNumber)}`}
+                            className="px-2 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition flex items-center gap-1"
+                            title="Inward Material at Store (GRN)"
+                          >
+                            <span>GRN</span>
+                            <span className="font-mono">➔</span>
+                          </Link>
                           <button
                             onClick={() => setViewPO(po)}
                             className="p-1.5 rounded-lg bg-[#FAF7F2] hover:bg-[#EBE3DB] text-[#211B17] transition"
@@ -524,6 +541,13 @@ export default function PurchaseOrderPage() {
                 </h2>
               </div>
               <div className="flex items-center gap-2">
+                <Link
+                  href={`/store/grn?poNumber=${encodeURIComponent(viewPO.poNumber)}`}
+                  className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow"
+                >
+                  <span>Receive GRN</span>
+                  <span className="font-mono">➔</span>
+                </Link>
                 <button
                   onClick={() => window.print()}
                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow"

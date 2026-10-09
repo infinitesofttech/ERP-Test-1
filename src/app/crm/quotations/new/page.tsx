@@ -40,8 +40,15 @@ function QuotationFormContent() {
   );
 
   const [customerId, setCustomerId] = useState(
-    prefillCustId || matchedLead?.convertedCustomerId || customers[0]?.id || ''
+    prefillCustId || matchedEnquiry?.customerId || matchedLead?.convertedCustomerId || customers[0]?.id || ''
   );
+
+  React.useEffect(() => {
+    const targetId = prefillCustId || matchedEnquiry?.customerId || matchedLead?.convertedCustomerId;
+    if (targetId && targetId !== customerId) {
+      setCustomerId(targetId);
+    }
+  }, [prefillCustId, matchedEnquiry, matchedLead]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [validUntil, setValidUntil] = useState('2026-10-30');
 

@@ -41,6 +41,7 @@ export default function ProjectListPage() {
     isProjectsLoading,
     syncProjects,
     salesOrders,
+    customers,
     createProjectFromSalesOrder,
     updateProject,
     deleteProject,
@@ -171,6 +172,8 @@ export default function ProjectListPage() {
     e.stopPropagation();
     setEditingProject(prj);
     setEditFormData({
+      customerName: prj.customerName,
+      customerId: prj.customerId,
       productName: prj.productName,
       specification: prj.specification,
       projectManager: prj.projectManager || 'Bhavin Shah',
@@ -190,6 +193,9 @@ export default function ProjectListPage() {
     if (!editingProject) return;
 
     const errors: Record<string, string> = {};
+    if (!editFormData.customerName || editFormData.customerName.trim() === '') {
+      errors.customerName = 'Customer name is required.';
+    }
     if (!editFormData.productName || editFormData.productName.trim() === '') {
       errors.productName = 'Product name is required.';
     }
@@ -248,7 +254,7 @@ export default function ProjectListPage() {
           (s) =>
             (p.salesOrderNumber && (s.salesOrderNumber === p.salesOrderNumber || s.id === p.salesOrderNumber)) ||
             (p.salesOrderId && (s.id === p.salesOrderId || s.salesOrderNumber === p.salesOrderId)) ||
-            (p.customerPoNumber && s.customerPoNumber && s.customerPoNumber === p.customerPoNumber)
+            (p.customerPoNumber && s.customerPoNumber && s.customerPoNumber === p.customerPoNumber && (s.customerName === p.customerName || s.customerId === p.customerId))
         );
         const displayName = (p.customerName && p.customerName !== 'Customer')
           ? p.customerName
@@ -663,11 +669,7 @@ export default function ProjectListPage() {
 
             <form onSubmit={handleEditSubmit} className="p-5 space-y-4 text-xs">
               {/* Reference Info (Readonly) */}
-              <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#EBE3DB] grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-[#70665F] block">Customer:</span>
-                  <span className="font-bold text-[#211B17]">{editingProject.customerName}</span>
-                </div>
+              <div className="p-3 bg-[#FAF7F2] rounded-xl border border-[#EBE3DB] grid grid-cols-3 gap-2 text-xs">
                 <div>
                   <span className="text-[#70665F] block">Job Number:</span>
                   <span className="font-mono font-bold text-amber-700">{editingProject.jobNumber}</span>
@@ -680,6 +682,48 @@ export default function ProjectListPage() {
                   <span className="text-[#70665F] block">Customer PO:</span>
                   <span className="font-mono text-[#544B45]">{editingProject.customerPoNumber || 'N/A'}</span>
                 </div>
+              </div>
+
+              {/* Customer Name */}
+              <div>
+                <label className="block font-semibold text-[#544B45] mb-1">
+                  Customer Name / Client <span className="text-rose-500">*</span>
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={editFormData.customerName || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, customerName: e.target.value })}
+                    placeholder="e.g. krupssss"
+                    className="flex-1 px-3 py-2 bg-white border border-[#EBE3DB] rounded-lg text-[#211B17] font-bold"
+                  />
+                  {customers && customers.length > 0 && (
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const chosen = customers.find((c) => c.id === e.target.value || c.companyName === e.target.value);
+                          if (chosen) {
+                            setEditFormData({
+                              ...editFormData,
+                              customerName: chosen.companyName,
+                              customerId: chosen.id
+                            });
+                          }
+                        }
+                      }}
+                      className="px-2 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-lg text-[#544B45] font-semibold text-xs"
+                    >
+                      <option value="">Select from Master...</option>
+                      {customers.map((c) => (
+                        <option key={c.id} value={c.id}>{c.companyName}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                {editErrors.customerName && (
+                  <p className="text-rose-500 text-[11px] mt-1">{editErrors.customerName}</p>
+                )}
               </div>
 
               {/* Equipment Name & Specification */}

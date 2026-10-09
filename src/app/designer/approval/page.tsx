@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import {
   Zap,
@@ -27,6 +28,7 @@ import {
 import { DesignJob, DesignJobStatus } from '../../../types/designer';
 
 export default function DesignApprovalPage() {
+  const router = useRouter();
   const {
     designJobs,
     approveDesignJob,
@@ -164,8 +166,10 @@ export default function DesignApprovalPage() {
   const handleRelease = () => {
     if (!activeJob) return;
     releaseDesignToManufacturing(activeJob.id, releaserName);
-    setActionSuccessMessage(`🚀 Design Job ${activeJob.designJobNumber} successfully released to Shop Floor & Manufacturing!`);
-    setTimeout(() => setActionSuccessMessage(null), 5000);
+    setActionSuccessMessage(`🚀 Design Job ${activeJob.designJobNumber} successfully released! Redirecting to MRP...`);
+    setTimeout(() => {
+      router.push(`/purchase/mrp?job=${encodeURIComponent(activeJob.jobNumber || '')}`);
+    }, 1200);
   };
 
   const handleRevoke = () => {

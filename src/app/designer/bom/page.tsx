@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useERP } from '../../../context/ERPContext';
 import { BOMHeader, BOMItem, BOMItemType, ProcurementType } from '../../../types/designer';
 import {
@@ -36,6 +38,7 @@ interface NewBOMFormItem {
 }
 
 export default function MasterBOMPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const { boms, addBOM, updateBOM, designJobs, projectJobs, itemMasters, currentUser } = useERP();
 
@@ -318,8 +321,10 @@ export default function MasterBOMPage() {
 
     setSelectedJobNumber(uniqueBomId);
     setIsCreateBOMModalOpen(false);
-    setSuccessToast(`Master BOM "${newBomName}" (${newVersion}) created successfully with ${formattedItems.length} line items!`);
-    setTimeout(() => setSuccessToast(''), 5000);
+    setSuccessToast(`Master BOM "${newBomName}" created! Redirecting to MRP...`);
+    setTimeout(() => {
+      router.push(`/purchase/mrp?job=${encodeURIComponent(validJobNumber)}`);
+    }, 1200);
   };
 
   // Add or Update Item in Active BOM
@@ -465,8 +470,10 @@ export default function MasterBOMPage() {
       isLocked: true,
       approvedBy: `${currentUser?.firstName || 'Dharmesh'} ${currentUser?.lastName || 'Joshi'}`.trim(),
     });
-    setSuccessToast(`Master BOM ${activeBOM.bomNumber} approved and locked for production!`);
-    setTimeout(() => setSuccessToast(''), 4000);
+    setSuccessToast(`Master BOM ${activeBOM.bomNumber} approved! Redirecting to MRP...`);
+    setTimeout(() => {
+      router.push(`/purchase/mrp?job=${encodeURIComponent(activeBOM.jobNumber || '')}`);
+    }, 1200);
   };
 
   const filteredItems = (activeBOM?.items || []).filter((item) => {
@@ -559,6 +566,17 @@ export default function MasterBOMPage() {
               BOM Locked ({activeBOM.revisionNumber || activeBOM.version || 'V1'}) - Click to Unlock
             </button>
           ) : null}
+
+          {activeBOM && (
+            <Link
+              href={`/purchase/mrp?job=${encodeURIComponent(activeBOM.jobNumber || '')}`}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-crm-brand-700 hover:bg-crm-brand-600 text-white text-xs font-bold shadow-sm transition"
+              title="Navigate to Material Requirements Planning"
+            >
+              <span>Calculate MRP</span>
+              <span className="font-mono">➔</span>
+            </Link>
+          )}
         </div>
       </div>
 
