@@ -7324,14 +7324,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       return updatedTasks;
     });
 
-    api.projects.deletePlanningStage(id).catch((err) => console.warn('Failed to delete stage on backend:', err));
     if (id) {
-      api.projects.deletePlanningStage(id.toLowerCase()).catch(() => {});
-      api.projects.deletePlanningStage(id.toUpperCase()).catch(() => {});
-      // Also delete corresponding task from backend API
+      api.projects.deletePlanningStage(id).catch(() => {});
       api.projects.deleteTask(`TSK-${id}`).catch(() => {});
-      api.projects.deleteTask(`TSK-${id.toLowerCase()}`).catch(() => {});
-      api.projects.deleteTask(`TSK-${id.toUpperCase()}`).catch(() => {});
     }
   };
 
@@ -7499,14 +7494,9 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
 
             if (isForThisPrj) {
               if (!activeStageNums.has(bkNum) || !activeIds.has(bkId)) {
-                await api.projects.deletePlanningStage(bkStage.id).catch(() => {});
                 if (bkStage.id) {
-                  await api.projects.deletePlanningStage(bkStage.id.toLowerCase()).catch(() => {});
-                  await api.projects.deletePlanningStage(bkStage.id.toUpperCase()).catch(() => {});
-                  // Also delete orphaned task from backend
+                  await api.projects.deletePlanningStage(bkStage.id).catch(() => {});
                   await api.projects.deleteTask(`TSK-${bkStage.id}`).catch(() => {});
-                  await api.projects.deleteTask(`TSK-${bkStage.id.toLowerCase()}`).catch(() => {});
-                  await api.projects.deleteTask(`TSK-${bkStage.id.toUpperCase()}`).catch(() => {});
                 }
               }
             }

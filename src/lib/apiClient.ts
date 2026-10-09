@@ -1262,6 +1262,46 @@ async function ensureMrpIdsLoaded(): Promise<void> {
   await mrpListPromise;
 }
 
+let planningStageListPromise: Promise<void> | null = null;
+async function ensurePlanningStageIdsLoaded(): Promise<void> {
+  if (knownPlanningStageIds.size > 0) return;
+  if (!planningStageListPromise) {
+    planningStageListPromise = (async () => {
+      try {
+        const res = await request<any[]>('/planning-stages/');
+        const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+        for (const item of list) {
+          if (item?.id) knownPlanningStageIds.add(String(item.id).toLowerCase());
+        }
+      } catch (_) {}
+      finally {
+        planningStageListPromise = null;
+      }
+    })();
+  }
+  await planningStageListPromise;
+}
+
+let projectTaskListPromise: Promise<void> | null = null;
+async function ensureProjectTaskIdsLoaded(): Promise<void> {
+  if (knownProjectTaskIds.size > 0) return;
+  if (!projectTaskListPromise) {
+    projectTaskListPromise = (async () => {
+      try {
+        const res = await request<any[]>('/project-tasks/');
+        const list = Array.isArray(res) ? res : ((res as any)?.results || []);
+        for (const item of list) {
+          if (item?.id) knownProjectTaskIds.add(String(item.id).toLowerCase());
+        }
+      } catch (_) {}
+      finally {
+        projectTaskListPromise = null;
+      }
+    })();
+  }
+  await projectTaskListPromise;
+}
+
 export const api = {
   // Generic HTTP verbs
   get: <T = any>(endpoint: string) => request<T>(endpoint, { method: 'GET' }),
@@ -1654,9 +1694,20 @@ export const api = {
         throw postErr;
       }
     },
-    deletePlanningStage: (id: string) => {
-      knownPlanningStageIds.delete(String(id).toLowerCase());
-      return request<any>(`/planning-stages/${id}/`, { method: 'DELETE' });
+    deletePlanningStage: async (id: string) => {
+      if (!id) return {} as any;
+      await ensurePlanningStageIdsLoaded();
+      const lowerId = String(id).toLowerCase();
+      if (!knownPlanningStageIds.has(lowerId)) {
+        return {} as any;
+      }
+      knownPlanningStageIds.delete(lowerId);
+      try {
+        return await request<any>(`/planning-stages/${encodeURIComponent(id)}/`, { method: 'DELETE' });
+      } catch (err: any) {
+        if (err?.status === 404) return {} as any;
+        throw err;
+      }
     },
     generatePlanningStages: (projectId: string) =>
       request<any>(`/projects/${projectId}/generate-stages/`, { method: 'POST' }),
@@ -1725,9 +1776,20 @@ export const api = {
         throw postErr;
       }
     },
-    deleteTask: (id: string) => {
-      knownProjectTaskIds.delete(String(id).toLowerCase());
-      return request<any>(`/project-tasks/${id}/`, { method: 'DELETE' });
+    deleteTask: async (id: string) => {
+      if (!id) return {} as any;
+      await ensureProjectTaskIdsLoaded();
+      const lowerId = String(id).toLowerCase();
+      if (!knownProjectTaskIds.has(lowerId)) {
+        return {} as any;
+      }
+      knownProjectTaskIds.delete(lowerId);
+      try {
+        return await request<any>(`/project-tasks/${encodeURIComponent(id)}/`, { method: 'DELETE' });
+      } catch (err: any) {
+        if (err?.status === 404) return {} as any;
+        throw err;
+      }
     },
     departmentAssignments: (projectId?: string) =>
       request<any[]>(projectId ? `/department-assignments/?projectId=${projectId}` : '/department-assignments/'),
