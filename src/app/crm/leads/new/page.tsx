@@ -223,11 +223,13 @@ export default function NewLeadPage() {
           'Pravin Patel'
         : 'Pravin Patel';
 
+      const resolvedMobile = (formData.mobile || formData.whatsapp || '').trim();
       addLead({
         ...formData,
         companyName: formData.companyName.trim(),
         contactPerson: formData.contactPerson.trim(),
-        mobile: formData.mobile.trim(),
+        mobile: resolvedMobile,
+        whatsapp: (formData.whatsapp || resolvedMobile).trim(),
         email: formData.email.trim(),
         productName: formData.productName.trim(),
         quantity: Number(formData.quantity) || 1,

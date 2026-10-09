@@ -223,8 +223,8 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       customerType: 'company',
       companyName: custCompanyName,
       industry: custIndustry,
-      gstin: custGstin?.toUpperCase(),
-      pan: custGstin.slice(2, 12) || 'AAACX0000X',
+      gstin: custGstin?.toUpperCase() || '',
+      pan: custGstin && custGstin.length >= 12 ? custGstin.slice(2, 12) : '',
       contactPerson: custContactPerson,
       designation: 'General Manager',
       mobile: custMobile.replace(/\D/g, '').slice(0, 10),
@@ -235,10 +235,10 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       state: custState,
       country: 'India',
       pincode: '390010',
-      paymentTerms: '30% Advance, 70% against Dispatch',
-      creditLimit: custCreditLimit,
+      paymentTerms: 'As per quotation terms',
+      creditLimit: custCreditLimit || 0,
       currency: 'INR (₹)',
-      category: 'gold',
+      category: 'standard',
       assignedSalesPerson: 'Pravin Patel',
     });
 
@@ -305,10 +305,10 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
             <ArrowUpRight className="w-3 h-3 opacity-60" />
           </Link>
           <div className="flex items-center gap-2 text-[11px] text-[#70665F]">
-            <span className="font-medium">{lead.contactPerson}</span>
-            {lead.mobile && (
+            <span className="font-medium">{lead.contactPerson || 'N/A'}</span>
+            {(lead.mobile || lead.whatsapp) && (
               <span className="flex items-center gap-0.5 font-mono text-[10px] text-[#544B45]">
-                <Phone className="w-2.5 h-2.5 text-[#A89F91]" /> {lead.mobile}
+                <Phone className="w-2.5 h-2.5 text-[#A89F91]" /> {lead.mobile || lead.whatsapp}
               </span>
             )}
           </div>
@@ -382,9 +382,14 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                 <Sparkles className="w-3 h-3" /> Convert
               </button>
             ) : (
-              <span className="px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 text-[10px] font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Converted
-              </span>
+              <Link
+                href={`/crm/customers/${lead.convertedCustomerId || ''}`}
+                onClick={(e) => e.stopPropagation()}
+                title="View Converted Customer Profile"
+                className="px-2.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 text-[10px] font-bold flex items-center gap-1 transition cursor-pointer"
+              >
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Customer
+              </Link>
             )}
             <button
               onClick={() => {
@@ -543,7 +548,7 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
         <div>
           <span className="font-semibold text-slate-800 block">{cust.contactPerson}</span>
           <div className="flex items-center gap-2 text-[10px] text-[#70665F] mt-0.5 font-mono">
-            {cust.mobile && <span>Ph: {cust.mobile}</span>}
+            {(cust.mobile || cust.whatsapp) && <span>Ph: {cust.mobile || cust.whatsapp}</span>}
             {cust.email && <span className="truncate max-w-[130px]">{cust.email}</span>}
           </div>
         </div>
@@ -1366,6 +1371,116 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                 <button
                   type="submit"
                   className="px-5 py-2 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-lg font-bold shadow-xs transition"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------------------------------------------------------------- */}
+      {/* MODAL 3B: EDIT CUSTOMER MODAL                                          */}
+      {/* ---------------------------------------------------------------------- */}
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-[#EBE3DB] rounded-2xl max-w-xl w-full p-6 shadow-xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3 mb-4">
+              <h3 className="font-bold text-sm text-[#211B17] flex items-center gap-2">
+                <Pencil className="w-4 h-4 text-amber-600" />
+                Edit Customer: {editingCustomer.customerCode || editingCustomer.id}
+              </h3>
+              <button onClick={() => setEditingCustomer(null)} className="text-[#70665F] hover:text-[#211B17]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditCustomer} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-[#544B45] font-semibold mb-1">Company Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingCustomer.companyName || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, companyName: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Contact Person</label>
+                  <input
+                    type="text"
+                    value={editingCustomer.contactPerson || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, contactPerson: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Mobile Contact</label>
+                  <input
+                    type="text"
+                    value={editingCustomer.mobile || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, mobile: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">WhatsApp</label>
+                  <input
+                    type="text"
+                    value={editingCustomer.whatsapp || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, whatsapp: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editingCustomer.email || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">GSTIN</label>
+                  <input
+                    type="text"
+                    value={editingCustomer.gstin || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, gstin: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono uppercase"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">City</label>
+                  <input
+                    type="text"
+                    value={editingCustomer.city || ''}
+                    onChange={(e) => setEditingCustomer({ ...editingCustomer, city: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#EBE3DB]">
+                <button
+                  type="button"
+                  onClick={() => setEditingCustomer(null)}
+                  className="px-4 py-2 border border-[#EBE3DB] rounded-lg hover:bg-slate-50 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-xs transition"
                 >
                   Save Changes
                 </button>

@@ -26,8 +26,16 @@ export default function QuotationDetailPage() {
   const router = useRouter();
   const { quotations, addQuotationRevision, updateQuotationStatus, currentUser, addCustomerPO } = useERP();
 
-  const quotationId = String(params.id);
-  const quotation = quotations.find((q) => q.id === quotationId);
+  const rawId = Array.isArray(params?.id) ? params.id.join('/') : String(params?.id || '');
+  const quotationId = decodeURIComponent(rawId);
+  const quotation = quotations.find((q) =>
+    q.id === quotationId ||
+    q.quotationNumber === quotationId ||
+    q.id === rawId ||
+    q.quotationNumber === rawId ||
+    q.id.toLowerCase() === quotationId.toLowerCase() ||
+    q.quotationNumber.toLowerCase() === quotationId.toLowerCase()
+  );
 
   const [selectedRevNum, setSelectedRevNum] = useState<string>(quotation?.currentRevision || 'Rev-00');
   const [showRevModal, setShowRevModal] = useState(false);

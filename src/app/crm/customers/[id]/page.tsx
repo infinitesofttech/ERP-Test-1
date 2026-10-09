@@ -24,7 +24,13 @@ export default function Customer360Page() {
   const { customers, quotations, salesOrders, projectJobs, leads, siteVisits } = useERP();
 
   const customerId = String(params.id);
-  const customer = customers.find((c) => c.id === customerId);
+  const customer = customers.find(
+    (c) =>
+      c.id === customerId ||
+      c.customerCode === customerId ||
+      c.id.toLowerCase() === customerId.toLowerCase() ||
+      c.customerCode?.toLowerCase() === customerId.toLowerCase()
+  );
 
   const [activeTab, setActiveTab] = useState<'orders' | 'quotations' | 'projects' | 'visits' | 'info'>('orders');
 

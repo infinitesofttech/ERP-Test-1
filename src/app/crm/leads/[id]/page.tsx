@@ -172,7 +172,8 @@ export default function LeadDetailPage() {
       ...editFormData,
       companyName: editFormData.companyName?.trim(),
       contactPerson: editFormData.contactPerson?.trim(),
-      mobile: editFormData.mobile?.trim(),
+      mobile: (editFormData.mobile || editFormData.whatsapp || '').trim(),
+      whatsapp: (editFormData.whatsapp || editFormData.mobile || '').trim(),
       email: editFormData.email?.trim(),
       productName: editFormData.productName?.trim(),
       quantity: Number(editFormData.quantity) || 1,
@@ -300,10 +301,14 @@ export default function LeadDetailPage() {
                 <span>Convert to Customer & Enquiry</span>
               </button>
             ) : (
-              <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold flex items-center gap-1">
+              <Link
+                href={`/crm/customers/${lead.convertedCustomerId}`}
+                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold flex items-center gap-1 transition"
+                title="View Customer Profile"
+              >
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>Converted Customer ({lead.convertedCustomerId})</span>
-              </span>
+              </Link>
             )}
           </div>
         </div>
@@ -318,12 +323,12 @@ export default function LeadDetailPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-[#EBE3DB] text-[11px]">
           <div>
             <span className="text-[#70665F] block">Contact Person</span>
-            <span className="font-bold text-slate-800 dark:text-[#544B45]">{lead.contactPerson}</span>
+            <span className="font-bold text-slate-800 dark:text-[#544B45]">{lead.contactPerson || 'N/A'}</span>
             <span className="text-[#70665F] block">{lead.designation}</span>
           </div>
           <div>
             <span className="text-[#70665F] block">Phone & WhatsApp</span>
-            <span className="font-bold text-slate-800 dark:text-[#544B45]">{lead.mobile}</span>
+            <span className="font-bold text-slate-800 dark:text-[#544B45]">{lead.mobile || lead.whatsapp || (lead as any).phone || 'N/A'}</span>
             <span className="text-[#70665F] block">{lead.email}</span>
           </div>
           <div>

@@ -5792,33 +5792,47 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     const lead = leads.find((l) => l.id === leadId || l.leadNo === leadId);
     if (!lead) throw new Error('Lead not found');
 
-    // Create Customer
-    const custId = `CUST-2026-${String(customers.length + 1).padStart(4, '0')}`;
+    // Generate unique, non-colliding Customer Code and ID
+    const existingCodes = customers.map((c) => c.customerCode || c.id || '');
+    let maxCustSeq = 0;
+    for (const code of existingCodes) {
+      const m = code.match(/CUST-(?:2026-)?(\d+)/i);
+      if (m) {
+        const val = parseInt(m[1], 10);
+        if (!isNaN(val) && val > maxCustSeq) maxCustSeq = val;
+      }
+    }
+    const nextCustSeq = Math.max(maxCustSeq + 1, customers.length + 1);
+    const custId = `CUST-2026-${String(nextCustSeq).padStart(4, '0')}`;
+    const custCode = `CUST-${String(nextCustSeq).padStart(3, '0')}`;
+
+    // Strictly copy exact data from lead without automatic dummy injection
+    const actualMobile = (lead.mobile || lead.whatsapp || (lead as any).phone || (lead as any).altMobile || '').trim();
     const newCustomer: Customer = {
       id: custId,
-      customerCode: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
+      customerCode: custCode,
       customerType: 'company',
-      companyName: lead.companyName,
+      companyName: lead.companyName || '',
       industry: lead.industry || 'Manufacturing',
-      gstin: lead.gstin || '24AAACX0000X1Z1',
-      pan: lead.gstin ? lead.gstin.slice(2, 12) : 'AAACX0000X',
+      gstin: lead.gstin || '',
+      pan: lead.gstin && lead.gstin.length >= 12 ? lead.gstin.slice(2, 12) : (lead as any).pan || '',
       website: lead.website || '',
-      contactPerson: lead.contactPerson,
-      designation: lead.designation,
-      mobile: lead.mobile,
-      email: lead.email,
-      whatsapp: lead.whatsapp,
-      billingAddress: lead.address,
-      shippingAddress: lead.address,
-      city: lead.city,
-      state: lead.state,
-      country: lead.country,
-      pincode: lead.pincode,
-      paymentTerms: '30% Advance, 70% against Dispatch',
-      creditLimit: 10000000,
+      contactPerson: lead.contactPerson || '',
+      designation: lead.designation || '',
+      mobile: actualMobile,
+      email: lead.email || '',
+      whatsapp: lead.whatsapp || actualMobile,
+      billingAddress: lead.address || '',
+      shippingAddress: lead.address || '',
+      city: lead.city || '',
+      state: lead.state || '',
+      country: lead.country || 'India',
+      pincode: lead.pincode || '',
+      paymentTerms: 'As per quotation terms',
+      creditLimit: 0,
       currency: 'INR (₹)',
-      category: 'gold',
-      assignedSalesPerson: lead.assignedSalesPersonName,
+      category: 'standard',
+      assignedSalesPerson: lead.assignedSalesPersonName || '',
       createdDate: new Date().toISOString().split('T')[0],
     };
     setCustomers((prev) => {
@@ -5838,13 +5852,13 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       customerId: newCustomer.id,
       customerName: newCustomer.companyName,
       enquiryDate: new Date().toISOString().split('T')[0],
-      requirement: lead.requirementDescription || `${lead.productName} for ${lead.companyName}`,
-      machineProduct: lead.productName,
+      requirement: lead.requirementDescription || (lead.productName ? `${lead.productName} for ${lead.companyName}` : ''),
+      machineProduct: lead.productName || 'Equipment',
       quantity: lead.quantity || 1,
-      specification: lead.capacity || lead.requirementDescription || 'As per customer drawing/spec',
-      expectedDelivery: lead.expectedDelivery || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      assignedPersonId: lead.assignedSalesPersonId,
-      assignedPersonName: lead.assignedSalesPersonName,
+      specification: lead.capacity || lead.requirementDescription || '',
+      expectedDelivery: lead.expectedDelivery || '',
+      assignedPersonId: lead.assignedSalesPersonId || '',
+      assignedPersonName: lead.assignedSalesPersonName || '',
       status: 'technical_review',
     };
     setEnquiries((prev) => {
@@ -5863,14 +5877,14 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       leadId: lead.id,
       customerId: newCustomer.id,
       customerName: newCustomer.companyName,
-      machineProduct: lead.productName,
-      estimatedValue: lead.budget || 3500000,
-      expectedClosingDate: lead.expectedDelivery || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      salesPersonId: lead.assignedSalesPersonId,
-      salesPersonName: lead.assignedSalesPersonName,
+      machineProduct: lead.productName || 'Equipment',
+      estimatedValue: lead.budget || 0,
+      expectedClosingDate: lead.expectedDelivery || '',
+      salesPersonId: lead.assignedSalesPersonId || '',
+      salesPersonName: lead.assignedSalesPersonName || '',
       probability: 60,
       stage: 'requirement',
-      remarks: `Converted from Lead ${lead.leadNo}`,
+      remarks: `Converted from Lead ${lead.leadNo || lead.id}`,
     };
     setOpportunities((prev) => {
       const updated = [newOpp, ...prev.filter((o) => o.id !== newOpp.id && o.opportunityNo !== newOpp.opportunityNo)];
@@ -5888,8 +5902,63 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       convertedOpportunityId: newOpp.id,
     });
 
-    // Asynchronously trigger lead conversion on PythonAnywhere backend
-    api.crm.leads.convert(lead.id).catch((err) => console.warn('Failed to sync lead conversion on backend:', err));
+    // Asynchronously sync lead conversion with PythonAnywhere backend and update IDs
+    api.crm.leads.convert(lead.id).then((res) => {
+      if (res && res.customer) {
+        const backendCust = res.customer;
+        const finalCustId = backendCust.id || custId;
+        const finalCustCode = backendCust.customerCode || custCode;
+
+        setCustomers((prev) => {
+          const updated = deduplicateCustomers(
+            prev.map((c) =>
+              c.id === custId || c.customerCode === custCode
+                ? { ...newCustomer, ...backendCust, id: finalCustId, customerCode: finalCustCode }
+                : c
+            )
+          );
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('UMA_ERP_customers', JSON.stringify(updated)); } catch (_) {}
+          }
+          return updated;
+        });
+
+        setLeads((prev) => {
+          const updated = prev.map((l) =>
+            l.id === lead.id || l.leadNo === lead.leadNo
+              ? {
+                  ...l,
+                  status: 'won' as const,
+                  convertedCustomerId: finalCustId,
+                  convertedEnquiryId: res.enquiry?.id || enqNo,
+                  convertedOpportunityId: res.opportunity?.id || oppNo,
+                }
+              : l
+          );
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('UMA_ERP_leads', JSON.stringify(updated)); } catch (_) {}
+          }
+          return updated;
+        });
+
+        if (res.enquiry) {
+          setEnquiries((prev) => {
+            const updated = prev.map((e) =>
+              e.id === enqNo || e.enquiryNo === enqNo
+                ? { ...newEnquiry, ...res.enquiry, customerId: finalCustId }
+                : e
+            );
+            if (typeof window !== 'undefined') {
+              try { localStorage.setItem('UMA_ERP_enquiries', JSON.stringify(updated)); } catch (_) {}
+            }
+            return updated;
+          });
+        }
+      }
+    }).catch((err) => {
+      console.warn('Failed to sync lead conversion on backend, ensuring customer exists:', err);
+      api.crm.customers.create(newCustomer).catch(() => {});
+    });
 
     logAction('APPROVE', 'CRM', 'Convert Lead', lead.id, `Converted lead to Customer ${newCustomer.companyName}, Enquiry ${enqNo}, Opportunity ${oppNo}`);
     return { customer: newCustomer, enquiry: newEnquiry, opportunity: newOpp };
@@ -5897,11 +5966,22 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
 
   // Customers
   const addCustomer = (custData: Omit<Customer, 'id' | 'customerCode' | 'createdDate'>): Customer => {
-    const custId = `CUST-2026-${String(customers.length + 1).padStart(4, '0')}`;
+    const existingCodes = customers.map((c) => c.customerCode || c.id || '');
+    let maxCustSeq = 0;
+    for (const code of existingCodes) {
+      const m = code.match(/CUST-(?:2026-)?(\d+)/i);
+      if (m) {
+        const val = parseInt(m[1], 10);
+        if (!isNaN(val) && val > maxCustSeq) maxCustSeq = val;
+      }
+    }
+    const nextCustSeq = Math.max(maxCustSeq + 1, customers.length + 1);
+    const custId = `CUST-2026-${String(nextCustSeq).padStart(4, '0')}`;
+    const custCode = `CUST-${String(nextCustSeq).padStart(3, '0')}`;
     const newCust: Customer = {
       ...custData,
       id: custId,
-      customerCode: `CUST-${String(customers.length + 1).padStart(3, '0')}`,
+      customerCode: custCode,
       createdDate: new Date().toISOString().split('T')[0],
     };
     setCustomers((prev) => {

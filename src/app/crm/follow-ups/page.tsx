@@ -86,13 +86,13 @@ export default function FollowUpsPage() {
     let leadId: string | undefined;
 
     if (targetType === 'lead') {
-      const selectedLead = leads.find((l) => l.id === targetId) || leads[0];
-      targetName = selectedLead ? `${selectedLead.companyName} (${selectedLead.contactPerson})` : 'New Lead';
-      leadId = selectedLead?.id;
+      const selectedLead = leads.find((l) => l.id === targetId || l.leadNo === targetId);
+      targetName = selectedLead ? `${selectedLead.companyName} (${selectedLead.contactPerson})` : 'Lead';
+      leadId = selectedLead?.id || targetId;
     } else {
-      const selectedCust = customers.find((c) => c.id === targetId) || customers[0];
+      const selectedCust = customers.find((c) => c.id === targetId || c.customerCode === targetId);
       targetName = selectedCust ? `${selectedCust.companyName} (${selectedCust.contactPerson})` : 'Customer';
-      customerId = selectedCust?.id;
+      customerId = selectedCust?.id || targetId;
     }
 
     const assignedStaff = allStaff.find((s) => s.id === assignedToId);

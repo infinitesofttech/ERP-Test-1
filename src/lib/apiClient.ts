@@ -96,13 +96,13 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
   else if (ep.includes('/leads')) {
     d.lead_no = d.lead_no || d.leadNo || d.id;
     d.leadNo = d.lead_no;
-    d.company_name = d.company_name || d.companyName || 'Prospect Co';
+    d.company_name = d.company_name || d.companyName || '';
     d.companyName = d.company_name;
-    d.contact_person = d.contact_person || d.contactPerson || 'Contact';
+    d.contact_person = d.contact_person || d.contactPerson || '';
     d.contactPerson = d.contact_person;
-    d.product_name = d.product_name || d.productName || d.requirementDescription || 'Equipment';
+    d.product_name = d.product_name || d.productName || d.requirementDescription || '';
     d.productName = d.product_name;
-    d.mobile = d.mobile || d.phone || '9999999999';
+    d.mobile = d.mobile || d.phone || d.whatsapp || d.contactMobile || d.contact_mobile || d.alt_mobile || d.altMobile || '';
     d.alt_mobile = d.alt_mobile || d.altMobile || '';
     d.machine_type = d.machine_type || d.machineType || '';
     d.requirement_description = d.requirement_description || d.requirementDescription || '';
@@ -135,11 +135,11 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.next_follow_up_date = d.next_follow_up_date || d.nextFollowUpDate || '';
     d.nextFollowUpDate = d.next_follow_up_date;
   } else if (ep.includes('/customers')) {
-    d.companyName = d.companyName || d.company_name || d.name || 'Customer Co';
+    d.companyName = d.companyName || d.company_name || d.name || '';
     d.company_name = d.companyName;
-    d.contactPerson = d.contactPerson || d.contact_person || d.name || 'Contact';
+    d.contactPerson = d.contactPerson || d.contact_person || d.name || '';
     d.contact_person = d.contactPerson;
-    d.mobile = d.mobile || d.phone || '9999999999';
+    d.mobile = d.mobile || d.phone || d.whatsapp || d.contactMobile || d.contact_mobile || d.alt_mobile || d.altMobile || '';
   } else if (ep.includes('/enquiries')) {
     d.customerId = d.customerId || d.customer_id || 'CUST-001';
     d.customer_id = d.customerId;
@@ -383,7 +383,7 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
   else if (ep.includes('/suppliers')) {
     d.vendorCode = d.vendorCode || d.supplierCode || d.code || d.id || 'SUP-001';
     d.contactPerson = d.contactPerson || d.contact_person || d.name || 'Vendor Rep';
-    d.mobile = d.mobile || d.phone || '9999999999';
+    d.mobile = d.mobile || d.phone || d.whatsapp || '';
   } else if (ep.includes('/purchase-requisitions')) {
     d.prNumber = d.prNumber || d.pr_number || d.id || `PR-2026-${Date.now().toString().slice(-4)}`;
     d.pr_number = d.prNumber;

@@ -39,16 +39,30 @@ function QuotationFormContent() {
     (prefillLeadId && e.leadId === prefillLeadId)
   );
 
-  const [customerId, setCustomerId] = useState(
-    prefillCustId || matchedEnquiry?.customerId || matchedLead?.convertedCustomerId || customers[0]?.id || ''
+  const leadMatchedCustomer = customers.find((c) =>
+    (matchedLead?.convertedCustomerId && (c.id === matchedLead.convertedCustomerId || c.customerCode === matchedLead.convertedCustomerId)) ||
+    (matchedLead?.companyName && c.companyName && c.companyName.trim().toLowerCase() === matchedLead.companyName.trim().toLowerCase())
   );
 
+  const initialCustomerId =
+    prefillCustId ||
+    matchedEnquiry?.customerId ||
+    matchedLead?.convertedCustomerId ||
+    leadMatchedCustomer?.id ||
+    '';
+
+  const [customerId, setCustomerId] = useState(initialCustomerId);
+
   React.useEffect(() => {
-    const targetId = prefillCustId || matchedEnquiry?.customerId || matchedLead?.convertedCustomerId;
+    const targetId =
+      prefillCustId ||
+      matchedEnquiry?.customerId ||
+      matchedLead?.convertedCustomerId ||
+      leadMatchedCustomer?.id;
     if (targetId && targetId !== customerId) {
       setCustomerId(targetId);
     }
-  }, [prefillCustId, matchedEnquiry, matchedLead]);
+  }, [prefillCustId, matchedEnquiry, matchedLead, leadMatchedCustomer]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [validUntil, setValidUntil] = useState('2026-10-30');
 
@@ -255,8 +269,11 @@ function QuotationFormContent() {
                 }}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
               >
+                <option value="">-- Select Customer Account --</option>
                 {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.companyName}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.companyName} ({c.customerCode || c.id})
+                  </option>
                 ))}
               </select>
             </div>
