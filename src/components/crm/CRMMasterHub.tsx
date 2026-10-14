@@ -60,6 +60,8 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
     updateCustomer,
     deleteCustomer,
     quotations,
+    addQuotation,
+    addFollowUp,
     opportunities,
     employees,
     availableEmployees,
@@ -154,34 +156,130 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
   const [showAddEnquiryModal, setShowAddEnquiryModal] = useState(false);
   const [enqCustomerId, setEnqCustomerId] = useState(customers[0]?.id || '');
   const [enqMachineProduct, setEnqMachineProduct] = useState('');
-  const [enqQuantity, setEnqQuantity] = useState<number | string>(1);
-  const [enqSpecification, setEnqSpecification] = useState('');
-  const [enqExpectedDelivery, setEnqExpectedDelivery] = useState('2026-11-15');
-  const [enqAssignedPersonId, setEnqAssignedPersonId] = useState(allEmployees[0]?.id || '');
+  const [enqQuotationAmount, setEnqQuotationAmount] = useState<number | string>('');
+  const [enqProductDetails, setEnqProductDetails] = useState('');
+  const [enqProductDescription, setEnqProductDescription] = useState('');
+
+  // Commented out fields per user requirements (default values applied automatically)
+  // const [enqQuantity, setEnqQuantity] = useState<number | string>(1);
+  // const [enqSpecification, setEnqSpecification] = useState('');
+  // const [enqExpectedDelivery, setEnqExpectedDelivery] = useState('2026-11-15');
+  // const [enqAssignedPersonId, setEnqAssignedPersonId] = useState(allEmployees[0]?.id || '');
 
   const handleCreateEnquiry = (e: React.FormEvent) => {
     e.preventDefault();
-    const cust = customers.find((c) => c.id === enqCustomerId);
-    const emp = allEmployees.find((emp) => emp.id === enqAssignedPersonId);
+    const cust = customers.find((c) => c.id === enqCustomerId) || customers[0];
+    const defaultEmp = allEmployees[0];
+    const assignedPersonId = defaultEmp?.id || 'EMP-001';
+    const assignedPersonName = defaultEmp
+      ? (defaultEmp.name || `${defaultEmp.firstName || ''} ${defaultEmp.lastName || ''}`.trim())
+      : 'Sales Engineer';
 
-    addEnquiry({
-      customerId: enqCustomerId,
+    const quoPrice = Number(enqQuotationAmount) || 0;
+    const defaultDelivery = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const validUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const nextFollowUpDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // 1. Create Enquiry Record
+    const newEnq = addEnquiry({
+      customerId: cust?.id || enqCustomerId || 'CUST-001',
       customerName: cust?.companyName || 'Valued Customer',
-      requirement: enqSpecification,
+      requirement: enqProductDescription || enqProductDetails || enqMachineProduct,
       machineProduct: enqMachineProduct,
-      quantity: Number(enqQuantity) || 1,
-      specification: enqSpecification,
-      expectedDelivery: enqExpectedDelivery,
-      assignedPersonId: enqAssignedPersonId,
-      assignedPersonName: emp ? emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() : 'Sales Engineer',
-      status: 'technical_review',
+      quantity: 1,
+      specification: enqProductDetails,
+      expectedDelivery: defaultDelivery,
+      assignedPersonId: assignedPersonId,
+      assignedPersonName: assignedPersonName,
+      status: 'quotation_ready',
     });
 
+    // 2. Automatically Create Entry in Quotation
+    const newQuo = addQuotation({
+      currentRevision: 'Rev-00',
+      date: todayStr,
+      validUntil: validUntilDate,
+      customerId: cust?.id || enqCustomerId || '',
+      customerName: cust?.companyName || 'Valued Customer',
+      contactPerson: cust?.contactPerson || 'Authorized Representative',
+      contactEmail: cust?.email || '',
+      contactMobile: cust?.mobile || '',
+      enquiryId: newEnq.id,
+      latestSummary: {
+        grandTotal: quoPrice > 0 ? Math.round(quoPrice * 1.18) : 0,
+        status: 'draft',
+        machineProduct: enqMachineProduct,
+      },
+      revisions: [
+        {
+          revisionNumber: 'Rev-00',
+          date: todayStr,
+          preparedBy: assignedPersonName,
+          items: [
+            {
+              id: 'ITEM-01',
+              productName: enqMachineProduct,
+              description: enqProductDescription || enqMachineProduct,
+              quantity: 1,
+              unit: 'Nos',
+              rate: quoPrice,
+              discountPercent: 0,
+              taxPercent: 18,
+              amount: quoPrice,
+            },
+          ],
+          subTotal: quoPrice,
+          discountAmount: 0,
+          taxAmount: Math.round(quoPrice * 0.18),
+          grandTotal: quoPrice > 0 ? Math.round(quoPrice * 1.18) : 0,
+          technicalSpecs: enqProductDetails || 'Standard MTO Technical Specifications',
+          scopeOfSupply: 'Engineering, manufacturing, inspection, and assembly testing.',
+          exclusions: 'Civil work, external piping, and unstated accessories.',
+          paymentTerms: '30% Advance, 60% Against Proforma/Inspection, 10% on Dispatch',
+          deliveryTime: '6 to 8 weeks from engineering approval',
+          warranty: '12 months from commissioning date',
+          termsAndConditions: 'Taxes extra at 18% GST. Freight charges at actuals.',
+          notes: enqProductDescription || '',
+          status: 'draft',
+        },
+      ],
+    });
+
+    // Link Quotation ID back to the Enquiry
+    if (newQuo && newQuo.id) {
+      updateEnquiry(newEnq.id, { quotationId: newQuo.id });
+    }
+
+    // 3. Automatically Create Follow-up Entry
+    addFollowUp({
+      leadOrCustomerId: cust?.id || enqCustomerId || newEnq.id,
+      leadOrCustomerName: cust?.companyName || 'Valued Customer',
+      entityType: 'customer',
+      type: 'call',
+      assignedToId: assignedPersonId,
+      assignedToName: assignedPersonName,
+      date: nextFollowUpDate,
+      time: '11:00 AM',
+      priority: 'high',
+      purpose: `Follow-up on Inquiry ${newEnq.enquiryNo} - ${enqMachineProduct}`,
+      notes: `Inquiry registered for ${enqMachineProduct}. Product Quotation Amount: ₹${quoPrice.toLocaleString(
+        'en-IN'
+      )}. Details: ${enqProductDetails || 'Standard specs'}. Follow up with client regarding quotation and specs.`,
+      status: 'pending',
+      nextFollowUpDate: nextFollowUpDate,
+    });
+
+    // Reset Form & Close Modal
     setEnqMachineProduct('');
-    setEnqSpecification('');
+    setEnqQuotationAmount('');
+    setEnqProductDetails('');
+    setEnqProductDescription('');
     setShowAddEnquiryModal(false);
-    setSuccessMsg('Technical enquiry registered successfully.');
-    setTimeout(() => setSuccessMsg(''), 4000);
+
+    setSuccessMsg(
+      `Technical Enquiry "${enqMachineProduct}" created! Automatic Quotation (${newQuo.quotationNumber || newQuo.id}) and Follow-up have been generated.`
+    );
+    setTimeout(() => setSuccessMsg(''), 7000);
   };
 
   // --------------------------------------------------------------------------
@@ -1049,8 +1147,11 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                 </select>
               </div>
 
+              {/* 1. Product Name */}
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Machine / Equipment Product *</label>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Product Name <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
@@ -1058,19 +1159,70 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                   value={enqMachineProduct}
                   onChange={(e) => setEnqMachineProduct(e.target.value)}
                   className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
-                >
-                </input>
+                />
               </div>
 
+              {/* 2. Product Quotation */}
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Product Quotation (Amount ₹) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 font-mono font-bold text-[#70665F]">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min={0}
+                    placeholder="e.g. 850000"
+                    value={enqQuotationAmount}
+                    onChange={(e) => setEnqQuotationAmount(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono font-bold text-emerald-800"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Product Details */}
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Product Details <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="e.g. SS 316 construction, 10 Bar design pressure, 180°C temp, mechanical seal, limpet coil jacket"
+                  value={enqProductDetails}
+                  onChange={(e) => setEnqProductDetails(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                />
+              </div>
+
+              {/* 4. Product Description */}
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Product Description <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="e.g. Supply of custom chemical reactor vessel with agitator assembly, hydraulic pressure testing, and MTC documentation."
+                  value={enqProductDescription}
+                  onChange={(e) => setEnqProductDescription(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                />
+              </div>
+
+              {/* =========================================================================
+                  COMMENTED OUT OTHER FIELDS PER USER REQUEST:
+                  (Quantity, Target Delivery Date, Assigned Sales Engineer)
+                  ========================================================================= */}
+              {/*
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[#544B45] font-semibold mb-1">Quantity *</label>
                   <input
                     type="number"
                     min={1}
-                    required
-                    value={enqQuantity}
-                    onChange={(e) => setEnqQuantity(e.target.value)}
+                    value={1}
                     className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
                   />
                 </div>
@@ -1079,8 +1231,7 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                   <input
                     type="date"
                     min={todayStr}
-                    value={enqExpectedDelivery}
-                    onChange={(e) => setEnqExpectedDelivery(e.target.value)}
+                    value={todayStr}
                     className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
                   />
                 </div>
@@ -1089,28 +1240,16 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
               <div>
                 <label className="block text-[#544B45] font-semibold mb-1">Assigned Sales Engineer</label>
                 <select
-                  value={enqAssignedPersonId}
-                  onChange={(e) => setEnqAssignedPersonId(e.target.value)}
                   className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl"
                 >
                   {allEmployees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.id}
+                      {emp.name || emp.id}
                     </option>
                   ))}
                 </select>
               </div>
-
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Technical Specifications</label>
-                <textarea
-                  rows={3}
-                  placeholder="Material specs, pressure rating, agitator details..."
-                  value={enqSpecification}
-                  onChange={(e) => setEnqSpecification(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl"
-                />
-              </div>
+              */}
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[#EBE3DB]">
                 <button
@@ -1124,7 +1263,7 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                   type="submit"
                   className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs transition"
                 >
-                  Save Enquiry
+                  Save Enquiry & Generate Quotation
                 </button>
               </div>
             </form>

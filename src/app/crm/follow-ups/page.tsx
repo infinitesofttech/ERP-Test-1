@@ -386,6 +386,8 @@ export default function FollowUpsPage() {
                 )}
               </div>
 
+              {/* Commented out Assigned Sales Engineer per user request */}
+              {/*
               <div>
                 <label className="block font-semibold text-[#544B45] mb-1">Assigned Sales Engineer</label>
                 <select
@@ -400,6 +402,7 @@ export default function FollowUpsPage() {
                   ))}
                 </select>
               </div>
+              */}
 
               <div>
                 <label className="block font-semibold text-[#544B45] mb-1">Notes / Instructions</label>

@@ -804,6 +804,8 @@ export default function LeadDetailPage() {
                     </select>
                   </div>
 
+                  {/* Commented out Assigned Sales Engineer per user request */}
+                  {/*
                   <div className="md:col-span-3">
                     <label className="block text-[#544B45] font-semibold mb-1">Assigned Sales Engineer</label>
                     <select
@@ -825,6 +827,7 @@ export default function LeadDetailPage() {
                       })}
                     </select>
                   </div>
+                  */}
 
                   <div className="md:col-span-3">
                     <label className="block text-[#544B45] font-semibold mb-1">Lead Status</label>
