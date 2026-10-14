@@ -529,36 +529,69 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
       d.grnNumber = d.grnNumber || d.grn_number || d.id;
       d.grn_number = d.grnNumber;
     } else {
-      // On POST creation, let Django backend generate the authoritative sequential GRN ID
+      // On POST creation, omit ID if matching sequential fallback to let backend auto-generate without 400 conflict
       delete d.id;
       delete d.grnNumber;
       delete d.grn_number;
     }
     d.date = d.date || d.grnDate || d.receiptDate || nowStr;
-    d.po_id = d.po_id || d.poId || '';
-    d.po_number = d.po_number || d.poNumber || '';
-    d.supplier_id = d.supplier_id || d.supplierId || 'SUP-001';
-    d.supplier_name = d.supplier_name || d.supplierName || 'Supplier';
-    d.challan_number = d.challan_number || d.deliveryChallanNumber || d.challanNumber || '';
-    d.invoice_number = d.invoice_number || d.invoiceNumber || '';
-    d.vehicle_number = d.vehicle_number || d.vehicleNumber || '';
-    d.warehouse_id = d.warehouse_id || d.warehouseId || 'WH-001';
-    d.received_by = d.received_by || d.receivedBy || 'Store Officer';
+    d.poId = d.poId || d.po_id || '';
+    d.po_id = d.poId;
+    d.poNumber = d.poNumber || d.po_number || '';
+    d.po_number = d.poNumber;
+    d.supplierId = d.supplierId || d.supplier_id || 'SUP-001';
+    d.supplier_id = d.supplierId;
+    d.supplierName = d.supplierName || d.supplier_name || 'Supplier';
+    d.supplier_name = d.supplierName;
+    d.challanNumber = d.challanNumber || d.challan_number || d.deliveryChallanNumber || '';
+    d.challan_number = d.challanNumber;
+    d.invoiceNumber = d.invoiceNumber || d.invoice_number || '';
+    d.invoice_number = d.invoiceNumber;
+    d.vehicleNumber = d.vehicleNumber || d.vehicle_number || '';
+    d.vehicle_number = d.vehicleNumber;
+    d.warehouseId = d.warehouseId || d.warehouse_id || 'WH-001';
+    d.warehouse_id = d.warehouseId;
+    d.receivedBy = d.receivedBy || d.received_by || 'Store Officer';
+    d.received_by = d.receivedBy;
+    d.status = d.status || 'Accepted';
+    d.notes = d.notes || d.remarks || '';
     if (Array.isArray(d.items)) {
-      d.items = d.items.map((itm: any) => ({
-        item_id: itm.itemId || itm.id || '',
-        item_code: itm.itemCode || itm.partNumber || '',
-        item_name: itm.itemName || itm.description || 'Material Item',
-        received_qty: Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.quantity ?? 1),
-        accepted_qty: Number(itm.acceptedQuantity ?? itm.acceptedQty ?? itm.quantity ?? 1),
-        rejected_qty: Number(itm.rejectedQuantity ?? itm.rejectedQty ?? 0),
-        unit: itm.uom || itm.unit || 'PCS',
-        unit_rate: Number(itm.unitPrice ?? itm.unitRate ?? itm.rate ?? 0),
-        total_amount: Number(itm.totalAmount ?? 0),
-        itemName: itm.itemName || itm.description || 'Material Item',
-        receivedQty: Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.quantity ?? 1),
-        unitRate: Number(itm.unitPrice ?? itm.unitRate ?? itm.rate ?? 0),
-      }));
+      d.items = d.items.map((itm: any) => {
+        const itemId = itm.itemId || itm.item_id || itm.id || '';
+        const itemCode = itm.itemCode || itm.item_code || itm.partNumber || itm.part_number || '';
+        const itemName = itm.itemName || itm.item_name || itm.description || 'Material Item';
+        const receivedQty = Number(itm.receivedQuantity ?? itm.receivedQty ?? itm.received_qty ?? itm.quantity ?? itm.orderedQuantity ?? 1);
+        const acceptedQty = Number(itm.acceptedQuantity ?? itm.acceptedQty ?? itm.accepted_qty ?? receivedQty ?? 1);
+        const rejectedQty = Number(itm.rejectedQuantity ?? itm.rejectedQty ?? itm.rejected_qty ?? 0);
+        const unit = itm.uom || itm.unit || 'PCS';
+        const unitRate = Number(itm.unitPrice ?? itm.unitRate ?? itm.unit_rate ?? itm.rate ?? 0);
+        const totalAmount = Number(itm.totalAmount ?? itm.total_amount ?? (receivedQty * unitRate));
+        const locationCode = itm.locationCode || itm.location_code || 'WH-MAIN-BAY-01';
+
+        return {
+          itemId,
+          item_id: itemId,
+          itemCode,
+          item_code: itemCode,
+          itemName,
+          item_name: itemName,
+          description: itemName,
+          receivedQty,
+          received_qty: receivedQty,
+          acceptedQty,
+          accepted_qty: acceptedQty,
+          rejectedQty,
+          rejected_qty: rejectedQty,
+          unit,
+          uom: unit,
+          unitRate,
+          unit_rate: unitRate,
+          totalAmount,
+          total_amount: totalAmount,
+          locationCode,
+          location_code: locationCode,
+        };
+      });
     } else {
       d.items = [];
     }
@@ -762,7 +795,46 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     d.category = d.category || 'General';
   }
   // Production Module Normalization
-  else if (ep.includes('/production-schedules')) {
+  else if (ep.includes('/work-orders')) {
+    const rawNum = d.workOrderNumber || d.work_order_number || d.id || '';
+    d.workOrderNumber = rawNum || `WO-2026-${Date.now().toString().slice(-4)}`;
+    d.work_order_number = d.workOrderNumber;
+    d.id = d.id || d.workOrderNumber;
+    d.jobId = d.jobId || d.job_id || d.jobNumber || d.job_number || '';
+    d.job_id = d.jobId;
+    d.jobNumber = d.jobNumber || d.job_number || d.jobId || '';
+    d.job_number = d.jobNumber;
+    d.projectId = d.projectId || d.project_id || d.jobId || '';
+    d.project_id = d.projectId;
+    d.customerId = d.customerId || d.customer_id || '';
+    d.customer_id = d.customerId;
+    d.customerName = d.customerName || d.customer_name || '';
+    d.customer_name = d.customerName;
+    d.salesOrderNumber = d.salesOrderNumber || d.sales_order_number || '';
+    d.sales_order_number = d.salesOrderNumber;
+    d.designRevision = d.designRevision || d.design_revision || 'REV-01';
+    d.design_revision = d.designRevision;
+    d.bomRevision = d.bomRevision || d.bom_revision || 'Rev-01';
+    d.bom_revision = d.bomRevision;
+    d.productName = d.productName || d.product_name || d.productDescription || d.product_description || 'Manufactured Item';
+    d.product_name = d.productName;
+    d.productionQuantity = Number(d.productionQuantity !== undefined ? d.productionQuantity : (d.production_quantity !== undefined ? d.production_quantity : (d.quantity || 1)));
+    d.production_quantity = d.productionQuantity;
+    d.uom = d.uom || 'Unit';
+    d.plannedStartDate = d.plannedStartDate || d.planned_start_date || d.startDate || d.start_date || nowStr;
+    d.planned_start_date = d.plannedStartDate;
+    d.plannedEndDate = d.plannedEndDate || d.planned_end_date || d.endDate || d.end_date || d.plannedStartDate;
+    d.planned_end_date = d.plannedEndDate;
+    d.actualStartDate = d.actualStartDate || d.actual_start_date || '';
+    d.actual_start_date = d.actualStartDate;
+    d.actualEndDate = d.actualEndDate || d.actual_end_date || '';
+    d.actual_end_date = d.actualEndDate;
+    d.productionManager = d.productionManager || d.production_manager || 'Production Manager';
+    d.production_manager = d.productionManager;
+    d.priority = d.priority || 'Medium';
+    d.status = d.status || 'Planned';
+    d.remarks = d.remarks || d.notes || '';
+  } else if (ep.includes('/production-schedules')) {
     d.scheduleNumber = d.scheduleNumber || d.schedule_number || d.id || `SCH-2026-${Date.now().toString().slice(-4)}`;
     d.schedule_number = d.scheduleNumber;
     d.job_number = d.jobNumber || d.job_number || d.jobId || '';
@@ -2165,7 +2237,10 @@ export const api = {
     },
     grns: {
       list: () => request<any[]>('/grns/'),
+      get: (id: string) => request<any>(`/grns/${id}/`),
       create: (data: any) => request<any>('/grns/', { method: 'POST', body: JSON.stringify(data) }),
+      update: (id: string, data: any) => request<any>(`/grns/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/grns/${id}/`, { method: 'DELETE' }),
     },
     qcInspections: () => request<any[]>('/qc-inspections/'),
     stock: () => request<any[]>('/stock/'),
@@ -2216,8 +2291,10 @@ export const api = {
     },
     workOrders: {
       list: () => request<any[]>('/work-orders/'),
+      get: (id: string) => request<any>(`/work-orders/${id}/`),
       create: (data: any) => request<any>('/work-orders/', { method: 'POST', body: JSON.stringify(data) }),
       update: (id: string, data: any) => request<any>(`/work-orders/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/work-orders/${id}/`, { method: 'DELETE' }),
       release: (id: string, data?: any) => request<any>(`/work-orders/${id}/release/`, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
     },
     orders: {
@@ -2477,7 +2554,16 @@ export const api = {
       recordPayment: (id: string, data: { amount: number; paymentMode?: string; referenceNumber?: string }) =>
         request<any>(`/purchase-invoices/${id}/record-payment/`, { method: 'POST', body: JSON.stringify(data) }),
     },
-    receipts: () => request<any[]>('/customer-receipts/'),
+    receipts: Object.assign(
+      () => request<any[]>('/customer-receipts/'),
+      {
+        list: () => request<any[]>('/customer-receipts/'),
+        get: (id: string) => request<any>(`/customer-receipts/${id}/`),
+        create: (data: any) => request<any>('/customer-receipts/', { method: 'POST', body: JSON.stringify(data) }),
+        update: (id: string, data: any) => request<any>(`/customer-receipts/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+        delete: (id: string) => request<any>(`/customer-receipts/${id}/`, { method: 'DELETE' }),
+      }
+    ),
     createReceipt: (data: any) => request<any>('/customer-receipts/', { method: 'POST', body: JSON.stringify(data) }),
     payments: () => request<any[]>('/supplier-payments/'),
     createPayment: (data: any) => request<any>('/supplier-payments/', { method: 'POST', body: JSON.stringify(data) }),

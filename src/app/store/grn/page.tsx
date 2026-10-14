@@ -97,6 +97,19 @@ function GoodsReceiptContent() {
     }
   }, [selectedPo, combinedSuppliers]);
 
+  // Ensure default PO and Warehouse are selected when data loads
+  useEffect(() => {
+    if (!poId && purchaseOrders.length > 0) {
+      setPoId(purchaseOrders[0].id || purchaseOrders[0].poNumber);
+    }
+  }, [purchaseOrders, poId]);
+
+  useEffect(() => {
+    if (!warehouseId && availableWarehouses.length > 0) {
+      setWarehouseId(availableWarehouses[0].id || (availableWarehouses[0] as any).warehouseCode || '');
+    }
+  }, [availableWarehouses, warehouseId]);
+
   // Auto-select PO if passed via query param (only once until user dismisses)
   useEffect(() => {
     if (poParam && !hasDismissedParam && purchaseOrders.length > 0) {
@@ -236,7 +249,7 @@ function GoodsReceiptContent() {
         };
       });
 
-      addGRN({
+      const createdGrn = await addGRN({
         grnDate: new Date().toISOString().split('T')[0],
         supplierId: suppId,
         supplierName: suppName,
@@ -259,12 +272,8 @@ function GoodsReceiptContent() {
       } as any);
 
       closeModal();
-      setSuccessMessage('Goods Receipt Note (GRN) created successfully! Stock updated. Redirecting to Material Issue...');
+      setSuccessMessage(`Goods Receipt Note ${createdGrn?.grnNumber || 'GRN'} created & saved to database successfully! Stock balances updated.`);
       setStockAddedBanner(true);
-      const targetJob = currentPo?.jobId || currentPo?.jobNumber || '';
-      setTimeout(() => {
-        router.push(`/store/material-issue?jobId=${encodeURIComponent(targetJob)}`);
-      }, 1200);
     } catch (err: any) {
       console.error('Error submitting GRN:', err);
       alert('Error creating GRN: ' + (err?.message || err));
@@ -327,13 +336,22 @@ function GoodsReceiptContent() {
               </div>
             </div>
           </div>
-          <Link
-            href="/store/bom-verification"
-            className="px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs shadow-md transition shrink-0 flex items-center gap-1.5"
-          >
-            <span>Verify in BOM</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/store/bom-verification"
+              className="px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs shadow-md transition shrink-0 flex items-center gap-1.5"
+            >
+              <span>Verify in BOM</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/store/material-issue"
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition shrink-0 flex items-center gap-1.5"
+            >
+              <span>Material Issue</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       )}
 

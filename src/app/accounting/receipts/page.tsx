@@ -1,63 +1,187 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useERP } from '../../../context/ERPContext';
 import { 
   Coins, Plus, Search, Landmark, CheckCircle2, 
   ArrowUpRight, Download, Filter, Eye, Printer, 
-  FileSpreadsheet, Calendar, User, ShieldCheck, X
+  FileSpreadsheet, Calendar, User, ShieldCheck, X,
+  RefreshCw, Trash2, AlertCircle, Check
 } from 'lucide-react';
 import { BankAccount } from '../../../types/accounting';
 
 export default function CustomerReceiptsPage() {
-  const { customerReceipts, addCustomerReceipt, customers, salesInvoices, bankAccounts } = useERP();
+  const { 
+    customerReceipts = [], 
+    addCustomerReceipt, 
+    deleteCustomerReceipt, 
+    customers = [], 
+    salesInvoices = [], 
+    bankAccounts = [],
+    syncModule
+  } = useERP();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [filterMode, setFilterMode] = useState('ALL');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const activeBankAccounts: BankAccount[] = bankAccounts || [];
 
-  const [customerId, setCustomerId] = useState(customers[0]?.id || '');
-  const [invoiceNumber, setInvoiceNumber] = useState(salesInvoices[0]?.invoiceNumber || '');
+  const [customerId, setCustomerId] = useState('');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [paymentMode, setPaymentMode] = useState<any>('NEFT');
-  const [bankAccountId, setBankAccountId] = useState(activeBankAccounts[0]?.id || '');
+  const [bankAccountId, setBankAccountId] = useState('');
   const [amountPaid, setAmountPaid] = useState<number | string>('');
   const [referenceNo, setReferenceNo] = useState('');
   const [receiptDate, setReceiptDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
 
+  // Initial load: ensure accounting and CRM data are fetched
+  useEffect(() => {
+    syncModule('accounting').catch(() => {});
+    if (!customers || customers.length === 0) {
+      syncModule('crm').catch(() => {});
+    }
+  }, [syncModule, customers?.length]);
+
+  // Handle manual data refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.allSettled([
+        syncModule('accounting', true),
+        syncModule('crm', true)
+      ]);
+      setToastMessage('✓ Data synced live from server!');
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Keep customerId synced if empty and customers become available
+  useEffect(() => {
+    if (!customerId && customers.length > 0) {
+      setCustomerId(customers[0].id);
+    }
+  }, [customerId, customers]);
+
+  // Keep bankAccountId synced if empty and accounts become available
+  useEffect(() => {
+    if (!bankAccountId && activeBankAccounts.length > 0) {
+      setBankAccountId(activeBankAccounts[0].id);
+    }
+  }, [bankAccountId, activeBankAccounts]);
+
+  // Selected customer object
+  const selectedCustomer = useMemo(() => {
+    return customers.find((c) => c.id === customerId) || null;
+  }, [customers, customerId]);
+
+  // Filtered invoices for the selected customer
+  const customerInvoices = useMemo(() => {
+    if (!customerId && !selectedCustomer) return [];
+    return salesInvoices.filter((si) => {
+      const matchId = si.customerId === customerId;
+      const matchName = selectedCustomer && si.customerName && 
+        (si.customerName.toLowerCase() === selectedCustomer.companyName.toLowerCase() ||
+         si.customerName.toLowerCase() === (selectedCustomer as any).name?.toLowerCase());
+      return matchId || matchName;
+    });
+  }, [salesInvoices, customerId, selectedCustomer]);
+
   // Calculate quick KPIs
-  const totalReceived = customerReceipts.reduce((sum, r) => sum + (Number(r.amountPaid || r.amount) || 0), 0);
-  const todayCount = customerReceipts.filter(r => (r.receiptDate || r.date) === new Date().toISOString().split('T')[0]).length;
+  const totalReceived = useMemo(() => {
+    return customerReceipts.reduce((sum, r) => sum + (Number(r.amountPaid ?? r.amount ?? 0) || 0), 0);
+  }, [customerReceipts]);
 
-  const filtered = customerReceipts.filter((r) => {
-    const q = (searchTerm || '').trim().toLowerCase();
-    const matchesSearch = !q || 
-      (r.receiptNumber || '').toLowerCase().includes(q) ||
-      (r.customerName || '').toLowerCase().includes(q) ||
-      (r.referenceNumber || '').toLowerCase().includes(q) ||
-      (r.salesInvoiceNumber || '').toLowerCase().includes(q);
+  const todayCount = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return customerReceipts.filter(r => (r.receiptDate || r.date) === today).length;
+  }, [customerReceipts]);
 
-    const matchesMode = filterMode === 'ALL' || r.paymentMode === filterMode;
-    return matchesSearch && matchesMode;
-  });
+  // Filtered receipts list
+  const filtered = useMemo(() => {
+    return customerReceipts.filter((r) => {
+      const q = (searchTerm || '').trim().toLowerCase();
+      const matchesSearch = !q || 
+        (r.receiptNumber || '').toLowerCase().includes(q) ||
+        (r.customerName || '').toLowerCase().includes(q) ||
+        (r.referenceNumber || '').toLowerCase().includes(q) ||
+        (r.salesInvoiceNumber || '').toLowerCase().includes(q);
 
+      const rMode = (r.paymentMode || '').toUpperCase();
+      const fMode = filterMode.toUpperCase();
+      const matchesMode = filterMode === 'ALL' || rMode === fMode || rMode.includes(fMode);
+      return matchesSearch && matchesMode;
+    });
+  }, [customerReceipts, searchTerm, filterMode]);
+
+  // Open modal with fresh defaults
   const handleOpenNewModal = () => {
-    if (customers.length > 0) setCustomerId(customers[0].id);
-    if (salesInvoices.length > 0) setInvoiceNumber(salesInvoices[0].invoiceNumber);
-    if (activeBankAccounts.length > 0) setBankAccountId(activeBankAccounts[0].id);
-    setAmountPaid('');
+    const initCustId = customers[0]?.id || '';
+    setCustomerId(initCustId);
+
+    const initCust = customers[0] || null;
+    const invs = salesInvoices.filter(
+      (si) => si.customerId === initCustId || (initCust && si.customerName === initCust.companyName)
+    );
+
+    if (invs.length > 0) {
+      setInvoiceNumber(invs[0].invoiceNumber);
+      const pending = Math.max(0, Number(invs[0].grandTotal || 0) - Number(invs[0].paidAmount || 0));
+      setAmountPaid(pending > 0 ? pending : Number(invs[0].grandTotal || 0));
+    } else {
+      setInvoiceNumber('');
+      setAmountPaid('');
+    }
+
+    if (activeBankAccounts.length > 0) {
+      setBankAccountId(activeBankAccounts[0].id);
+    }
     setReferenceNo(`UTR-${Date.now().toString().slice(-6)}`);
     setReceiptDate(new Date().toISOString().split('T')[0]);
     setNotes('');
     setIsModalOpen(true);
   };
 
+  // When customer changes in modal
+  const handleCustomerSelect = (newCustId: string) => {
+    setCustomerId(newCustId);
+    const custObj = customers.find((c) => c.id === newCustId);
+    const matchingInvs = salesInvoices.filter(
+      (si) => si.customerId === newCustId || (custObj && si.customerName === custObj.companyName)
+    );
+    if (matchingInvs.length > 0) {
+      setInvoiceNumber(matchingInvs[0].invoiceNumber);
+      const pending = Math.max(0, Number(matchingInvs[0].grandTotal || 0) - Number(matchingInvs[0].paidAmount || 0));
+      setAmountPaid(pending > 0 ? pending : Number(matchingInvs[0].grandTotal || 0));
+    } else {
+      setInvoiceNumber('');
+      setAmountPaid('');
+    }
+  };
+
+  // When invoice selection changes
+  const handleInvoiceSelect = (invNo: string) => {
+    setInvoiceNumber(invNo);
+    if (!invNo) return;
+    const inv = salesInvoices.find((si) => si.invoiceNumber === invNo || si.id === invNo);
+    if (inv) {
+      const pending = Math.max(0, Number(inv.grandTotal || 0) - Number(inv.paidAmount || 0));
+      setAmountPaid(pending > 0 ? pending : Number(inv.grandTotal || 0));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     const cust =
       customers.find((c) => c.id === customerId) ||
+      selectedCustomer ||
       customers[0] || {
         id: 'CUST-001',
         companyName: 'Standard Customer',
@@ -67,25 +191,32 @@ export default function CustomerReceiptsPage() {
       activeBankAccounts.find((b) => b.id === bankAccountId) ||
       activeBankAccounts[0] || {
         id: 'BANK-01',
-        bankName: 'HDFC Bank - Current A/C',
-        accountNumber: '50200098765432',
+        bankName: 'HDFC Bank Ltd. (Operations)',
+        accountNumber: '50200088921045',
       };
+
+    const numAmount = Number(amountPaid) || 0;
 
     try {
       addCustomerReceipt({
         receiptDate: receiptDate || new Date().toISOString().split('T')[0],
+        date: receiptDate || new Date().toISOString().split('T')[0],
         customerId: cust.id,
         customerName: cust.companyName || (cust as any).customerName || (cust as any).name || 'Customer',
-        salesInvoiceNumber: invoiceNumber || 'Direct Advance Payment',
+        salesInvoiceNumber: invoiceNumber.trim() || 'Direct Advance Payment',
         paymentMode,
         bankAccountId: bank.id,
-        bankName: bank.bankName,
-        amountPaid: Number(amountPaid) || 0,
-        referenceNumber: referenceNo || `UTR-${Date.now().toString().slice(-8)}`,
+        bankName: bank.bankName || 'Operations Bank A/C',
+        amountPaid: numAmount,
+        amount: numAmount,
+        referenceNumber: referenceNo.trim() || `UTR-${Date.now().toString().slice(-8)}`,
         status: 'Received',
-        remarks: notes || 'Customer payment received & reconciled against invoice',
+        remarks: notes.trim() || (invoiceNumber ? `Payment reconciled against ${invoiceNumber}` : 'Direct inward customer payment received'),
         createdBy: 'Accounts Team',
       });
+
+      setToastMessage(`✓ Receipt recorded for ${cust.companyName} (₹${numAmount.toLocaleString('en-IN')})`);
+      setTimeout(() => setToastMessage(null), 3500);
 
       setIsModalOpen(false);
       setAmountPaid('');
@@ -96,8 +227,27 @@ export default function CustomerReceiptsPage() {
     }
   };
 
+  const handleDeleteReceipt = (id: string, recNum: string) => {
+    if (window.confirm(`Are you sure you want to delete Receipt voucher "${recNum}"?`)) {
+      deleteCustomerReceipt(id);
+      if (selectedReceipt?.id === id) {
+        setSelectedReceipt(null);
+      }
+      setToastMessage(`✓ Deleted receipt voucher ${recNum}`);
+      setTimeout(() => setToastMessage(null), 3000);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 bg-[#FAF7F2] min-h-screen text-[#211B17]">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-[#8B2500] text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-200">
+          <Check className="w-4 h-4 text-emerald-300" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* Top Banner Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#EBE3DB] shadow-xs">
         <div className="flex items-center gap-3">
@@ -118,6 +268,16 @@ export default function CustomerReceiptsPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 bg-[#FAF7F2] hover:bg-[#EFE8DF] text-[#544B45] text-xs font-bold px-3.5 py-2.5 rounded-xl border border-[#E5DCD3] transition active:scale-95 disabled:opacity-50"
+            title="Refresh Live Data from Server"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-[#8B2500]' : ''}`} />
+            <span>{isRefreshing ? 'Syncing...' : 'Sync'}</span>
+          </button>
+
           <button
             onClick={handleOpenNewModal}
             className="flex items-center gap-2 bg-[#8B2500] hover:bg-[#701E00] text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xs transition active:scale-95"
@@ -153,7 +313,9 @@ export default function CustomerReceiptsPage() {
           <div className="text-2xl font-black text-[#211B17] mt-2 font-mono">
             {customerReceipts.length}
           </div>
-          <p className="text-[11px] text-[#8C827A] mt-1 font-medium">Official payment vouchers</p>
+          <p className="text-[11px] text-[#8C827A] mt-1 font-medium">
+            {todayCount > 0 ? `${todayCount} issued today` : 'Official payment vouchers'}
+          </p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-[#EBE3DB] shadow-xs">
@@ -164,9 +326,9 @@ export default function CustomerReceiptsPage() {
             </div>
           </div>
           <div className="text-2xl font-black text-[#211B17] mt-2 font-mono">
-            {activeBankAccounts.length || 2}
+            {activeBankAccounts.length || 4}
           </div>
-          <p className="text-[11px] text-[#8C827A] mt-1 font-medium">HDFC, SBI Current Accounts</p>
+          <p className="text-[11px] text-[#8C827A] mt-1 font-medium">HDFC, SBI, ICICI Escrow, Petty Cash</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-[#EBE3DB] shadow-xs">
@@ -189,7 +351,7 @@ export default function CustomerReceiptsPage() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#8C827A]" />
           <input
             type="text"
-            placeholder="Search receipt no (e.g. REC-), customer name, invoice ref, or UTR..."
+            placeholder="Search receipt no (e.g. RCT-), customer, invoice, or UTR..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl pl-9 pr-4 py-2 text-xs text-[#211B17] focus:outline-hidden focus:border-[#8B2500]"
@@ -236,19 +398,19 @@ export default function CustomerReceiptsPage() {
                   <td colSpan={9} className="py-12 text-center text-[#8C827A]">
                     <Coins className="w-8 h-8 mx-auto mb-2 text-[#C8B8A6] opacity-50" />
                     <p className="font-semibold text-sm">No Customer Receipts found</p>
-                    <p className="text-xs text-[#8C827A] mt-1">Click &quot;Record Customer Receipt&quot; above to add a new inward payment.</p>
+                    <p className="text-xs text-[#8C827A] mt-1">Click &quot;+ Record Customer Receipt&quot; above to add a new inward payment.</p>
                   </td>
                 </tr>
               ) : (
                 filtered.map((r) => {
                   const recDate = r.receiptDate || r.date || '-';
-                  const bank = r.bankName || r.bankCashAccountName || 'HDFC Bank - Current';
+                  const bank = r.bankName || r.bankCashAccountName || 'Operations Bank A/C';
                   const amt = Number(r.amountPaid ?? r.amount ?? 0);
 
                   return (
                     <tr key={r.id} className="hover:bg-[#FAF7F2]/60 transition">
                       <td className="py-3.5 px-4 font-bold text-[#8B2500] font-mono">
-                        {r.receiptNumber}
+                        {r.receiptNumber || r.id}
                       </td>
                       <td className="py-3.5 px-4 text-[#70665F] font-mono">
                         {recDate}
@@ -263,7 +425,7 @@ export default function CustomerReceiptsPage() {
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-[#211B17]">{r.paymentMode}</div>
-                        <div className="text-[11px] text-[#70665F]">{bank}</div>
+                        <div className="text-[11px] text-[#70665F] truncate max-w-[160px]">{bank}</div>
                       </td>
                       <td className="py-3.5 px-4 font-mono text-[#544B45]">
                         {r.referenceNumber || 'N/A'}
@@ -278,13 +440,22 @@ export default function CustomerReceiptsPage() {
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedReceipt(r)}
-                          className="p-1.5 hover:bg-[#FAF7F2] rounded-lg text-[#8B2500] hover:text-[#701E00] transition"
-                          title="View & Print Voucher"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setSelectedReceipt(r)}
+                            className="p-1.5 hover:bg-[#FAF7F2] rounded-lg text-[#8B2500] hover:text-[#701E00] transition"
+                            title="View & Print Voucher"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReceipt(r.id, r.receiptNumber || r.id)}
+                            className="p-1.5 hover:bg-rose-50 rounded-lg text-[#8C827A] hover:text-rose-600 transition"
+                            title="Delete Voucher"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -295,7 +466,7 @@ export default function CustomerReceiptsPage() {
         </div>
       </div>
 
-      {/* Record Payment Modal */}
+      {/* Record Customer Inward Payment Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
           <div className="bg-white border border-[#EBE3DB] rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-xl">
@@ -336,7 +507,8 @@ export default function CustomerReceiptsPage() {
                     onChange={(e) => setPaymentMode(e.target.value as any)}
                     className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-semibold"
                   >
-                    <option value="NEFT">NEFT / RTGS</option>
+                    <option value="NEFT">NEFT / Electronic Transfer</option>
+                    <option value="RTGS">RTGS Real-Time Transfer</option>
                     <option value="UPI">UPI / QR Code</option>
                     <option value="Cheque">Bank Cheque</option>
                     <option value="Cash">Cash Deposit</option>
@@ -344,32 +516,69 @@ export default function CustomerReceiptsPage() {
                 </div>
               </div>
 
+              {/* Customer Selector */}
               <div>
                 <label className="block text-[#70665F] font-bold mb-1">Customer *</label>
-                <select
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                  className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-semibold"
-                >
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.companyName || (c as any).name} ({c.gstin || 'Standard'})
-                    </option>
-                  ))}
-                </select>
+                {customers.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 flex items-center justify-between text-xs">
+                    <span>Loading registered customers...</span>
+                    <button
+                      type="button"
+                      onClick={() => syncModule('crm', true)}
+                      className="font-bold underline text-[#8B2500]"
+                    >
+                      Reload Customers
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={customerId}
+                    onChange={(e) => handleCustomerSelect(e.target.value)}
+                    className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-semibold"
+                  >
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.companyName || (c as any).name} {c.gstin ? `(${c.gstin})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
+              {/* Sales Invoice & Receiving Bank */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#70665F] font-bold mb-1">Sales Invoice Ref</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. INV-2026-0001 or Direct"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-mono"
-                  />
+                  <label className="block text-[#70665F] font-bold mb-1">
+                    Sales Invoice Ref {customerInvoices.length > 0 && <span className="text-emerald-700">({customerInvoices.length} found)</span>}
+                  </label>
+                  {customerInvoices.length > 0 ? (
+                    <select
+                      value={invoiceNumber}
+                      onChange={(e) => handleInvoiceSelect(e.target.value)}
+                      className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-mono text-[11px]"
+                    >
+                      <option value="">-- Direct Advance / Direct Credit --</option>
+                      {customerInvoices.map((inv) => {
+                        const pend = Math.max(0, Number(inv.grandTotal || 0) - Number(inv.paidAmount || 0));
+                        return (
+                          <option key={inv.id} value={inv.invoiceNumber}>
+                            {inv.invoiceNumber} {pend > 0 ? `(Pending ₹${pend.toLocaleString('en-IN')})` : '(Paid)'}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="e.g. SINV-2026-0001 or Direct"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17] font-mono"
+                    />
+                  )}
                 </div>
+
                 <div>
                   <label className="block text-[#70665F] font-bold mb-1">Receiving Bank A/C *</label>
                   <select
@@ -377,21 +586,27 @@ export default function CustomerReceiptsPage() {
                     onChange={(e) => setBankAccountId(e.target.value)}
                     className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-xl px-3 py-2 text-[#211B17]"
                   >
-                    {activeBankAccounts.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.bankName} - A/C {b.accountNumber ? b.accountNumber.slice(-4) : 'Main'}
-                      </option>
-                    ))}
+                    {activeBankAccounts.length > 0 ? (
+                      activeBankAccounts.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.bankName} {b.accountNumber ? `(${b.accountNumber.slice(-4)})` : ''}
+                        </option>
+                      ))
+                    ) : (
+                      <option value="BANK-01">HDFC Bank Ltd. (Operations)</option>
+                    )}
                   </select>
                 </div>
               </div>
 
+              {/* Amount & UTR / Ref No */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[#70665F] font-bold mb-1">Amount Received (₹) *</label>
                   <input
                     type="number"
                     required
+                    min="1"
                     placeholder="e.g. 500000"
                     value={amountPaid}
                     onChange={(e) => setAmountPaid(e.target.value === '' ? '' : Number(e.target.value))}
@@ -449,7 +664,7 @@ export default function CustomerReceiptsPage() {
             <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3">
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#8C827A] tracking-wider">Official Payment Voucher</span>
-                <h3 className="text-lg font-black text-[#8B2500] font-mono">{selectedReceipt.receiptNumber}</h3>
+                <h3 className="text-lg font-black text-[#8B2500] font-mono">{selectedReceipt.receiptNumber || selectedReceipt.id}</h3>
               </div>
               <button
                 onClick={() => setSelectedReceipt(null)}
@@ -478,34 +693,50 @@ export default function CustomerReceiptsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#70665F]">Bank Account:</span>
-                <span className="font-bold text-[#211B17]">{selectedReceipt.bankName || 'HDFC Bank'}</span>
+                <span className="font-bold text-[#211B17]">{selectedReceipt.bankName || 'HDFC Bank Ltd. (Operations)'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#70665F]">UTR / Ref No:</span>
-                <span className="font-mono font-bold text-[#211B17]">{selectedReceipt.referenceNumber}</span>
+                <span className="font-mono font-bold text-[#211B17]">{selectedReceipt.referenceNumber || 'N/A'}</span>
               </div>
+              {selectedReceipt.remarks && (
+                <div className="flex justify-between">
+                  <span className="text-[#70665F]">Remarks:</span>
+                  <span className="text-[#211B17] italic">{selectedReceipt.remarks}</span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-[#E5DCD3] text-sm">
                 <span className="font-bold text-[#211B17]">Amount Cleared:</span>
                 <span className="font-mono font-black text-emerald-800">
-                  ₹{Number(selectedReceipt.amountPaid || selectedReceipt.amount || 0).toLocaleString('en-IN')}
+                  ₹{Number(selectedReceipt.amountPaid ?? selectedReceipt.amount ?? 0).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-between gap-2 pt-2">
               <button
-                onClick={() => window.print()}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DF] text-[#211B17] font-semibold text-xs border border-[#E5DCD3]"
+                onClick={() => handleDeleteReceipt(selectedReceipt.id, selectedReceipt.receiptNumber || selectedReceipt.id)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition"
               >
-                <Printer className="w-4 h-4" />
-                <span>Print Voucher</span>
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Voucher</span>
               </button>
-              <button
-                onClick={() => setSelectedReceipt(null)}
-                className="px-4 py-2 rounded-xl bg-[#8B2500] hover:bg-[#701E00] text-white font-bold text-xs"
-              >
-                Close
-              </button>
+
+              <div className="flex items-center gap-2 ml-auto">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DF] text-[#211B17] font-semibold text-xs border border-[#E5DCD3]"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Voucher</span>
+                </button>
+                <button
+                  onClick={() => setSelectedReceipt(null)}
+                  className="px-4 py-2 rounded-xl bg-[#8B2500] hover:bg-[#701E00] text-white font-bold text-xs"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

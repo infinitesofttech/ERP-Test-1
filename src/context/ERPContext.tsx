@@ -655,7 +655,7 @@ interface ERPContextType {
   openingStocks: OpeningStock[];
   addOpeningStock: (stock: Omit<OpeningStock, 'id'>) => void;
   goodsReceipts: GoodsReceiptNote[];
-  addGRN: (grn: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => void;
+  addGRN: (grn: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => Promise<GoodsReceiptNote>;
   inwardGRNToStock: (grnIdOrNumber: string) => void;
   qcInspections: QCInspection[];
   addQCInspection: (qc: Omit<QCInspection, 'id' | 'inspectionNumber'>) => void;
@@ -697,7 +697,7 @@ interface ERPContextType {
   productionPlans: ProductionPlan[];
   addProductionPlan: (plan: Omit<ProductionPlan, 'id' | 'createdAt'>) => void;
   workOrders: WorkOrder[];
-  addWorkOrder: (wo: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>) => void;
+  addWorkOrder: (wo: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>) => Promise<WorkOrder>;
   releaseWorkOrder: (id: string) => void;
   productionOrders: ProductionOrder[];
   addProductionOrder: (po: Omit<ProductionOrder, 'id' | 'productionOrderNumber' | 'createdAt'>) => void;
@@ -765,6 +765,7 @@ interface ERPContextType {
   deleteDebitNote: (id: string) => void;
   customerReceipts: CustomerReceipt[];
   addCustomerReceipt: (rec: Omit<CustomerReceipt, 'id' | 'receiptNumber'>) => void;
+  deleteCustomerReceipt: (id: string) => void;
   supplierPayments: SupplierPayment[];
   addSupplierPayment: (pay: Omit<SupplierPayment, 'id' | 'paymentNumber'>) => void;
   journalEntries: JournalEntry[];
@@ -993,6 +994,7 @@ interface ERPContextType {
   securityChecks: SecurityAuditCheck[];
   goLiveChecklist: GoLiveChecklistItem[];
   toggleGoLiveItem: (id: string) => void;
+  syncModule: (moduleName: string, force?: boolean) => Promise<any>;
 }
 
 const ERPContext = createContext<ERPContextType | undefined>(undefined);
@@ -4740,6 +4742,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         api.accounting.bankAccounts.list(),
         api.accounting.expenses.list(),
         api.accounting.fixedAssets.list(),
+        api.crm.customers.list(),
       ]);
 
       applyLive<FinancialYear>(val(results[0]), setFinancialYears, 'financialYears');
@@ -4807,7 +4810,38 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      applyLive<CustomerReceipt>(val(results[4]), setCustomerReceipts, 'customerReceipts');
+      const rawReceipts = val<any[]>(results[4]);
+      if (rawReceipts && Array.isArray(rawReceipts) && rawReceipts.length > 0) {
+        const normalizedReceipts: CustomerReceipt[] = rawReceipts.map((r: any) => {
+          const amt = Number(r.amount ?? r.amountPaid ?? r.amount_paid ?? 0);
+          const rDate = r.receiptDate || r.receipt_date || r.date || '';
+          return {
+            ...r,
+            id: String(r.id || r.receiptNumber || r.receipt_number),
+            receiptNumber: r.receiptNumber || r.receipt_number || r.id,
+            receiptDate: rDate,
+            date: rDate,
+            customerId: r.customerId || r.customer_id || '',
+            customerName: r.customerName || r.customer_name || 'Customer',
+            salesInvoiceNumber: r.salesInvoiceNumber || r.sales_invoice_number || '',
+            paymentMode: r.paymentMode || r.payment_mode || 'NEFT',
+            bankName: r.bankName || r.bank_name || '',
+            bankAccountId: r.bankAccountId || r.bank_account_id || '',
+            amount: amt,
+            amountPaid: amt,
+            referenceNumber: r.referenceNumber || r.reference_number || '',
+            status: r.status || 'Received',
+            remarks: r.remarks || '',
+            createdBy: r.createdBy || r.created_by || '',
+          };
+        });
+        const sorted = sortByLatestDesc(normalizedReceipts);
+        setCustomerReceipts(sorted);
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('UMA_ERP_customerReceipts', JSON.stringify(sorted)); } catch (_) {}
+        }
+      }
+
       applyLive<SupplierPayment>(val(results[5]), setSupplierPayments, 'supplierPayments');
       applyLive<JournalEntry>(val(results[6]), setJournalEntries, 'journalEntries');
       applyLive<CreditNote>(val(results[7]), setCreditNotes, 'creditNotes');
@@ -4816,6 +4850,17 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       applyLive<BankAccount>(val(results[10]), setBankAccounts, 'bankAccounts');
       applyLive<ExpenseEntry>(val(results[11]), setExpenseEntries, 'expenseEntries');
       applyLive<FixedAsset>(val(results[12]), setFixedAssets, 'fixedAssets');
+
+      const rawCusts = val<any[]>(results[13]);
+      if (rawCusts && Array.isArray(rawCusts) && rawCusts.length > 0) {
+        setCustomers((prev) => {
+          const combined = deduplicateCustomers([...prev, ...rawCusts]);
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('UMA_ERP_customers', JSON.stringify(combined)); } catch (_) {}
+          }
+          return combined;
+        });
+      }
 
       lastSyncTimes.current['accounting'] = Date.now();
     } catch (err) {
@@ -9322,7 +9367,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const addGRN = (data: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>) => {
+  const addGRN = async (data: Omit<GoodsReceiptNote, 'id' | 'grnNumber' | 'createdAt'>): Promise<GoodsReceiptNote> => {
     const existingSeqNumbers = (goodsReceipts || [])
       .map((g) => {
         const raw = String(g.grnNumber || g.id || '');
@@ -9334,7 +9379,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     const nextSeq = Math.max(maxSeq + 1, (goodsReceipts?.length || 0) + 1);
     const grnNumber = (data as any).grnNumber || `GRN-${new Date().getFullYear()}-${String(nextSeq).padStart(4, '0')}`;
     const isDirectInward = (data as any).directInward === true || (data as any).status === 'Accepted';
-    const newGrn: GoodsReceiptNote = {
+    let newGrn: GoodsReceiptNote = {
       ...data,
       id: grnNumber,
       grnNumber,
@@ -9590,10 +9635,17 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     delete grnPayload.grnNumber;
     delete grnPayload.grn_number;
 
-    api.store.grns.create(grnPayload).then((res) => {
+    try {
+      const res = await api.store.grns.create(grnPayload);
       if (res && (res.id || res.grnNumber)) {
         const authId = res.id || res.grnNumber;
         const authGrnNo = res.grnNumber || res.id;
+        newGrn = {
+          ...newGrn,
+          ...res,
+          id: authId,
+          grnNumber: authGrnNo,
+        };
         setGoodsReceipts((prev) => {
           const synced = prev.map((g) => (g.id === grnNumber || g.grnNumber === grnNumber ? {
             ...g,
@@ -9618,7 +9670,11 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
           });
         }
       }
-    }).catch((err) => console.warn('Failed to sync GRN to backend:', err));
+    } catch (err) {
+      console.error('Failed to sync GRN to backend:', err);
+    }
+
+    return newGrn;
   };
 
   const inwardGRNToStock = (grnIdOrNumber: string) => {
@@ -9626,6 +9682,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       (g) => g.id === grnIdOrNumber || g.grnNumber === grnIdOrNumber
     );
     if (!targetGrn) return;
+
+    api.store.grns.update(targetGrn.id, { status: 'Accepted' }).catch(() => {});
 
     setGoodsReceipts((prev) => {
       const updated = prev.map((g) =>
@@ -10274,24 +10332,64 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.post('/production-plans/', newPlan).catch((err) => console.warn('Failed to add production plan:', err));
   };
 
-  const addWorkOrder = (data: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>) => {
-    const workOrderNumber = `WO-${new Date().getFullYear()}-${String(workOrders.length + 1).padStart(3, '0')}-A`;
-    const newWo: WorkOrder = {
+  const addWorkOrder = async (data: Omit<WorkOrder, 'id' | 'workOrderNumber' | 'createdAt'>): Promise<WorkOrder> => {
+    const existingSeqNumbers = (workOrders || [])
+      .map((w) => {
+        const raw = String(w.workOrderNumber || w.id || '');
+        const match = raw.match(/WO-\d{4}-(\d+)/i) || raw.match(/(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter((n) => !isNaN(n) && n > 0);
+    const maxSeq = existingSeqNumbers.length > 0 ? Math.max(...existingSeqNumbers) : 0;
+    const nextSeq = Math.max(maxSeq + 1, (workOrders?.length || 0) + 1);
+    const workOrderNumber = (data as any).workOrderNumber || `WO-${new Date().getFullYear()}-${String(nextSeq).padStart(3, '0')}`;
+    let newWo: WorkOrder = {
       ...data,
       id: workOrderNumber,
       workOrderNumber,
       createdAt: new Date().toISOString().split('T')[0],
+      status: (data as any).status || 'Planned',
     };
-    setWorkOrders((prev) => [newWo, ...prev]);
+
+    setWorkOrders((prev) => [newWo, ...(prev || [])]);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('UMA_ERP_workOrders', JSON.stringify([newWo, ...(workOrders || [])])); } catch (_) {}
+    }
+
     if (newWo.jobNumber) {
       updateJobStatus(newWo.jobNumber, 'step-7', 'in_progress');
     }
     logAction('CREATE', 'Production', 'Work Orders', newWo.id, `Generated Work Order ${newWo.workOrderNumber} for ${newWo.jobNumber}`);
-    api.production.workOrders.create(newWo).then((res) => {
-      if (res && res.id) {
-        setWorkOrders((prev) => prev.map((w) => (w.id === workOrderNumber ? { ...w, ...res } : w)));
+
+    try {
+      const res = await api.production.workOrders.create(newWo);
+      if (res && (res.id || res.workOrderNumber)) {
+        const authId = res.id || res.workOrderNumber;
+        const authWoNo = res.workOrderNumber || res.id;
+        newWo = {
+          ...newWo,
+          ...res,
+          id: authId,
+          workOrderNumber: authWoNo,
+        };
+        setWorkOrders((prev) => {
+          const synced = prev.map((w) => (w.id === workOrderNumber || w.workOrderNumber === workOrderNumber ? {
+            ...w,
+            ...res,
+            id: authId,
+            workOrderNumber: authWoNo,
+          } : w));
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('UMA_ERP_workOrders', JSON.stringify(synced)); } catch (_) {}
+          }
+          return synced;
+        });
       }
-    }).catch((err) => console.warn('Failed to sync work order to backend:', err));
+    } catch (err) {
+      console.error('Failed to sync work order to backend:', err);
+    }
+
+    return newWo;
   };
 
   const releaseWorkOrder = (id: string) => {
@@ -10300,15 +10398,12 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     logAction('UPDATE', 'Production', 'Work Orders', id, `Released Work Order ${id} to shop floor`);
 
     const payload = target ? { ...target, status: 'Released' } : { id, workOrderNumber: id, status: 'Released' };
-    api.production.workOrders.release(id, payload).then((res: any) => {
-      if (res && res.workOrder) {
-        setWorkOrders((prev) => prev.map((w) => (w.id === id || w.workOrderNumber === id ? { ...w, ...res.workOrder, status: 'Released' } : w)));
-      }
-    }).catch(() => {
-      // Fallback: also ensure record exists via create/patch
-      api.production.workOrders.create(payload).catch((err: any) =>
-        console.warn('Failed to update work order on backend:', err)
-      );
+    api.production.workOrders.update(id, { status: 'Released' }).catch(() => {
+      api.production.workOrders.release(id, payload).catch(() => {
+        api.production.workOrders.create(payload).catch((err: any) =>
+          console.warn('Failed to update work order on backend:', err)
+        );
+      });
     });
   };
 
@@ -10906,11 +11001,91 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addCustomerReceipt = (rec: Omit<CustomerReceipt, 'id' | 'receiptNumber'>) => {
-    const receiptNumber = `RCT-2026-${String(customerReceipts.length + 1).padStart(4, '0')}`;
-    const newRec: CustomerReceipt = { ...rec, id: receiptNumber, receiptNumber };
-    setCustomerReceipts((prev) => [newRec, ...prev]);
-    logAction('CREATE', 'Accounting', 'Customer Receipts', newRec.id, `Recorded Receipt ${newRec.receiptNumber} from ${newRec.customerName} (₹${(newRec.amountPaid ?? 0)?.toLocaleString()})`);
-    api.accounting.createReceipt(newRec).catch((err) => console.warn('Failed to add customer receipt:', err));
+    // Determine highest numeric receipt suffix across existing records to guarantee uniqueness
+    const existingNums = customerReceipts
+      .map((r) => {
+        const m = (r.receiptNumber || r.id || '').match(/(\d+)$/);
+        return m ? parseInt(m[1], 10) : 0;
+      })
+      .filter((n) => !isNaN(n));
+    const maxNum = existingNums.length > 0 ? Math.max(...existingNums, 25) : 25;
+    const nextNum = maxNum + 1;
+    const receiptNumber = (rec as any).receiptNumber || `RCT-2026-${String(nextNum).padStart(4, '0')}`;
+    const id = (rec as any).id || receiptNumber;
+    const amt = Number(rec.amountPaid ?? rec.amount ?? 0);
+    const rDate = rec.receiptDate || rec.date || new Date().toISOString().split('T')[0];
+
+    const newRec: CustomerReceipt = {
+      ...rec,
+      id,
+      receiptNumber,
+      receiptDate: rDate,
+      date: rDate,
+      amount: amt,
+      amountPaid: amt,
+      status: rec.status || 'Received',
+    };
+
+    setCustomerReceipts((prev) => {
+      const updated = [newRec, ...prev];
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('UMA_ERP_customerReceipts', JSON.stringify(updated)); } catch (_) {}
+      }
+      return updated;
+    });
+
+    logAction('CREATE', 'Accounting', 'Customer Receipts', newRec.id, `Recorded Receipt ${newRec.receiptNumber} from ${newRec.customerName} (₹${amt.toLocaleString()})`);
+
+    // Payload for PythonAnywhere Django REST API
+    const payload = {
+      id: newRec.id,
+      receiptNumber: newRec.receiptNumber,
+      receiptDate: newRec.receiptDate,
+      customerId: newRec.customerId || 'CUST-001',
+      customerName: newRec.customerName || 'Customer',
+      salesInvoiceNumber: newRec.salesInvoiceNumber || '',
+      paymentMode: newRec.paymentMode || 'NEFT',
+      bankName: newRec.bankName || '',
+      amount: amt,
+      referenceNumber: newRec.referenceNumber || '',
+      status: newRec.status || 'Received',
+      remarks: newRec.remarks || '',
+      createdBy: newRec.createdBy || 'Accounts Team',
+    };
+
+    api.accounting.receipts.create(payload).catch((err) => console.warn('Failed to add customer receipt on backend:', err));
+
+    // Reconcile and update linked sales invoice if an invoice ref is provided
+    if (newRec.salesInvoiceNumber && amt > 0) {
+      const matchedInv = salesInvoices.find(
+        (si) => si.invoiceNumber === newRec.salesInvoiceNumber || si.id === newRec.salesInvoiceNumber
+      );
+      if (matchedInv) {
+        const curPaid = Number(matchedInv.paidAmount || 0);
+        const newPaid = curPaid + amt;
+        const total = Number(matchedInv.grandTotal || 0);
+        const newPaymentStatus = newPaid >= total ? 'Paid' : 'Partially Paid';
+        updateSalesInvoicePayment(matchedInv.id, {
+          paidAmount: newPaid,
+          paymentStatus: newPaymentStatus,
+          paymentMode: newRec.paymentMode as any,
+          referenceNumber: newRec.referenceNumber,
+          paymentDate: newRec.receiptDate,
+        });
+      }
+    }
+  };
+
+  const deleteCustomerReceipt = (id: string) => {
+    setCustomerReceipts((prev) => {
+      const updated = prev.filter((r) => r.id !== id && r.receiptNumber !== id);
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('UMA_ERP_customerReceipts', JSON.stringify(updated)); } catch (_) {}
+      }
+      return updated;
+    });
+    logAction('DELETE', 'Accounting', 'Customer Receipts', id, `Deleted Customer Receipt ${id}`);
+    api.accounting.receipts.delete(id).catch((err) => console.warn('Failed to delete customer receipt on backend:', err));
   };
 
   const addSupplierPayment = (pay: Omit<SupplierPayment, 'id' | 'paymentNumber'>) => {
@@ -13052,6 +13227,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         deleteDebitNote,
         customerReceipts: sortByLatestDesc(customerReceipts),
         addCustomerReceipt,
+        deleteCustomerReceipt,
         supplierPayments: sortByLatestDesc(supplierPayments),
         addSupplierPayment,
         journalEntries: sortByLatestDesc(journalEntries),
@@ -13277,6 +13453,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         securityChecks,
         goLiveChecklist,
         toggleGoLiveItem,
+        syncModule,
       }}
     >
       {children}

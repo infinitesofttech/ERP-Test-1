@@ -29,6 +29,8 @@ export default function WorkOrdersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdWoSuccess, setCreatedWoSuccess] = useState<WorkOrder | null>(null);
 
   // Form state
   const [jobNumber, setJobNumber] = useState(manufacturingJobs[0]?.jobNumber || '');
@@ -37,6 +39,15 @@ export default function WorkOrdersPage() {
   const [priority, setPriority] = useState<'Low' | 'Medium' | 'High' | 'Urgent'>('Medium');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
+
+  // Auto-select first job and product name once manufacturingJobs load
+  useEffect(() => {
+    if (!jobNumber && manufacturingJobs.length > 0) {
+      const firstJob = manufacturingJobs[0];
+      setJobNumber(firstJob.jobNumber);
+      setProductName(firstJob.productName || '');
+    }
+  }, [manufacturingJobs, jobNumber]);
 
   // Close modals on ESC key
   useEffect(() => {
@@ -50,35 +61,46 @@ export default function WorkOrdersPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedWoForPrint, showCreateModal]);
 
-  const handleCreateWo = (e: React.FormEvent) => {
+  const handleCreateWo = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetJob = manufacturingJobs.find((j) => j.jobNumber === jobNumber);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    addWorkOrder({
-      jobId: targetJob?.projectId || targetJob?.id || '',
-      jobNumber: jobNumber || targetJob?.jobNumber || '',
-      projectId: targetJob?.projectId || targetJob?.id || '',
-      customerId: targetJob?.customerId || '',
-      customerName: targetJob?.customerName || '',
-      salesOrderNumber: targetJob?.salesOrderNumber || '',
-      designRevision: targetJob?.designRevision || 'REV-01',
-      bomRevision: targetJob?.bomRevision || 'Rev-01',
-      productName: productName || targetJob?.productName || '',
-      productionQuantity: qty,
-      uom: 'Unit',
-      plannedStartDate: startDate,
-      plannedEndDate: endDate || startDate,
-      productionManager: targetJob?.projectManager || 'Production Manager',
-      priority,
-      status: 'Planned',
-      remarks: 'Created via Work Order Manager',
-    });
+    try {
+      const targetJob = manufacturingJobs.find((j) => j.jobNumber === jobNumber);
 
-    setShowCreateModal(false);
-    setToastMessage(`Work Order created successfully! Redirecting to QC Inspection...`);
-    setTimeout(() => {
-      router.push(`/store/qc-inspection?job=${encodeURIComponent(jobNumber || targetJob?.jobNumber || '')}`);
-    }, 1200);
+      const createdWo = await addWorkOrder({
+        jobId: targetJob?.projectId || targetJob?.id || '',
+        jobNumber: jobNumber || targetJob?.jobNumber || '',
+        projectId: targetJob?.projectId || targetJob?.id || '',
+        customerId: targetJob?.customerId || '',
+        customerName: targetJob?.customerName || '',
+        salesOrderNumber: targetJob?.salesOrderNumber || '',
+        designRevision: targetJob?.designRevision || 'REV-01',
+        bomRevision: targetJob?.bomRevision || 'Rev-01',
+        productName: productName || targetJob?.productName || 'Manufactured Item',
+        productionQuantity: Number(qty) || 1,
+        uom: 'Unit',
+        plannedStartDate: startDate || new Date().toISOString().split('T')[0],
+        plannedEndDate: endDate || startDate || new Date().toISOString().split('T')[0],
+        productionManager: targetJob?.projectManager || 'Production Manager',
+        priority,
+        status: 'Planned',
+        remarks: 'Created via Work Order Manager',
+      });
+
+      setShowCreateModal(false);
+      setCreatedWoSuccess(createdWo);
+      setToastMessage(`Work Order Card ${createdWo?.workOrderNumber || ''} created & saved to database successfully!`);
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 5000);
+    } catch (err: any) {
+      console.error('Error creating work order:', err);
+      alert('Error creating work order: ' + (err?.message || err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredWorkOrders = (workOrders || []).filter((wo) => {
@@ -128,6 +150,39 @@ export default function WorkOrdersPage() {
           <Plus className="w-4 h-4" /> Generate New Work Order
         </button>
       </div>
+
+      {/* Database Confirmation Banner */}
+      {createdWoSuccess && (
+        <div className="p-4 rounded-2xl bg-emerald-900 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-emerald-700 animate-in fade-in duration-200">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-emerald-300 shrink-0" />
+            <div>
+              <div className="font-extrabold text-sm text-emerald-200">
+                ✅ Work Order Card {createdWoSuccess.workOrderNumber} Saved to Database!
+              </div>
+              <div className="text-xs text-white/90 mt-0.5">
+                Job: <strong className="text-emerald-100">{createdWoSuccess.jobNumber}</strong> — {createdWoSuccess.productName} ({createdWoSuccess.productionQuantity} {createdWoSuccess.uom}). Ready for Shop Floor fabrication.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setSelectedWoForPrint(createdWoSuccess)}
+              className="px-3.5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Print Card</span>
+            </button>
+            <Link
+              href={`/store/qc-inspection?job=${encodeURIComponent(createdWoSuccess.jobNumber)}`}
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition flex items-center gap-1.5"
+            >
+              <span>QC Inspection</span>
+              <span className="font-mono">➔</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Control / Search Bar */}
       <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-[#EBE3DB] shadow-xs print:hidden">
@@ -423,7 +478,14 @@ export default function WorkOrdersPage() {
                 <label className="block font-semibold text-[#544B45] mb-1">Select Job</label>
                 <select
                   value={jobNumber}
-                  onChange={(e) => setJobNumber(e.target.value)}
+                  onChange={(e) => {
+                    const sel = e.target.value;
+                    setJobNumber(sel);
+                    const matched = manufacturingJobs.find((j) => j.jobNumber === sel);
+                    if (matched) {
+                      setProductName(matched.productName || '');
+                    }
+                  }}
                   className="w-full bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl px-3 py-2 text-[#211B17] focus:outline-none focus:border-orange-500 font-medium"
                 >
                   {manufacturingJobs.map((j) => (
@@ -501,9 +563,17 @@ export default function WorkOrdersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-orange-700 font-bold text-white hover:bg-orange-600 shadow-lg transition"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-xl bg-orange-700 font-bold text-white hover:bg-orange-600 shadow-lg transition flex items-center gap-2 disabled:opacity-60 cursor-pointer"
                 >
-                  Generate Work Order
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Generating Card...</span>
+                    </>
+                  ) : (
+                    <span>Generate Work Order</span>
+                  )}
                 </button>
               </div>
             </form>
