@@ -262,9 +262,7 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       time: '11:00 AM',
       priority: 'high',
       purpose: `Follow-up on Inquiry ${newEnq.enquiryNo} - ${enqMachineProduct}`,
-      notes: `Inquiry registered for ${enqMachineProduct}. Product Quotation Amount: ₹${quoPrice.toLocaleString(
-        'en-IN'
-      )}. Details: ${enqProductDetails || 'Standard specs'}. Follow up with client regarding quotation and specs.`,
+      notes: `Inquiry registered for ${enqMachineProduct}. Details: ${enqProductDetails || 'Standard specs'}. Follow up with client regarding quotation and specs.`,
       status: 'pending',
       nextFollowUpDate: nextFollowUpDate,
     });
@@ -1162,24 +1160,6 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                 />
               </div>
 
-              {/* 2. Product Quotation */}
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Product Quotation (Amount ₹) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2 font-mono font-bold text-[#70665F]">₹</span>
-                  <input
-                    type="number"
-                    required
-                    min={0}
-                    placeholder="e.g. 850000"
-                    value={enqQuotationAmount}
-                    onChange={(e) => setEnqQuotationAmount(e.target.value)}
-                    className="w-full pl-8 pr-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono font-bold text-emerald-800"
-                  />
-                </div>
-              </div>
 
               {/* 3. Product Details */}
               <div>
