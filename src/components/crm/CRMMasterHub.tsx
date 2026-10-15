@@ -156,15 +156,8 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
   const [showAddEnquiryModal, setShowAddEnquiryModal] = useState(false);
   const [enqCustomerId, setEnqCustomerId] = useState(customers[0]?.id || '');
   const [enqMachineProduct, setEnqMachineProduct] = useState('');
-  const [enqQuotationAmount, setEnqQuotationAmount] = useState<number | string>('');
-  const [enqProductDetails, setEnqProductDetails] = useState('');
-  const [enqProductDescription, setEnqProductDescription] = useState('');
-
-  // Commented out fields per user requirements (default values applied automatically)
-  // const [enqQuantity, setEnqQuantity] = useState<number | string>(1);
-  // const [enqSpecification, setEnqSpecification] = useState('');
-  // const [enqExpectedDelivery, setEnqExpectedDelivery] = useState('2026-11-15');
-  // const [enqAssignedPersonId, setEnqAssignedPersonId] = useState(allEmployees[0]?.id || '');
+  const [enqQuantity, setEnqQuantity] = useState<number | string>(1);
+  const [enqDescription, setEnqDescription] = useState('');
 
   const handleCreateEnquiry = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +168,7 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       ? (defaultEmp.name || `${defaultEmp.firstName || ''} ${defaultEmp.lastName || ''}`.trim())
       : 'Sales Engineer';
 
-    const quoPrice = Number(enqQuotationAmount) || 0;
+    const qty = Number(enqQuantity) || 1;
     const defaultDelivery = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const validUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const nextFollowUpDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -184,73 +177,17 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
     const newEnq = addEnquiry({
       customerId: cust?.id || enqCustomerId || 'CUST-001',
       customerName: cust?.companyName || 'Valued Customer',
-      requirement: enqProductDescription || enqProductDetails || enqMachineProduct,
+      requirement: enqDescription || enqMachineProduct,
       machineProduct: enqMachineProduct,
-      quantity: 1,
-      specification: enqProductDetails,
+      quantity: qty,
+      specification: enqDescription,
       expectedDelivery: defaultDelivery,
       assignedPersonId: assignedPersonId,
       assignedPersonName: assignedPersonName,
-      status: 'quotation_ready',
+      status: 'new',
     });
 
-    // 2. Automatically Create Entry in Quotation
-    const newQuo = addQuotation({
-      currentRevision: 'Rev-00',
-      date: todayStr,
-      validUntil: validUntilDate,
-      customerId: cust?.id || enqCustomerId || '',
-      customerName: cust?.companyName || 'Valued Customer',
-      contactPerson: cust?.contactPerson || 'Authorized Representative',
-      contactEmail: cust?.email || '',
-      contactMobile: cust?.mobile || '',
-      enquiryId: newEnq.id,
-      latestSummary: {
-        grandTotal: quoPrice > 0 ? Math.round(quoPrice * 1.18) : 0,
-        status: 'draft',
-        machineProduct: enqMachineProduct,
-      },
-      revisions: [
-        {
-          revisionNumber: 'Rev-00',
-          date: todayStr,
-          preparedBy: assignedPersonName,
-          items: [
-            {
-              id: 'ITEM-01',
-              productName: enqMachineProduct,
-              description: enqProductDescription || enqMachineProduct,
-              quantity: 1,
-              unit: 'Nos',
-              rate: quoPrice,
-              discountPercent: 0,
-              taxPercent: 18,
-              amount: quoPrice,
-            },
-          ],
-          subTotal: quoPrice,
-          discountAmount: 0,
-          taxAmount: Math.round(quoPrice * 0.18),
-          grandTotal: quoPrice > 0 ? Math.round(quoPrice * 1.18) : 0,
-          technicalSpecs: enqProductDetails || 'Standard MTO Technical Specifications',
-          scopeOfSupply: 'Engineering, manufacturing, inspection, and assembly testing.',
-          exclusions: 'Civil work, external piping, and unstated accessories.',
-          paymentTerms: '30% Advance, 60% Against Proforma/Inspection, 10% on Dispatch',
-          deliveryTime: '6 to 8 weeks from engineering approval',
-          warranty: '12 months from commissioning date',
-          termsAndConditions: 'Taxes extra at 18% GST. Freight charges at actuals.',
-          notes: enqProductDescription || '',
-          status: 'draft',
-        },
-      ],
-    });
-
-    // Link Quotation ID back to the Enquiry
-    if (newQuo && newQuo.id) {
-      updateEnquiry(newEnq.id, { quotationId: newQuo.id });
-    }
-
-    // 3. Automatically Create Follow-up Entry
+    // 2. Automatically Create Follow-up Entry
     addFollowUp({
       leadOrCustomerId: cust?.id || enqCustomerId || newEnq.id,
       leadOrCustomerName: cust?.companyName || 'Valued Customer',
@@ -261,23 +198,20 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       date: nextFollowUpDate,
       time: '11:00 AM',
       priority: 'high',
-      purpose: `Follow-up on Inquiry ${newEnq.enquiryNo} - ${enqMachineProduct}`,
-      notes: `Inquiry registered for ${enqMachineProduct}. Details: ${enqProductDetails || 'Standard specs'}. Follow up with client regarding quotation and specs.`,
+      purpose: `Follow-up on Inquiry ${newEnq.enquiryNo || newEnq.id} - ${enqMachineProduct}`,
+      notes: `Inquiry registered for ${enqMachineProduct}. Description: ${enqDescription || 'Standard specs'}.`,
       status: 'pending',
       nextFollowUpDate: nextFollowUpDate,
     });
 
     // Reset Form & Close Modal
     setEnqMachineProduct('');
-    setEnqQuotationAmount('');
-    setEnqProductDetails('');
-    setEnqProductDescription('');
+    setEnqDescription('');
+    setEnqQuantity(1);
     setShowAddEnquiryModal(false);
 
-    setSuccessMsg(
-      `Technical Enquiry "${enqMachineProduct}" created! Automatic Quotation (${newQuo.quotationNumber || newQuo.id}) and Follow-up have been generated.`
-    );
-    setTimeout(() => setSuccessMsg(''), 7000);
+    setSuccessMsg(`Technical Enquiry "${newEnq.enquiryNo || newEnq.id}" created successfully!`);
+    setTimeout(() => setSuccessMsg(''), 5000);
   };
 
   // --------------------------------------------------------------------------
@@ -990,12 +924,12 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
             searchPlaceholder="Search customers by company, GSTIN, contact..."
             onRowClick={(cust) => router.push(`/crm/customers/${cust.id}`)}
             actions={
-              <button
-                onClick={() => setShowAddCustomerModal(true)}
+              <Link
+                href="/crm/customers/new"
                 className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs flex items-center gap-1 transition shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Register Customer
-              </button>
+              </Link>
             }
           />
         </div>
@@ -1114,15 +1048,15 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       )}
 
       {/* ---------------------------------------------------------------------- */}
-      {/* MODAL 1: ADD TECHNICAL ENQUIRY                                          */}
+      {/* MODAL 1: REGISTER NEW TECHNICAL ENQUIRY                                */}
       {/* ---------------------------------------------------------------------- */}
       {showAddEnquiryModal && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white border border-[#EBE3DB] rounded-2xl max-w-lg w-full p-6 shadow-xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3 mb-4">
               <h3 className="font-bold text-sm text-[#211B17] flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                Add New Technical Enquiry
+                <FileText className="w-4 h-4 text-[#75401F]" />
+                Register New Technical Enquiry
               </h3>
               <button onClick={() => setShowAddEnquiryModal(false)} className="text-[#70665F] hover:text-[#211B17]">
                 <X className="w-4 h-4" />
@@ -1131,21 +1065,31 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
 
             <form onSubmit={handleCreateEnquiry} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Select Customer Account *</label>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Select customer (Lead) <span className="text-rose-500">*</span>
+                </label>
                 <select
+                  required
                   value={enqCustomerId}
                   onChange={(e) => setEnqCustomerId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold"
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
                 >
+                  <option value="">– Select Customer / Lead –</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.companyName} ({c.city})
+                      {c.companyName} ({c.customerCode || c.city || 'Customer'})
                     </option>
                   ))}
+                  {leads
+                    .filter((l) => !customers.some((c) => c.companyName.toLowerCase() === l.companyName.toLowerCase()))
+                    .map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.companyName} (Lead: {l.contactPerson})
+                      </option>
+                    ))}
                 </select>
               </div>
 
-              {/* 1. Product Name */}
               <div>
                 <label className="block text-[#544B45] font-semibold mb-1">
                   Product Name <span className="text-rose-500">*</span>
@@ -1153,97 +1097,54 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 5 KL SS 316 Reaction Vessel"
+                  placeholder="e.g. Stainless Steel SS316 Reaction Vessel"
                   value={enqMachineProduct}
                   onChange={(e) => setEnqMachineProduct(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
                 />
               </div>
 
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Quantity <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={enqQuantity}
+                  onChange={(e) => setEnqQuantity(e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
+                />
+              </div>
 
-              {/* 3. Product Details */}
               <div>
                 <label className="block text-[#544B45] font-semibold mb-1">
-                  Product Details <span className="text-rose-500">*</span>
+                  Description <span className="text-rose-500">*</span>
                 </label>
                 <textarea
-                  rows={2}
+                  rows={4}
                   required
-                  placeholder="e.g. SS 316 construction, 10 Bar design pressure, 180°C temp, mechanical seal, limpet coil jacket"
-                  value={enqProductDetails}
-                  onChange={(e) => setEnqProductDetails(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
+                  placeholder="Enter equipment technical specifications, customer requirements, design parameters..."
+                  value={enqDescription}
+                  onChange={(e) => setEnqDescription(e.target.value)}
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
                 />
               </div>
-
-              {/* 4. Product Description */}
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Product Description <span className="text-rose-500">*</span>
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="e.g. Supply of custom chemical reactor vessel with agitator assembly, hydraulic pressure testing, and MTC documentation."
-                  value={enqProductDescription}
-                  onChange={(e) => setEnqProductDescription(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium"
-                />
-              </div>
-
-              {/* =========================================================================
-                  COMMENTED OUT OTHER FIELDS PER USER REQUEST:
-                  (Quantity, Target Delivery Date, Assigned Sales Engineer)
-                  ========================================================================= */}
-              {/*
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[#544B45] font-semibold mb-1">Quantity *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={1}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[#544B45] font-semibold mb-1">Target Delivery Date</label>
-                  <input
-                    type="date"
-                    min={todayStr}
-                    value={todayStr}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Assigned Sales Engineer</label>
-                <select
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl"
-                >
-                  {allEmployees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name || emp.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              */}
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[#EBE3DB]">
                 <button
                   type="button"
                   onClick={() => setShowAddEnquiryModal(false)}
-                  className="px-4 py-2 border border-[#EBE3DB] rounded-lg hover:bg-slate-50 font-semibold"
+                  className="px-4 py-2 border border-[#EBE3DB] rounded-xl hover:bg-slate-50 font-semibold text-[#544B45]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs transition"
+                  className="px-5 py-2 bg-[#211B17] hover:bg-[#3E2723] text-white rounded-xl font-bold shadow-xs transition"
                 >
-                  Save Enquiry & Generate Quotation
+                  Create Technical Enquiry
                 </button>
               </div>
             </form>
@@ -1389,12 +1290,17 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       {/* ---------------------------------------------------------------------- */}
       {editingLead && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-[#EBE3DB] rounded-2xl max-w-lg w-full p-6 shadow-xl animate-in zoom-in-95 duration-150">
+          <div className="bg-white border border-[#EBE3DB] rounded-2xl max-w-xl w-full p-6 shadow-xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3 mb-4">
-              <h3 className="font-bold text-sm text-[#211B17] flex items-center gap-2">
-                <Pencil className="w-4 h-4 text-crm-brand-700" />
-                Edit Lead: {editingLead.leadNo || editingLead.id}
-              </h3>
+              <div>
+                <h3 className="font-bold text-sm text-[#211B17] flex items-center gap-2">
+                  <Pencil className="w-4 h-4 text-crm-brand-700" />
+                  Edit Lead Details
+                </h3>
+                <span className="text-[11px] text-[#70665F] font-mono">
+                  Ref : {editingLead.leadNo || editingLead.id}
+                </span>
+              </div>
               <button onClick={() => setEditingLead(null)} className="text-[#70665F] hover:text-[#211B17]">
                 <X className="w-4 h-4" />
               </button>
@@ -1402,56 +1308,110 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
 
             <form onSubmit={handleSaveEditLead} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Company Name</label>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Company Name <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={editLeadData.companyName || ''}
                   onChange={(e) => setEditLeadData((prev) => ({ ...prev, companyName: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold"
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-[#211B17]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#544B45] font-semibold mb-1">Contact Person</label>
+                  <label className="block text-[#544B45] font-semibold mb-1">
+                    Contact Person <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
                     value={editLeadData.contactPerson || ''}
                     onChange={(e) => setEditLeadData((prev) => ({ ...prev, contactPerson: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl"
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#544B45] font-semibold mb-1">Mobile</label>
+                  <label className="block text-[#544B45] font-semibold mb-1">
+                    Mobile Number <span className="text-rose-500">*</span>
+                  </label>
                   <input
                     type="text"
+                    required
+                    maxLength={10}
                     value={editLeadData.mobile || ''}
-                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, mobile: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
+                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, mobile: e.target.value.replace(/\D/g, '') }))}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    value={editLeadData.email || ''}
+                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">City / Location</label>
+                  <input
+                    type="text"
+                    value={editLeadData.city || ''}
+                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, city: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Machine / Product</label>
+                <label className="block text-[#544B45] font-semibold mb-1">Office / Factory Address</label>
+                <textarea
+                  rows={2}
+                  value={editLeadData.address || ''}
+                  onChange={(e) => setEditLeadData((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="e.g. Plot No. 42, GIDC Industrial Estate, Makarpura, Vadodara"
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">
+                  Machine / Equipment Required <span className="text-rose-500">*</span>
+                </label>
                 <input
                   type="text"
+                  required
                   value={editLeadData.productName || ''}
                   onChange={(e) => setEditLeadData((prev) => ({ ...prev, productName: e.target.value }))}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold"
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold text-[#211B17]"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[#544B45] font-semibold mb-1">Qty</label>
+                  <label className="block text-[#544B45] font-semibold mb-1">Quantity</label>
                   <input
                     type="number"
                     min={1}
                     value={editLeadData.quantity || 1}
                     onChange={(e) => setEditLeadData((prev) => ({ ...prev, quantity: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono"
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Capacity</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 15 KL"
+                    value={editLeadData.capacity || ''}
+                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, capacity: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
                   />
                 </div>
                 <div>
@@ -1463,33 +1423,83 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
                     className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono font-bold text-emerald-700"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Priority</label>
+                  <select
+                    value={editLeadData.priority || 'medium'}
+                    onChange={(e) => setEditLeadData((prev) => ({ ...prev, priority: e.target.value as any }))}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold text-[#211B17]"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-[#544B45] font-semibold mb-1">Status</label>
                   <select
                     value={editLeadData.status || 'new'}
                     onChange={(e) => setEditLeadData((prev) => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold"
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-semibold text-[#211B17]"
                   >
-                    <option value="new">New</option>
+                    <option value="new">New Lead</option>
                     <option value="contacted">Contacted</option>
                     <option value="qualified">Qualified</option>
                     <option value="won">Won / Converted</option>
                     <option value="lost">Lost</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-[#544B45] font-semibold mb-1">Sales Engineer</label>
+                  <select
+                    value={editLeadData.assignedSalesPersonId || ''}
+                    onChange={(e) => {
+                      const emp = allEmployees.find((em) => em.id === e.target.value);
+                      const name = emp ? (emp.name || (emp as any).employeeName || 'Sales Team') : 'Sales Team';
+                      setEditLeadData((prev) => ({
+                        ...prev,
+                        assignedSalesPersonId: e.target.value,
+                        assignedSalesPersonName: name,
+                      }));
+                    }}
+                    className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                  >
+                    <option value="">– Assign Engineer –</option>
+                    {allEmployees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name || (emp as any).employeeName || emp.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#544B45] font-semibold mb-1">Remarks / Technical Notes</label>
+                <textarea
+                  rows={2}
+                  value={editLeadData.remarks || ''}
+                  onChange={(e) => setEditLeadData((prev) => ({ ...prev, remarks: e.target.value }))}
+                  placeholder="Additional client requirements, operating conditions..."
+                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-3 border-t border-[#EBE3DB]">
                 <button
                   type="button"
                   onClick={() => setEditingLead(null)}
-                  className="px-4 py-2 border border-[#EBE3DB] rounded-lg hover:bg-slate-50 font-semibold"
+                  className="px-4 py-2 border border-[#EBE3DB] rounded-xl hover:bg-slate-50 font-semibold text-[#544B45]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-lg font-bold shadow-xs transition"
+                  className="px-5 py-2 bg-[#75401F] hover:bg-[#5F3218] text-white rounded-xl font-bold shadow-xs transition"
                 >
                   Save Changes
                 </button>

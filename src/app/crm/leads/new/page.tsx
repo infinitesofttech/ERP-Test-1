@@ -10,17 +10,14 @@ import {
   Building,
   Phone,
   Wrench,
-  Shield,
   AlertCircle,
-  CheckCircle2,
   Calendar,
-  DollarSign,
   Layers,
   Mail,
-  Smartphone,
-  Hash,
   User,
   MapPin,
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 import { LeadSource, LeadStatus, PriorityLevel, Employee } from '../../../../types/crm';
 
@@ -43,13 +40,13 @@ export default function NewLeadPage() {
 
   const defaultSalesPersonId = salesEngineers[0]?.id || allEmployees[0]?.id || '';
 
-  // Current today date in YYYY-MM-DD
+  // Dates
   const todayStr = new Date().toISOString().split('T')[0];
   const defaultFollowUp = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const defaultDelivery = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
-    // 1. Company
+    // 1. Company Profile
     companyName: '',
     industry: 'Speciality Chemicals',
     website: '',
@@ -60,7 +57,7 @@ export default function NewLeadPage() {
     country: 'India',
     pincode: '390010',
 
-    // 2. Contact
+    // 2. Key Personnel & Communications
     contactPerson: '',
     designation: 'Project Lead',
     mobile: '',
@@ -68,8 +65,8 @@ export default function NewLeadPage() {
     email: '',
     whatsapp: '',
 
-    // 3. Requirement
-    productName: 'General Requirement',
+    // 3. Technical Requirements
+    productName: '',
     machineType: 'Chemical Pressure Vessel / Reactor',
     quantity: 1 as number | string,
     capacity: '',
@@ -77,10 +74,10 @@ export default function NewLeadPage() {
     requirementDescription: '',
     expectedDelivery: defaultDelivery,
     budget: '' as number | string,
-    priority: 'high' as PriorityLevel,
 
-    // 4. CRM
-    source: 'exhibition' as LeadSource,
+    // 4. Sales Assignment & Timeline
+    priority: 'medium' as PriorityLevel,
+    source: 'direct_inward' as LeadSource,
     assignedSalesPersonId: defaultSalesPersonId,
     status: 'new' as LeadStatus,
     nextFollowUpDate: defaultFollowUp,
@@ -97,87 +94,51 @@ export default function NewLeadPage() {
   // GSTIN 15-character format
   const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
-  // Validate single field (active fields: companyName, contactPerson, mobile, email, address)
+  // Validate single field
   const validateField = (name: string, value: any): string => {
     switch (name) {
       case 'companyName':
         if (!value || value.trim().length < 2) return 'Company name is required (at least 2 characters).';
         return '';
       case 'contactPerson':
-        if (!value || value.trim().length < 2) return 'Person name is required (at least 2 characters).';
+        if (!value || value.trim().length < 2) return 'Contact person name is required (at least 2 characters).';
         return '';
       case 'mobile': {
-        if (!value || value.trim() === '') return 'Mobile contact number is required.';
+        if (!value || value.trim() === '') return 'Mobile number is required.';
         const clean = value.replace(/\D/g, '');
-        if (clean.length !== 10) return 'Mobile number must be exactly 10 digits (digits only).';
+        if (clean.length !== 10) return 'Mobile number must be exactly 10 digits.';
         return '';
       }
       case 'email':
-        if (!value || value.trim() === '') return 'Email address is required.';
-        if (!emailRegex.test(value.trim())) return 'Invalid email format (Must contain "@" and domain, e.g. name@company.com).';
-        return '';
-      case 'address':
-        if (!value || value.trim().length < 2) return 'Address is required (at least 2 characters).';
-        return '';
-
-      /*
-      // Other fields commented out per user request:
-      case 'city':
-        if (!value || value.trim().length < 2) return 'City & State is required.';
+        if (value && value.trim() && !emailRegex.test(value.trim())) {
+          return 'Invalid email format (Must contain "@" and domain, e.g. name@company.com).';
+        }
         return '';
       case 'gstin':
-        if (value && value.trim()) {
-          if (!gstinRegex.test(value.trim().toUpperCase())) {
-            return 'Invalid GSTIN (Must be 15 chars, e.g. 24AAACX0000X1Z1).';
-          }
+        if (value && value.trim() && !gstinRegex.test(value.trim().toUpperCase())) {
+          return 'Invalid GSTIN (Must be 15 chars, e.g. 24AAACX0000X1Z1).';
         }
         return '';
-      case 'website':
-        if (value && value.trim()) {
-          const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
-          if (!urlPattern.test(value.trim())) return 'Invalid URL (e.g. https://example.com).';
-        }
-        return '';
-      case 'whatsapp':
-        if (value && value.trim()) {
-          const clean = value.replace(/\D/g, '');
-          if (clean.length !== 10) return 'WhatsApp number must be 10 digits.';
-        }
-        return '';
-      case 'productName':
-        if (!value || value.trim().length < 3) return 'Product / Machine title is required (at least 3 characters).';
-        return '';
-      case 'quantity':
-        if (value === '' || Number(value) < 1) return 'Quantity must be at least 1.';
-        return '';
-      case 'expectedDelivery':
-        if (!value || value.trim() === '') return 'Target delivery date is required.';
-        if (value < todayStr) return 'Target delivery date cannot be in the past.';
-        return '';
-      case 'nextFollowUpDate':
-        if (!value || value.trim() === '') return 'Follow-up date is required.';
-        if (value < todayStr) return 'Follow-up date cannot be in the past (Must be today or future).';
-        return '';
-      case 'budget':
-        if (value !== '' && Number(value) < 0) return 'Estimated budget cannot be negative.';
-        return '';
-      case 'assignedSalesPersonId':
-        if (!value) return 'Please assign a sales engineer.';
-        return '';
-      */
       default:
         return '';
     }
   };
 
-  // Full validation for active fields only
+  // Validation strictly on required fields matching Test-2
   const validateAll = () => {
-    const activeFields = ['companyName', 'contactPerson', 'mobile', 'email', 'address'];
+    const requiredFields = ['companyName', 'contactPerson', 'mobile'];
     const errs: Record<string, string> = {};
-    activeFields.forEach((key) => {
+    requiredFields.forEach((key) => {
       const err = validateField(key, (formData as any)[key]);
       if (err) errs[key] = err;
     });
+
+    // Optional email format check if filled
+    if (formData.email && formData.email.trim()) {
+      const emailErr = validateField('email', formData.email);
+      if (emailErr) errs['email'] = emailErr;
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -243,7 +204,7 @@ export default function NewLeadPage() {
         email: formData.email.trim(),
         address: formData.address.trim(),
         city: formData.city || 'Vadodara',
-        productName: (formData.productName || 'General Requirement').trim(),
+        productName: (formData.productName || 'Industrial Process Equipment').trim(),
         quantity: Number(formData.quantity) || 1,
         budget: Number(formData.budget) || 0,
         assignedSalesPersonName: assignedName,
@@ -272,7 +233,7 @@ export default function NewLeadPage() {
             New Customer Lead Registration
           </h1>
           <p className="text-[#70665F] mt-0.5">
-            Capture prospective customer details (Company Name, Person Name, Mobile Number, Email, and Address).
+            Capture prospective customer details, engineering requirements, and commercial assignment.
           </p>
         </div>
 
@@ -282,7 +243,7 @@ export default function NewLeadPage() {
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
             <div>
               <span className="font-bold block">
-                Please correct the following {Object.values(errors).filter(Boolean).length} validation errors:
+                Please correct {Object.values(errors).filter(Boolean).length} validation error(s) before saving the lead:
               </span>
               <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-rose-600 font-medium">
                 {Object.entries(errors)
@@ -296,17 +257,17 @@ export default function NewLeadPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          {/* ACTIVE SECTION: Company Name, Person Name, Number, Email, Address */}
+          {/* SECTION 1: Company Profile */}
           <div className="space-y-4">
             <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
                 1
               </span>
-              Customer Lead Information
+              Company Profile
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* 1. Company Name */}
+              {/* Company Name */}
               <div className="md:col-span-6" data-invalid={Boolean(errors.companyName && (touched.companyName || submitAttempted))}>
                 <label className="block text-[#544B45] font-semibold mb-1">
                   Company Name <span className="text-rose-500">*</span>
@@ -318,7 +279,7 @@ export default function NewLeadPage() {
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
                     onBlur={() => handleBlur('companyName')}
-                    placeholder="e.g. Industrial Enterprises Ltd."
+                    placeholder="e.g. Reliance Industries / Nayara Energy"
                     className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
                       errors.companyName && (touched.companyName || submitAttempted)
                         ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
@@ -333,7 +294,103 @@ export default function NewLeadPage() {
                 )}
               </div>
 
-              {/* 2. Person Name (Contact Person) */}
+              {/* Industry Sector */}
+              <div className="md:col-span-6">
+                <label className="block text-[#544B45] font-semibold mb-1">Industry Sector</label>
+                <input
+                  type="text"
+                  value={formData.industry}
+                  onChange={(e) => handleInputChange('industry', e.target.value)}
+                  placeholder="e.g. Petrochemical, Oil & Gas / Speciality Chemicals"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+
+              {/* Website URL */}
+              <div className="md:col-span-4">
+                <label className="block text-[#544B45] font-semibold mb-1">Website URL</label>
+                <input
+                  type="url"
+                  value={formData.website}
+                  onChange={(e) => handleInputChange('website', e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+
+              {/* GSTIN Number */}
+              <div className="md:col-span-4">
+                <label className="block text-[#544B45] font-semibold mb-1">GSTIN Number (15 digits)</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  value={formData.gstin}
+                  onChange={(e) => handleInputChange('gstin', e.target.value)}
+                  placeholder="24AAACX0000X1Z1"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono uppercase text-[#211B17]"
+                />
+              </div>
+
+              {/* City & State */}
+              <div className="md:col-span-4">
+                <label className="block text-[#544B45] font-semibold mb-1">City & State</label>
+                <input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="e.g. Vadodara, Gujarat"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="md:col-span-8">
+                <label className="block text-[#544B45] font-semibold mb-1">Office / Factory Address</label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
+                  <textarea
+                    rows={2}
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    placeholder="e.g. Plot No. 42, GIDC Industrial Estate, Makarpura, Vadodara, Gujarat - 390010"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                  />
+                </div>
+              </div>
+
+              {/* Country & Pincode */}
+              <div className="md:col-span-2">
+                <label className="block text-[#544B45] font-semibold mb-1">Country</label>
+                <input
+                  type="text"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-[#544B45] font-semibold mb-1">Pincode</label>
+                <input
+                  type="text"
+                  value={formData.pincode}
+                  onChange={(e) => handleInputChange('pincode', e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: Key Personnel & Communications */}
+          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
+            <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
+                2
+              </span>
+              Key Personnel & Communications
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Person Name */}
               <div className="md:col-span-6" data-invalid={Boolean(errors.contactPerson && (touched.contactPerson || submitAttempted))}>
                 <label className="block text-[#544B45] font-semibold mb-1">
                   Person Name (Contact Person) <span className="text-rose-500">*</span>
@@ -360,8 +417,20 @@ export default function NewLeadPage() {
                 )}
               </div>
 
-              {/* 3. Number (Mobile Contact) */}
-              <div className="md:col-span-6" data-invalid={Boolean(errors.mobile && (touched.mobile || submitAttempted))}>
+              {/* Designation */}
+              <div className="md:col-span-6">
+                <label className="block text-[#544B45] font-semibold mb-1">Designation</label>
+                <input
+                  type="text"
+                  value={formData.designation}
+                  onChange={(e) => handleInputChange('designation', e.target.value)}
+                  placeholder="e.g. Project Lead / Purchase Head"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
+
+              {/* Mobile Contact */}
+              <div className="md:col-span-4" data-invalid={Boolean(errors.mobile && (touched.mobile || submitAttempted))}>
                 <label className="block text-[#544B45] font-semibold mb-1">
                   Number (Mobile Contact) <span className="text-rose-500">*</span>
                 </label>
@@ -389,11 +458,22 @@ export default function NewLeadPage() {
                 )}
               </div>
 
-              {/* 4. Email */}
-              <div className="md:col-span-6" data-invalid={Boolean(errors.email && (touched.email || submitAttempted))}>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Email Address <span className="text-rose-500">*</span>
-                </label>
+              {/* Alt Mobile */}
+              <div className="md:col-span-4">
+                <label className="block text-[#544B45] font-semibold mb-1">Alt Mobile / Landline</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  value={formData.altMobile}
+                  onChange={(e) => handleInputChange('altMobile', e.target.value)}
+                  placeholder="0265-264XXXX"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
+                />
+              </div>
+
+              {/* Email Address */}
+              <div className="md:col-span-4" data-invalid={Boolean(errors.email)}>
+                <label className="block text-[#544B45] font-semibold mb-1">Email Address</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
                   <input
@@ -403,116 +483,20 @@ export default function NewLeadPage() {
                     onBlur={() => handleBlur('email')}
                     placeholder="name@company.com"
                     className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.email && (touched.email || submitAttempted)
-                        ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
-                        : 'border-[#EBE3DB]'
+                      errors.email ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30' : 'border-[#EBE3DB]'
                     } rounded-xl text-[#211B17] font-medium`}
                   />
                 </div>
-                {errors.email && (touched.email || submitAttempted) && (
+                {errors.email && (
                   <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
                     <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.email}
                   </p>
                 )}
               </div>
 
-              {/* 5. Address */}
-              <div className="md:col-span-12" data-invalid={Boolean(errors.address && (touched.address || submitAttempted))}>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Address <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
-                  <textarea
-                    rows={3}
-                    value={formData.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    onBlur={() => handleBlur('address')}
-                    placeholder="e.g. Plot No. 42, GIDC Industrial Estate, Makarpura, Vadodara, Gujarat - 390010"
-                    className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.address && (touched.address || submitAttempted)
-                        ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
-                        : 'border-[#EBE3DB]'
-                    } rounded-xl text-[#211B17]`}
-                  />
-                </div>
-                {errors.address && (touched.address || submitAttempted) && (
-                  <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.address}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* =========================================================================
-              COMMENTED OUT OTHER FIELDS AS PER USER REQUEST:
-              (Industry, GSTIN, Website, City, Designation, WhatsApp,
-               Section 3: Machine & Requirement, Section 4: Source & Assignment)
-             ========================================================================= */}
-
-          {/*
-          <div className="space-y-3 pt-4 border-t border-[#EBE3DB] opacity-60">
-            <h3 className="font-bold text-sm text-[#544B45]">Additional Company Fields (Commented Out)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="md:col-span-6">
-                <label className="block text-[#544B45] font-semibold mb-1">Industry Sector</label>
-                <input
-                  type="text"
-                  value={formData.industry}
-                  onChange={(e) => handleInputChange('industry', e.target.value)}
-                  placeholder="e.g. Speciality Chemicals / Pharma / Heavy Engineering"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
+              {/* WhatsApp Number */}
               <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">GSTIN Number (15 digits)</label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  value={formData.gstin}
-                  onChange={(e) => handleInputChange('gstin', e.target.value)}
-                  placeholder="24AAACX0000X1Z1"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono uppercase text-[#211B17]"
-                />
-              </div>
-
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Website URL</label>
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  placeholder="https://example.com"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">City & State</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="e.g. Vadodara, Gujarat"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Designation</label>
-                <input
-                  type="text"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  placeholder="e.g. Project Lead / Purchase Head"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              <div className="md:col-span-6">
-                <label className="block text-[#544B45] font-semibold mb-1">WhatsApp Number (10 digits)</label>
+                <label className="block text-[#544B45] font-semibold mb-1">WhatsApp Number</label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -520,35 +504,38 @@ export default function NewLeadPage() {
                   value={formData.whatsapp}
                   onChange={(e) => handleInputChange('whatsapp', e.target.value)}
                   placeholder="9825012345"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono font-semibold tracking-wider"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono"
                 />
               </div>
             </div>
           </div>
-          */}
 
-          {/*
-          <div className="space-y-3 pt-4 border-t border-[#EBE3DB]">
+          {/* SECTION 3: Technical Requirements */}
+          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
             <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
                 3
               </span>
               Machine & Equipment Technical Requirement
             </h3>
+
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Product / Machine Title */}
               <div className="md:col-span-8">
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Product / Machine Title
-                </label>
-                <input
-                  type="text"
-                  value={formData.productName}
-                  onChange={(e) => handleInputChange('productName', e.target.value)}
-                  placeholder="e.g. 10 KL SS 316L Chemical Reactor Vessel with Limpet Jacket"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-[#211B17]"
-                />
+                <label className="block text-[#544B45] font-semibold mb-1">Target Machine / Equipment Title</label>
+                <div className="relative">
+                  <Wrench className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={formData.productName}
+                    onChange={(e) => handleInputChange('productName', e.target.value)}
+                    placeholder="e.g. 10 KL SS 316L Chemical Reactor Vessel with Limpet Jacket"
+                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-[#211B17]"
+                  />
+                </div>
               </div>
 
+              {/* Quantity */}
               <div className="md:col-span-4">
                 <label className="block text-[#544B45] font-semibold mb-1">Quantity</label>
                 <input
@@ -561,6 +548,24 @@ export default function NewLeadPage() {
                 />
               </div>
 
+              {/* Machine Type */}
+              <div className="md:col-span-4">
+                <label className="block text-[#544B45] font-semibold mb-1">Machine / Equipment Category</label>
+                <select
+                  value={formData.machineType}
+                  onChange={(e) => handleInputChange('machineType', e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-semibold"
+                >
+                  <option value="Chemical Pressure Vessel / Reactor">Chemical Pressure Vessel / Reactor</option>
+                  <option value="Shell & Tube Heat Exchanger">Shell & Tube Heat Exchanger</option>
+                  <option value="Storage Tank / Silo">Storage Tank / Silo</option>
+                  <option value="Heavy Industrial Structure">Heavy Industrial Structure</option>
+                  <option value="Distillation Column / Tower">Distillation Column / Tower</option>
+                  <option value="Custom Process Skid">Custom Process Skid</option>
+                </select>
+              </div>
+
+              {/* Capacity / Dimensions */}
               <div className="md:col-span-4">
                 <label className="block text-[#544B45] font-semibold mb-1">Capacity / Dimensions</label>
                 <input
@@ -572,6 +577,7 @@ export default function NewLeadPage() {
                 />
               </div>
 
+              {/* Target Delivery Date */}
               <div className="md:col-span-4">
                 <label className="block text-[#544B45] font-semibold mb-1">Target Delivery Date</label>
                 <input
@@ -583,6 +589,7 @@ export default function NewLeadPage() {
                 />
               </div>
 
+              {/* Estimated Budget */}
               <div className="md:col-span-4">
                 <label className="block text-[#544B45] font-semibold mb-1">Estimated Budget (₹)</label>
                 <input
@@ -591,33 +598,50 @@ export default function NewLeadPage() {
                   placeholder="0"
                   value={formData.budget}
                   onChange={(e) => handleInputChange('budget', e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-emerald-600"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-emerald-600 font-mono"
                 />
               </div>
 
-              <div className="md:col-span-12">
+              {/* Technical Scope & Description */}
+              <div className="md:col-span-8">
                 <label className="block text-[#544B45] font-semibold mb-1">Technical Scope & Description</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={formData.requirementDescription}
                   onChange={(e) => handleInputChange('requirementDescription', e.target.value)}
-                  placeholder="Pressure ratings, material of construction..."
+                  placeholder="Pressure ratings, material of construction (SS304/SS316/Carbon Steel), operating parameters..."
                   className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
                 />
               </div>
             </div>
           </div>
-          */}
 
-          {/*
-          <div className="space-y-3 pt-4 border-t border-[#EBE3DB]">
+          {/* SECTION 4: Sales Assignment & Timeline */}
+          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
             <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
                 4
               </span>
-              Lead Source & Sales Assignment
+              Sales Assignment & Timeline
             </h3>
+
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              {/* Priority */}
+              <div className="md:col-span-3">
+                <label className="block text-[#544B45] font-semibold mb-1">Priority Level</label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) => handleInputChange('priority', e.target.value as any)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-bold"
+                >
+                  <option value="low">Low Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="urgent">URGENT Fast-Track</option>
+                </select>
+              </div>
+
+              {/* Lead Source */}
               <div className="md:col-span-3">
                 <label className="block text-[#544B45] font-semibold mb-1">Lead Source</label>
                 <select
@@ -625,15 +649,16 @@ export default function NewLeadPage() {
                   onChange={(e) => handleInputChange('source', e.target.value as any)}
                   className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-semibold"
                 >
-                  <option value="exhibition">Exhibition / Expo</option>
-                  <option value="website">Website Inquiry</option>
-                  <option value="phone">Direct Phone Call</option>
-                  <option value="whatsapp">WhatsApp</option>
-                  <option value="referral">Referral</option>
-                  <option value="existing_customer">Existing Customer</option>
+                  <option value="direct_inward">Direct Inward / Call</option>
+                  <option value="exhibition">Exhibition / Trade Expo</option>
+                  <option value="website">Website / Digital</option>
+                  <option value="referral">Reference / Referral</option>
+                  <option value="email">Email Campaign</option>
+                  <option value="tender">Tender / GeM Portal</option>
                 </select>
               </div>
 
+              {/* Assigned Sales Engineer */}
               <div className="md:col-span-3">
                 <label className="block text-[#544B45] font-semibold mb-1">Assigned Sales Engineer</label>
                 <select
@@ -643,26 +668,13 @@ export default function NewLeadPage() {
                 >
                   {allEmployees.map((emp) => (
                     <option key={emp.id} value={emp.id}>
-                      {emp.name || emp.id}
+                      {emp.name || (emp as any).employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.id}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="md:col-span-3">
-                <label className="block text-[#544B45] font-semibold mb-1">Priority</label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => handleInputChange('priority', e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-bold"
-                >
-                  <option value="low">Low Priority</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High Priority</option>
-                  <option value="urgent">URGENT Fast-Track</option>
-                </select>
-              </div>
-
+              {/* Next Follow-up Date */}
               <div className="md:col-span-3">
                 <label className="block text-[#544B45] font-semibold mb-1">Next Follow-up Date</label>
                 <input
@@ -673,9 +685,20 @@ export default function NewLeadPage() {
                   className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono"
                 />
               </div>
+
+              {/* Remarks */}
+              <div className="md:col-span-12">
+                <label className="block text-[#544B45] font-semibold mb-1">Special Instructions / Remarks</label>
+                <input
+                  type="text"
+                  value={formData.remarks}
+                  onChange={(e) => handleInputChange('remarks', e.target.value)}
+                  placeholder="Key customer expectations, decision makers, project urgency..."
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                />
+              </div>
             </div>
           </div>
-          */}
 
           <div className="pt-4 flex justify-end gap-3 border-t border-[#EBE3DB]">
             <Link
@@ -697,7 +720,7 @@ export default function NewLeadPage() {
                   Saving Lead...
                 </>
               ) : (
-                'Register & Save Lead'
+                'Save & Register Lead'
               )}
             </button>
           </div>
