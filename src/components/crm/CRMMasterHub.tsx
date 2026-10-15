@@ -156,21 +156,22 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
   const [showAddEnquiryModal, setShowAddEnquiryModal] = useState(false);
   const [enqCustomerId, setEnqCustomerId] = useState(customers[0]?.id || '');
   const [enqMachineProduct, setEnqMachineProduct] = useState('');
-  const [enqQuantity, setEnqQuantity] = useState<number | string>(1);
+  const [enqProductDetails, setEnqProductDetails] = useState('');
   const [enqDescription, setEnqDescription] = useState('');
 
   const handleCreateEnquiry = (e: React.FormEvent) => {
     e.preventDefault();
-    const cust = customers.find((c) => c.id === enqCustomerId) || customers[0];
+    const cust =
+      customers.find((c) => c.id === enqCustomerId) ||
+      (leads.find((l) => l.id === enqCustomerId) as any) ||
+      customers[0];
     const defaultEmp = allEmployees[0];
     const assignedPersonId = defaultEmp?.id || 'EMP-001';
     const assignedPersonName = defaultEmp
       ? (defaultEmp.name || `${defaultEmp.firstName || ''} ${defaultEmp.lastName || ''}`.trim())
       : 'Sales Engineer';
 
-    const qty = Number(enqQuantity) || 1;
     const defaultDelivery = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const validUntilDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
     const nextFollowUpDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     // 1. Create Enquiry Record
@@ -179,8 +180,8 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       customerName: cust?.companyName || 'Valued Customer',
       requirement: enqDescription || enqMachineProduct,
       machineProduct: enqMachineProduct,
-      quantity: qty,
-      specification: enqDescription,
+      quantity: 1,
+      specification: enqProductDetails || enqDescription,
       expectedDelivery: defaultDelivery,
       assignedPersonId: assignedPersonId,
       assignedPersonName: assignedPersonName,
@@ -199,19 +200,31 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
       time: '11:00 AM',
       priority: 'high',
       purpose: `Follow-up on Inquiry ${newEnq.enquiryNo || newEnq.id} - ${enqMachineProduct}`,
-      notes: `Inquiry registered for ${enqMachineProduct}. Description: ${enqDescription || 'Standard specs'}.`,
+      notes: `Inquiry registered for ${enqMachineProduct}. Details: ${enqProductDetails || 'N/A'}. Description: ${enqDescription || 'Standard specs'}.`,
       status: 'pending',
       nextFollowUpDate: nextFollowUpDate,
     });
 
+    // Capture IDs for quotation generation
+    const createdEnqId = newEnq.enquiryNo || newEnq.id;
+    const custId = cust?.id || enqCustomerId || '';
+    const prodName = enqMachineProduct;
+
     // Reset Form & Close Modal
     setEnqMachineProduct('');
+    setEnqProductDetails('');
     setEnqDescription('');
-    setEnqQuantity(1);
     setShowAddEnquiryModal(false);
 
-    setSuccessMsg(`Technical Enquiry "${newEnq.enquiryNo || newEnq.id}" created successfully!`);
-    setTimeout(() => setSuccessMsg(''), 5000);
+    setSuccessMsg(`Technical Enquiry "${createdEnqId}" created successfully! Generating quotation...`);
+    setTimeout(() => setSuccessMsg(''), 4000);
+
+    // Navigate to Quotation generation with prefilled enquiry & customer
+    router.push(
+      `/crm/quotations/new?enquiryId=${encodeURIComponent(createdEnqId)}&customerId=${encodeURIComponent(
+        custId
+      )}&machineProduct=${encodeURIComponent(prodName)}`
+    );
   };
 
   // --------------------------------------------------------------------------
@@ -1055,96 +1068,99 @@ export function CRMMasterHub({ defaultTab = 'leads' }: CRMMasterHubProps) {
           <div className="bg-white border border-[#EBE3DB] rounded-2xl max-w-lg w-full p-6 shadow-xl animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3 mb-4">
               <h3 className="font-bold text-sm text-[#211B17] flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#75401F]" />
-                Register New Technical Enquiry
+                <FileText className="w-5 h-5 text-blue-600" />
+                Add New Technical Enquiry
               </h3>
-              <button onClick={() => setShowAddEnquiryModal(false)} className="text-[#70665F] hover:text-[#211B17]">
+              <button
+                onClick={() => setShowAddEnquiryModal(false)}
+                className="text-stone-400 hover:text-stone-700 transition cursor-pointer"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateEnquiry} className="space-y-3.5 text-xs">
+            <form onSubmit={handleCreateEnquiry} className="space-y-4 text-xs">
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Select customer (Lead) <span className="text-rose-500">*</span>
+                <label className="block text-[#211B17] font-semibold mb-1.5">
+                  Select Customer Account <span className="text-rose-500">*</span>
                 </label>
                 <select
                   required
                   value={enqCustomerId}
                   onChange={(e) => setEnqCustomerId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17] outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
                 >
-                  <option value="">– Select Customer / Lead –</option>
+                  <option value="">– Select Customer Account –</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.companyName} ({c.customerCode || c.city || 'Customer'})
+                      {c.companyName} ({c.city || 'Vadodara'})
                     </option>
                   ))}
                   {leads
                     .filter((l) => !customers.some((c) => c.companyName.toLowerCase() === l.companyName.toLowerCase()))
                     .map((l) => (
                       <option key={l.id} value={l.id}>
-                        {l.companyName} (Lead: {l.contactPerson})
+                        {l.companyName} ({l.city || 'Vadodara'})
                       </option>
                     ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
+                <label className="block text-[#211B17] font-semibold mb-1.5">
                   Product Name <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Stainless Steel SS316 Reaction Vessel"
+                  placeholder="e.g. 5 KL SS 316 Reaction Vessel"
                   value={enqMachineProduct}
                   onChange={(e) => setEnqMachineProduct(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17] placeholder:text-[#A89F97] outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"
                 />
               </div>
 
               <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Quantity <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  required
-                  value={enqQuantity}
-                  onChange={(e) => setEnqQuantity(e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Description <span className="text-rose-500">*</span>
+                <label className="block text-[#211B17] font-semibold mb-1.5">
+                  Product Details <span className="text-rose-500">*</span>
                 </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   required
-                  placeholder="Enter equipment technical specifications, customer requirements, design parameters..."
-                  value={enqDescription}
-                  onChange={(e) => setEnqDescription(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17]"
+                  placeholder="e.g. SS 316 construction, 10 Bar design pressure, 180°C temp, mechanical seal, limpet coil jacket"
+                  value={enqProductDetails}
+                  onChange={(e) => setEnqProductDetails(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17] placeholder:text-[#A89F97] outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition resize-y"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#EBE3DB]">
+              <div>
+                <label className="block text-[#211B17] font-semibold mb-1.5">
+                  Product Description <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="e.g. Supply of custom chemical reactor vessel with agitator assembly, hydraulic pressure testing, and MTC documentation."
+                  value={enqDescription}
+                  onChange={(e) => setEnqDescription(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-medium text-[#211B17] placeholder:text-[#A89F97] outline-none focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition resize-y"
+                />
+              </div>
+
+              <div className="flex justify-end items-center gap-2.5 pt-3.5 border-t border-[#EBE3DB]">
                 <button
                   type="button"
                   onClick={() => setShowAddEnquiryModal(false)}
-                  className="px-4 py-2 border border-[#EBE3DB] rounded-xl hover:bg-slate-50 font-semibold text-[#544B45]"
+                  className="px-5 py-2.5 bg-white border border-[#D5CAC0] hover:bg-[#FAF7F2] text-[#211B17] rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#211B17] hover:bg-[#3E2723] text-white rounded-xl font-bold shadow-xs transition"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer"
                 >
-                  Create Technical Enquiry
+                  Save Enquiry & Generate Quotation
                 </button>
               </div>
             </form>
