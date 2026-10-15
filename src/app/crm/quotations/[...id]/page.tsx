@@ -47,8 +47,15 @@ export default function QuotationDetailPage() {
     d.setDate(d.getDate() + 60);
     return d.toISOString().split('T')[0];
   });
+  const [poCustomerName, setPoCustomerName] = useState(quotation?.customerName || '');
   const [remarks, setRemarks] = useState('');
   const [actionMsg, setActionMsg] = useState('');
+
+  React.useEffect(() => {
+    if (quotation?.customerName && !poCustomerName) {
+      setPoCustomerName(quotation.customerName);
+    }
+  }, [quotation?.customerName]);
 
   if (!quotation) {
     return (
@@ -77,17 +84,19 @@ export default function QuotationDetailPage() {
 
   const handleCustomerAccept = () => {
     updateQuotationStatus(quotation.id, currentRev.revisionNumber, 'accepted');
+    if (quotation.customerName) setPoCustomerName(quotation.customerName);
     setShowPoModal(true);
   };
 
   const handleCreateCustomerPO = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanPoNumber = poNumber.trim() || `PO/${quotation.customerName.slice(0, 4)?.toUpperCase().replace(/[^A-Z0-9]/g, '') || 'GEN'}/${Date.now().toString().slice(-4)}`;
+    const resolvedCustName = poCustomerName.trim() || quotation.customerName;
+    const cleanPoNumber = poNumber.trim() || `PO/${resolvedCustName.slice(0, 4)?.toUpperCase().replace(/[^A-Z0-9]/g, '') || 'GEN'}/${Date.now().toString().slice(-4)}`;
     addCustomerPO({
       poNumber: cleanPoNumber,
       poDate: poDate || new Date().toISOString().split('T')[0],
       customerId: quotation.customerId,
-      customerName: quotation.customerName,
+      customerName: resolvedCustName,
       quotationId: quotation.id,
       quotationNumber: `${quotation.quotationNumber} (${currentRev.revisionNumber})`,
       poAmount: currentRev.grandTotal,
@@ -356,6 +365,17 @@ export default function QuotationDetailPage() {
               Customer has accepted {quotation.quotationNumber} ({currentRev.revisionNumber}). Record their formal purchase order.
             </p>
             <form onSubmit={handleCreateCustomerPO} className="space-y-3">
+              <div>
+                <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">Customer / Company Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={poCustomerName}
+                  onChange={(e) => setPoCustomerName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-[#211B17]"
+                />
+              </div>
+
               <div>
                 <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">Customer PO Number *</label>
                 <input

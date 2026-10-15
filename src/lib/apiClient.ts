@@ -172,6 +172,20 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
       d.grand_total = Number(d.orderValue);
       d.total_amount = Number(d.orderValue);
     }
+  } else if (ep.includes('/quotations')) {
+    const custName = d.customerName || d.customer_name || '';
+    if (custName) {
+      d.customerName = custName;
+      d.customer_name = custName;
+    }
+    if (d.customerId || d.customer_id) {
+      d.customerId = d.customerId || d.customer_id;
+      d.customer_id = d.customerId;
+    }
+    if (d.quotationNumber || d.quotation_number) {
+      d.quotation_number = d.quotation_number || d.quotationNumber;
+      d.quotationNumber = d.quotation_number;
+    }
   } else if (ep.includes('/customer-pos')) {
     if (d.poNumber || d.po_number) {
       d.po_number = d.po_number || d.poNumber;
@@ -182,6 +196,23 @@ function normalizePayload(endpoint: string, body: any, method = 'POST'): any {
     }
     if (d.poAmount !== undefined && d.po_value === undefined) {
       d.po_value = Number(d.poAmount);
+    }
+    const custName = d.customerName || d.customer_name || '';
+    if (custName) {
+      d.customerName = custName;
+      d.customer_name = custName;
+    }
+    if (d.customerId || d.customer_id) {
+      d.customerId = d.customerId || d.customer_id;
+      d.customer_id = d.customerId;
+    }
+    if (d.quotationNumber || d.quotation_number) {
+      d.quotationNumber = d.quotationNumber || d.quotation_number;
+      d.quotation_number = d.quotationNumber;
+    }
+    if (d.quotationId || d.quotation_id) {
+      d.quotationId = d.quotationId || d.quotation_id;
+      d.quotation_id = d.quotationId;
     }
   }
   // Projects
@@ -1526,6 +1557,7 @@ export const api = {
       get: (id: string) => request<any>(`/crm/customer-pos/${id}/`),
       create: (data: any) => request<any>('/crm/customer-pos/', { method: 'POST', body: JSON.stringify(data) }),
       update: (id: string, data: any) => request<any>(`/crm/customer-pos/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+      delete: (id: string) => request<any>(`/crm/customer-pos/${id}/`, { method: 'DELETE' }),
       convertToSo: (id: string) => request<any>(`/crm/customer-pos/${id}/convert-to-so/`, { method: 'POST' }),
     },
     salesOrders: {

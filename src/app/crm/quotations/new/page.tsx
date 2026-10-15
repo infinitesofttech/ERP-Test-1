@@ -47,11 +47,15 @@ function QuotationFormContent() {
   const initialCustomerId =
     prefillCustId ||
     matchedEnquiry?.customerId ||
-    matchedLead?.convertedCustomerId ||
-    leadMatchedCustomer?.id ||
+  const initCompanyName =
+    matchedEnquiry?.customerName ||
+    matchedLead?.companyName ||
+    leadMatchedCustomer?.companyName ||
+    customers.find((c) => c.id === initialCustomerId)?.companyName ||
     '';
 
   const [customerId, setCustomerId] = useState(initialCustomerId);
+  const [companyName, setCompanyName] = useState(initCompanyName);
 
   React.useEffect(() => {
     const targetId =
@@ -61,6 +65,14 @@ function QuotationFormContent() {
       leadMatchedCustomer?.id;
     if (targetId && targetId !== customerId) {
       setCustomerId(targetId);
+    }
+    const resolvedName =
+      matchedEnquiry?.customerName ||
+      matchedLead?.companyName ||
+      leadMatchedCustomer?.companyName ||
+      customers.find((c) => c.id === targetId)?.companyName;
+    if (resolvedName && !companyName) {
+      setCompanyName(resolvedName);
     }
   }, [prefillCustId, matchedEnquiry, matchedLead, leadMatchedCustomer]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -161,17 +173,46 @@ function QuotationFormContent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cust = customers.find((c) => c.id === customerId);
+    const cust =
+      customers.find((c) => c.id === customerId) ||
+      leads.find((l) => l.id === customerId || l.convertedCustomerId === customerId) ||
+      enquiries.find((enq) => enq.customerId === customerId || enq.id === customerId);
+
+    const resolvedCustomerName =
+      companyName.trim() ||
+      cust?.companyName ||
+      (cust as any)?.customerName ||
+      matchedEnquiry?.customerName ||
+      matchedLead?.companyName ||
+      'Customer';
+
+    const resolvedContactPerson =
+      cust?.contactPerson ||
+      (cust as any)?.contact_person ||
+      matchedLead?.contactPerson ||
+      'Purchase Head';
+
+    const resolvedContactEmail =
+      cust?.email ||
+      (cust as any)?.contact_email ||
+      matchedLead?.email ||
+      '';
+
+    const resolvedContactMobile =
+      cust?.mobile ||
+      (cust as any)?.phone ||
+      matchedLead?.mobile ||
+      '';
 
     const created = addQuotation({
       currentRevision: 'Rev-00',
       date,
       validUntil,
-      customerId,
-      customerName: cust?.companyName || 'Valued Customer',
-      contactPerson: cust?.contactPerson || 'Purchase Head',
-      contactEmail: cust?.email || '',
-      contactMobile: cust?.mobile || '',
+      customerId: customerId || `CUST-${Date.now().toString().slice(-4)}`,
+      customerName: resolvedCustomerName,
+      contactPerson: resolvedContactPerson,
+      contactEmail: resolvedContactEmail,
+      contactMobile: resolvedContactMobile,
       enquiryId: prefillEnqId || undefined,
       latestSummary: {
         grandTotal,
@@ -227,16 +268,23 @@ function QuotationFormContent() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* HEADER METADATA */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">Customer *</label>
+              <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
+                Select Account / Lead <span className="text-rose-500">*</span>
+              </label>
               <select
                 value={customerId}
                 onChange={(e) => {
                   const newCustId = e.target.value;
                   setCustomerId(newCustId);
+                  const foundCust = customers.find((c) => c.id === newCustId);
                   const custLead = leads.find((l) => l.convertedCustomerId === newCustId || l.id === newCustId);
-                  const custEnq = enquiries.find((enq) => enq.customerId === newCustId);
+                  const custEnq = enquiries.find((enq) => enq.customerId === newCustId || enq.id === newCustId);
+                  const resolvedName = foundCust?.companyName || custLead?.companyName || custEnq?.customerName || '';
+                  if (resolvedName) {
+                    setCompanyName(resolvedName);
+                  }
                   if (custLead || custEnq) {
                     const prodName = custLead?.productName || custEnq?.machineProduct;
                     const desc = custLead?.requirementDescription || custEnq?.requirement || custEnq?.specification;
@@ -267,15 +315,42 @@ function QuotationFormContent() {
                     }
                   }
                 }}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
               >
                 <option value="">-- Select Customer Account --</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.companyName} ({c.customerCode || c.id})
+                    {c.companyName} ({c.customerCode || c.city || 'Customer'})
                   </option>
                 ))}
+                {leads
+                  .filter((l) => !customers.some((c) => c.companyName.toLowerCase() === l.companyName.toLowerCase()))
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.companyName} (Lead: {l.contactPerson})
+                    </option>
+                  ))}
+                {matchedEnquiry &&
+                  !customers.some((c) => c.id === matchedEnquiry.customerId) &&
+                  !leads.some((l) => l.id === matchedEnquiry.customerId) && (
+                    <option value={matchedEnquiry.customerId || 'enq-matched'}>
+                      {matchedEnquiry.customerName} (Enquiry)
+                    </option>
+                  )}
               </select>
+            </div>
+            <div>
+              <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
+                Customer / Company Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. abc@123"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
+              />
             </div>
             <div>
               <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">Quotation Date</label>
@@ -283,7 +358,7 @@ function QuotationFormContent() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg"
               />
             </div>
             <div>
@@ -292,7 +367,7 @@ function QuotationFormContent() {
                 type="date"
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg"
               />
             </div>
           </div>

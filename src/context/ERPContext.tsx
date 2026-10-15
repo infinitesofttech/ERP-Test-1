@@ -504,6 +504,8 @@ interface ERPContextType {
 
   customerPOs: CustomerPO[];
   addCustomerPO: (poData: Omit<CustomerPO, 'id'>) => CustomerPO;
+  updateCustomerPO: (id: string, updates: Partial<CustomerPO>) => void;
+  deleteCustomerPO: (id: string) => void;
   convertCustomerPOToSalesOrder: (poId: string) => SalesOrder;
 
   salesOrders: SalesOrder[];
@@ -6561,7 +6563,17 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.crm.customerPos.create(poPayload).then((res) => {
       if (res && res.id) {
         setCustomerPOs((prev) => {
-          const updated = deduplicateCustomerPOs(prev.map((p) => (p.id === poId || p.poNumber === newPO.poNumber ? { ...p, ...res } : p)));
+          const updated = deduplicateCustomerPOs(
+            prev.map((p) =>
+              p.id === poId || p.poNumber === newPO.poNumber
+                ? {
+                    ...p,
+                    ...res,
+                    customerName: newPO.customerName || p.customerName || res.customerName || res.customer_name || 'Customer',
+                  }
+                : p
+            )
+          );
           if (typeof window !== 'undefined') {
             try { localStorage.setItem('UMA_ERP_customerPOs', JSON.stringify(updated)); } catch (_) {}
           }
@@ -6570,6 +6582,30 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       }
     }).catch((err) => console.warn('Failed to sync customer PO to backend:', err));
     return newPO;
+  };
+
+  const updateCustomerPO = (id: string, updates: Partial<CustomerPO>) => {
+    setCustomerPOs((prev) => {
+      const updated = deduplicateCustomerPOs(
+        prev.map((p) => (p.id === id || p.poNumber === id ? { ...p, ...updates } : p))
+      );
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('UMA_ERP_customerPOs', JSON.stringify(updated)); } catch (_) {}
+      }
+      return updated;
+    });
+    api.crm.customerPos.update(id, updates).catch(() => {});
+  };
+
+  const deleteCustomerPO = (id: string) => {
+    setCustomerPOs((prev) => {
+      const updated = prev.filter((p) => p.id !== id && p.poNumber !== id);
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('UMA_ERP_customerPOs', JSON.stringify(updated)); } catch (_) {}
+      }
+      return updated;
+    });
+    api.crm.customerPos.delete(id).catch(() => {});
   };
 
   const convertCustomerPOToSalesOrder = (poId: string): SalesOrder => {
@@ -12999,6 +13035,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         updateQuotationStatus,
         customerPOs: deduplicateCustomerPOs(customerPOs),
         addCustomerPO,
+        updateCustomerPO,
+        deleteCustomerPO,
         convertCustomerPOToSalesOrder,
         salesOrders: deduplicateSalesOrders(salesOrders),
         addSalesOrder,
