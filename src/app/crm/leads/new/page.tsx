@@ -6,18 +6,10 @@ import Link from 'next/link';
 import { useERP } from '../../../../context/ERPContext';
 import {
   ArrowLeft,
-  UserPlus,
-  Building,
-  Phone,
-  Wrench,
+  ChevronUp,
+  Save,
   AlertCircle,
-  Calendar,
-  Layers,
-  Mail,
-  User,
-  MapPin,
-  Clock,
-  Sparkles,
+  ArrowUp,
 } from 'lucide-react';
 import { LeadSource, LeadStatus, PriorityLevel, Employee } from '../../../../types/crm';
 
@@ -32,142 +24,68 @@ export default function NewLeadPage() {
       ? employees
       : [];
 
-  const salesEngineers = allEmployees.filter(
-    (e) =>
-      (e.departmentName && (e.departmentName.includes('CRM') || e.departmentName.includes('Sales') || e.departmentName.includes('Project'))) ||
-      (e.department && (e.department.includes('CRM') || e.department.includes('Sales') || e.department.includes('Project')))
-  );
+  const defaultSalesPerson = allEmployees[0]?.name || (allEmployees[0] as any)?.employeeName || 'Deepbhai Manvar';
+  const defaultSalesPersonId = allEmployees[0]?.id || 'EMP-001';
 
-  const defaultSalesPersonId = salesEngineers[0]?.id || allEmployees[0]?.id || '';
+  // Section 2 collapse toggle
+  const [basicOpen, setBasicOpen] = useState(true);
 
-  // Dates
-  const todayStr = new Date().toISOString().split('T')[0];
-  const defaultFollowUp = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const defaultDelivery = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
+  // Form State matching Test-2 screenshot
   const [formData, setFormData] = useState({
-    // 1. Company Profile
+    // Section 1: Lead & Company Details
     companyName: '',
-    industry: 'Speciality Chemicals',
-    website: '',
-    gstin: '',
-    address: '',
-    city: 'Vadodara',
-    state: 'Gujarat',
-    country: 'India',
-    pincode: '390010',
-
-    // 2. Key Personnel & Communications
     contactPerson: '',
-    designation: 'Project Lead',
     mobile: '',
-    altMobile: '',
     email: '',
-    whatsapp: '',
-
-    // 3. Technical Requirements
-    productName: '',
-    machineType: 'Chemical Pressure Vessel / Reactor',
-    quantity: 1 as number | string,
-    capacity: '',
-    application: '',
-    requirementDescription: '',
-    expectedDelivery: defaultDelivery,
-    budget: '' as number | string,
-
-    // 4. Sales Assignment & Timeline
-    priority: 'medium' as PriorityLevel,
-    source: 'direct_inward' as LeadSource,
+    source: 'Direct Inward / Call',
+    priority: 'Medium',
+    assignedSalesPersonName: defaultSalesPerson,
     assignedSalesPersonId: defaultSalesPersonId,
-    status: 'new' as LeadStatus,
-    nextFollowUpDate: defaultFollowUp,
-    remarks: '',
+    productName: '',
+
+    // Section 2: Basic Details (Address & Regional Details)
+    address: '',
+    city: '',
+    state: '',
+    country: 'India',
+    pincode: '',
+    whatsapp: '',
+    altMobile: '',
+    industry: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Email regex for valid standard emails (e.g. user@domain.com)
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  // GSTIN 15-character format
-  const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-
-  // Validate single field
-  const validateField = (name: string, value: any): string => {
-    switch (name) {
-      case 'companyName':
-        if (!value || value.trim().length < 2) return 'Company name is required (at least 2 characters).';
-        return '';
-      case 'contactPerson':
-        if (!value || value.trim().length < 2) return 'Contact person name is required (at least 2 characters).';
-        return '';
-      case 'mobile': {
-        if (!value || value.trim() === '') return 'Mobile number is required.';
-        const clean = value.replace(/\D/g, '');
-        if (clean.length !== 10) return 'Mobile number must be exactly 10 digits.';
-        return '';
-      }
-      case 'email':
-        if (value && value.trim() && !emailRegex.test(value.trim())) {
-          return 'Invalid email format (Must contain "@" and domain, e.g. name@company.com).';
-        }
-        return '';
-      case 'gstin':
-        if (value && value.trim() && !gstinRegex.test(value.trim().toUpperCase())) {
-          return 'Invalid GSTIN (Must be 15 chars, e.g. 24AAACX0000X1Z1).';
-        }
-        return '';
-      default:
-        return '';
+  const handleInputChange = (field: string, value: string) => {
+    let sanitized = value;
+    if (field === 'mobile' || field === 'whatsapp') {
+      sanitized = value.replace(/\D/g, '').slice(0, 10);
+    }
+    setFormData((prev) => ({ ...prev, [field]: sanitized }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const copy = { ...prev };
+        delete copy[field];
+        return copy;
+      });
     }
   };
 
-  // Validation strictly on required fields matching Test-2
-  const validateAll = () => {
-    const requiredFields = ['companyName', 'contactPerson', 'mobile'];
+  const validate = () => {
     const errs: Record<string, string> = {};
-    requiredFields.forEach((key) => {
-      const err = validateField(key, (formData as any)[key]);
-      if (err) errs[key] = err;
-    });
-
-    // Optional email format check if filled
-    if (formData.email && formData.email.trim()) {
-      const emailErr = validateField('email', formData.email);
-      if (emailErr) errs['email'] = emailErr;
+    if (!formData.companyName.trim() || formData.companyName.trim().length < 2) {
+      errs.companyName = 'Company Name is required.';
     }
-
+    if (!formData.contactPerson.trim() || formData.contactPerson.trim().length < 2) {
+      errs.contactPerson = 'Contact Person Name is required.';
+    }
+    if (!formData.mobile.trim() || formData.mobile.replace(/\D/g, '').length !== 10) {
+      errs.mobile = 'Mobile Number must be 10 digits.';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
-  };
-
-  const handleInputChange = (field: string, rawVal: any) => {
-    let sanitizedVal = rawVal;
-
-    // Mobile & WhatsApp: strictly allow digits only, max 10 chars
-    if (field === 'mobile' || field === 'whatsapp' || field === 'altMobile') {
-      sanitizedVal = rawVal.replace(/\D/g, '').slice(0, 10);
-    }
-    // GSTIN: uppercase alphanumeric only, max 15 chars
-    if (field === 'gstin') {
-      sanitizedVal = rawVal.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
-    }
-
-    setFormData((prev) => ({ ...prev, [field]: sanitizedVal }));
-
-    // Instant validation on type if field was touched or submit was attempted
-    if (touched[field] || submitAttempted) {
-      const err = validateField(field, sanitizedVal);
-      setErrors((prev) => ({ ...prev, [field]: err }));
-    }
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    const err = validateField(field, (formData as any)[field]);
-    setErrors((prev) => ({ ...prev, [field]: err }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,39 +93,62 @@ export default function NewLeadPage() {
     if (isSubmitting) return;
     setSubmitAttempted(true);
 
-    if (!validateAll()) {
-      const firstErrorField = document.querySelector('[data-invalid="true"]');
-      if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    if (!validate()) {
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const assignedPerson = allEmployees.find((emp) => emp.id === formData.assignedSalesPersonId);
-      const assignedName = assignedPerson
-        ? assignedPerson.name ||
-          (assignedPerson as any).employeeName ||
-          `${assignedPerson.firstName || ''} ${assignedPerson.lastName || ''}`.trim() ||
-          'Pravin Patel'
-        : 'Pravin Patel';
+      const priorityMap: Record<string, PriorityLevel> = {
+        Low: 'low',
+        Medium: 'medium',
+        High: 'high',
+        Urgent: 'urgent',
+      };
 
-      const resolvedMobile = (formData.mobile || formData.whatsapp || '').trim();
+      const sourceMap: Record<string, LeadSource> = {
+        'Direct Inward / Call': 'phone',
+        'Exhibition / Trade Expo': 'exhibition',
+        'Website Inquiry': 'website',
+        'Referral / Partner': 'referral',
+        'Email Campaign': 'email',
+        'Tender / GeM Portal': 'other',
+      };
+
+      const assignedPerson = allEmployees.find(
+        (emp) => (emp.name || (emp as any).employeeName) === formData.assignedSalesPersonName
+      );
+
+      const assignedId = assignedPerson?.id || formData.assignedSalesPersonId || 'EMP-001';
+      const resolvedPriority = priorityMap[formData.priority] || 'medium';
+      const resolvedSource = sourceMap[formData.source] || 'phone';
+
       addLead({
-        ...formData,
         companyName: formData.companyName.trim(),
         contactPerson: formData.contactPerson.trim(),
-        mobile: resolvedMobile,
-        whatsapp: (formData.whatsapp || resolvedMobile).trim(),
+        designation: 'Contact Person / Representative',
+        mobile: formData.mobile.trim(),
+        whatsapp: (formData.whatsapp || formData.mobile).trim(),
+        altMobile: formData.altMobile.trim(),
         email: formData.email.trim(),
         address: formData.address.trim(),
-        city: formData.city || 'Vadodara',
-        productName: (formData.productName || 'Industrial Process Equipment').trim(),
-        quantity: Number(formData.quantity) || 1,
-        budget: Number(formData.budget) || 0,
-        assignedSalesPersonName: assignedName,
+        city: formData.city.trim() || 'Vadodara',
+        state: formData.state.trim() || 'Gujarat',
+        country: formData.country.trim() || 'India',
+        pincode: formData.pincode.trim(),
+        industry: formData.industry.trim() || 'Engineering / Fabrication',
+        productName: formData.productName.trim() || 'General Inquiry / Equipment Requirement',
+        machineType: 'Custom Process Equipment',
+        quantity: 1,
+        budget: 0,
+        expectedDelivery: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        requirementDescription: formData.productName.trim() || 'General Inquiry / Equipment Requirement',
+        source: resolvedSource,
+        priority: resolvedPriority,
+        assignedSalesPersonId: assignedId,
+        assignedSalesPersonName: formData.assignedSalesPersonName,
+        status: 'new' as LeadStatus,
       });
 
       router.push(`/crm/leads?tab=leads&created=${encodeURIComponent(formData.companyName.trim())}`);
@@ -217,515 +158,359 @@ export default function NewLeadPage() {
     }
   };
 
-  return (
-    <div className="w-full space-y-4 text-xs pb-10">
-      <Link
-        href="/crm/leads"
-        className="inline-flex items-center gap-1.5 text-crm-brand-700 hover:text-crm-brand-800 font-semibold"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" /> Back to Leads
-      </Link>
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-      <div className="bg-white border border-[#EBE3DB] rounded-2xl p-6 shadow-sm space-y-6">
-        <div className="border-b border-[#EBE3DB] pb-4">
-          <h1 className="text-lg font-bold text-[#211B17] flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-crm-brand-700" />
-            New Customer Lead Registration
-          </h1>
-          <p className="text-[#70665F] mt-0.5">
-            Capture prospective customer details, engineering requirements, and commercial assignment.
-          </p>
+  return (
+    <div className="w-full space-y-6 text-xs pb-16 relative">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center justify-between border-b border-[#EBE3DB] pb-3">
+        <div className="flex items-center gap-2 text-[11px] text-[#70665F]">
+          <Link href="/crm" className="hover:text-[#211B17]">
+            DASHBOARD
+          </Link>
+          <span>/</span>
+          <Link href="/crm/leads" className="hover:text-[#211B17]">
+            CRM
+          </Link>
+          <span>/</span>
+          <Link href="/crm/leads" className="hover:text-[#211B17]">
+            LEADS
+          </Link>
+          <span>/</span>
+          <span className="font-bold text-[#6D28D9]">CREATE</span>
         </div>
 
-        {/* Global Validation Warning Banner */}
-        {submitAttempted && Object.values(errors).some(Boolean) && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2.5 animate-in fade-in duration-200">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
+        <Link
+          href="/crm/leads"
+          className="inline-flex items-center gap-1.5 text-xs text-[#544B45] hover:text-[#211B17] font-semibold"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Back to List
+        </Link>
+      </div>
+
+      {/* Validation Error Banner */}
+      {submitAttempted && Object.values(errors).some(Boolean) && (
+        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2.5 animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-600" />
+          <div>
+            <span className="font-bold block">
+              Please correct {Object.values(errors).filter(Boolean).length} validation error(s) before saving:
+            </span>
+            <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-rose-600 font-medium">
+              {Object.entries(errors)
+                .filter(([_, msg]) => Boolean(msg))
+                .map(([key, err], i) => (
+                  <li key={i}>{err}</li>
+                ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} noValidate className="space-y-6">
+        {/* 1. Lead & Company Details */}
+        <div className="bg-white border border-[#EBE3DB] rounded-2xl p-6 shadow-xs space-y-4">
+          <h2 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
+            <span>1. Lead & Company Details</span>
+            <span className="text-xs font-normal text-[#70665F]">(Primary Prospect Profile)</span>
+          </h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Company Name */}
             <div>
-              <span className="font-bold block">
-                Please correct {Object.values(errors).filter(Boolean).length} validation error(s) before saving the lead:
-              </span>
-              <ul className="list-disc list-inside mt-1 space-y-0.5 text-[11px] text-rose-600 font-medium">
-                {Object.entries(errors)
-                  .filter(([_, msg]) => Boolean(msg))
-                  .map(([key, err], i) => (
-                    <li key={i}>{err}</li>
-                  ))}
-              </ul>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">
+                Company Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.companyName}
+                onChange={(e) => handleInputChange('companyName', e.target.value)}
+                placeholder="e.g. Reliance Industries Ltd."
+                className={`w-full px-3.5 py-2.5 bg-white border ${
+                  errors.companyName ? 'border-rose-500 bg-rose-50/20' : 'border-[#EBE3DB]'
+                } rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition`}
+              />
+              {errors.companyName && <p className="text-rose-500 text-[10px] mt-1">{errors.companyName}</p>}
+            </div>
+
+            {/* Contact Person Name */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">
+                Contact Person Name <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.contactPerson}
+                onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                placeholder="e.g. Rajesh Sharma"
+                className={`w-full px-3.5 py-2.5 bg-white border ${
+                  errors.contactPerson ? 'border-rose-500 bg-rose-50/20' : 'border-[#EBE3DB]'
+                } rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition`}
+              />
+              {errors.contactPerson && <p className="text-rose-500 text-[10px] mt-1">{errors.contactPerson}</p>}
+            </div>
+
+            {/* Mobile Number */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">
+                Mobile Number <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                maxLength={10}
+                value={formData.mobile}
+                onChange={(e) => handleInputChange('mobile', e.target.value)}
+                placeholder="+91 10-digit mobile"
+                className={`w-full px-3.5 py-2.5 bg-white border ${
+                  errors.mobile ? 'border-rose-500 bg-rose-50/20' : 'border-[#EBE3DB]'
+                } rounded-xl text-xs text-[#211B17] font-mono focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition`}
+              />
+              {errors.mobile && <p className="text-rose-500 text-[10px] mt-1">{errors.mobile}</p>}
+            </div>
+
+            {/* Email Address */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">Email Address</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="e.g. purchase@company.com"
+                className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              />
+            </div>
+
+            {/* Lead Source */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">Lead Source</label>
+              <select
+                value={formData.source}
+                onChange={(e) => handleInputChange('source', e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              >
+                <option value="Direct Inward / Call">Direct Inward / Call</option>
+                <option value="Exhibition / Trade Expo">Exhibition / Trade Expo</option>
+                <option value="Website Inquiry">Website Inquiry</option>
+                <option value="Referral / Partner">Referral / Partner</option>
+                <option value="Email Campaign">Email Campaign</option>
+                <option value="Tender / GeM Portal">Tender / GeM Portal</option>
+              </select>
+            </div>
+
+            {/* Priority Level */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">Priority Level</label>
+              <select
+                value={formData.priority}
+                onChange={(e) => handleInputChange('priority', e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              >
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Urgent">Urgent</option>
+              </select>
+            </div>
+
+            {/* Assigned Sales Engineer */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">Assigned Sales Engineer</label>
+              <select
+                value={formData.assignedSalesPersonName}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const found = allEmployees.find(
+                    (emp) => (emp.name || (emp as any).employeeName || emp.id) === val
+                  );
+                  setFormData((prev) => ({
+                    ...prev,
+                    assignedSalesPersonName: val,
+                    assignedSalesPersonId: found?.id || prev.assignedSalesPersonId,
+                  }));
+                }}
+                className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              >
+                {allEmployees.map((emp) => {
+                  const name = emp.name || (emp as any).employeeName || emp.id;
+                  return (
+                    <option key={emp.id} value={name}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Product Requirement */}
+            <div>
+              <label className="block text-xs font-semibold text-[#544B45] mb-1">Product Requirement</label>
+              <input
+                type="text"
+                value={formData.productName}
+                onChange={(e) => handleInputChange('productName', e.target.value)}
+                placeholder="General Inquiry / Equipment Requirement"
+                className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+              />
             </div>
           </div>
-        )}
+        </div>
 
-        <form onSubmit={handleSubmit} noValidate className="space-y-6">
-          {/* SECTION 1: Company Profile */}
-          <div className="space-y-4">
-            <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
-                1
-              </span>
-              Company Profile
-            </h3>
+        {/* 2. Basic Details (Address & Regional Details) */}
+        <div className="bg-white border border-[#EBE3DB] rounded-2xl p-6 shadow-xs space-y-4">
+          <div
+            className="flex items-center justify-between cursor-pointer select-none"
+            onClick={() => setBasicOpen(!basicOpen)}
+          >
+            <h2 className="text-sm font-bold text-[#211B17] flex items-center gap-2">
+              <span>2. Basic Details</span>
+              <span className="text-xs font-normal text-[#70665F]">(Address & Regional Details)</span>
+            </h2>
+            <ChevronUp
+              className={`w-4 h-4 text-[#70665F] transition-transform duration-200 ${
+                basicOpen ? '' : 'rotate-180'
+              }`}
+            />
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* Company Name */}
-              <div className="md:col-span-6" data-invalid={Boolean(errors.companyName && (touched.companyName || submitAttempted))}>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Company Name <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <Building className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
+          {basicOpen && (
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Address Line */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">Address Line</label>
                   <input
                     type="text"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    onBlur={() => handleBlur('companyName')}
-                    placeholder="e.g. Reliance Industries / Nayara Energy"
-                    className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.companyName && (touched.companyName || submitAttempted)
-                        ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
-                        : 'border-[#EBE3DB]'
-                    } rounded-xl text-[#211B17] font-bold`}
-                  />
-                </div>
-                {errors.companyName && (touched.companyName || submitAttempted) && (
-                  <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.companyName}
-                  </p>
-                )}
-              </div>
-
-              {/* Industry Sector */}
-              <div className="md:col-span-6">
-                <label className="block text-[#544B45] font-semibold mb-1">Industry Sector</label>
-                <input
-                  type="text"
-                  value={formData.industry}
-                  onChange={(e) => handleInputChange('industry', e.target.value)}
-                  placeholder="e.g. Petrochemical, Oil & Gas / Speciality Chemicals"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              {/* Website URL */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Website URL</label>
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => handleInputChange('website', e.target.value)}
-                  placeholder="https://example.com"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              {/* GSTIN Number */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">GSTIN Number (15 digits)</label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  value={formData.gstin}
-                  onChange={(e) => handleInputChange('gstin', e.target.value)}
-                  placeholder="24AAACX0000X1Z1"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono uppercase text-[#211B17]"
-                />
-              </div>
-
-              {/* City & State */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">City & State</label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="e.g. Vadodara, Gujarat"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              {/* Address */}
-              <div className="md:col-span-8">
-                <label className="block text-[#544B45] font-semibold mb-1">Office / Factory Address</label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
-                  <textarea
-                    rows={2}
                     value={formData.address}
                     onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="e.g. Plot No. 42, GIDC Industrial Estate, Makarpura, Vadodara, Gujarat - 390010"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
+                    placeholder="Plot / Street / GIDC Industrial Area"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
                   />
                 </div>
-              </div>
 
-              {/* Country & Pincode */}
-              <div className="md:col-span-2">
-                <label className="block text-[#544B45] font-semibold mb-1">Country</label>
-                <input
-                  type="text"
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-[#544B45] font-semibold mb-1">Pincode</label>
-                <input
-                  type="text"
-                  value={formData.pincode}
-                  onChange={(e) => handleInputChange('pincode', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 2: Key Personnel & Communications */}
-          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
-            <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
-                2
-              </span>
-              Key Personnel & Communications
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* Person Name */}
-              <div className="md:col-span-6" data-invalid={Boolean(errors.contactPerson && (touched.contactPerson || submitAttempted))}>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Person Name (Contact Person) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
+                {/* City */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">City</label>
                   <input
                     type="text"
-                    value={formData.contactPerson}
-                    onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                    onBlur={() => handleBlur('contactPerson')}
-                    placeholder="e.g. Harish Trivedi"
-                    className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.contactPerson && (touched.contactPerson || submitAttempted)
-                        ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
-                        : 'border-[#EBE3DB]'
-                    } rounded-xl text-[#211B17] font-semibold`}
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    placeholder="e.g. Vadodara / Ahmedabad"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
                   />
                 </div>
-                {errors.contactPerson && (touched.contactPerson || submitAttempted) && (
-                  <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.contactPerson}
-                  </p>
-                )}
-              </div>
 
-              {/* Designation */}
-              <div className="md:col-span-6">
-                <label className="block text-[#544B45] font-semibold mb-1">Designation</label>
-                <input
-                  type="text"
-                  value={formData.designation}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  placeholder="e.g. Project Lead / Purchase Head"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              {/* Mobile Contact */}
-              <div className="md:col-span-4" data-invalid={Boolean(errors.mobile && (touched.mobile || submitAttempted))}>
-                <label className="block text-[#544B45] font-semibold mb-1">
-                  Number (Mobile Contact) <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-2.5 font-mono text-[#70665F] font-bold">+91</span>
+                {/* State */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">State</label>
                   <input
                     type="text"
-                    inputMode="numeric"
-                    maxLength={10}
-                    value={formData.mobile}
-                    onChange={(e) => handleInputChange('mobile', e.target.value)}
-                    onBlur={() => handleBlur('mobile')}
-                    placeholder="9825012345"
-                    className={`w-full pl-11 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.mobile && (touched.mobile || submitAttempted)
-                        ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30'
-                        : 'border-[#EBE3DB]'
-                    } rounded-xl text-[#211B17] font-mono font-semibold tracking-wider`}
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    placeholder="e.g. Gujarat"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
                   />
                 </div>
-                {errors.mobile && (touched.mobile || submitAttempted) && (
-                  <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.mobile}
-                  </p>
-                )}
-              </div>
 
-              {/* Alt Mobile */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Alt Mobile / Landline</label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  value={formData.altMobile}
-                  onChange={(e) => handleInputChange('altMobile', e.target.value)}
-                  placeholder="0265-264XXXX"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
-                />
-              </div>
-
-              {/* Email Address */}
-              <div className="md:col-span-4" data-invalid={Boolean(errors.email)}>
-                <label className="block text-[#544B45] font-semibold mb-1">Email Address</label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    onBlur={() => handleBlur('email')}
-                    placeholder="name@company.com"
-                    className={`w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border ${
-                      errors.email ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30' : 'border-[#EBE3DB]'
-                    } rounded-xl text-[#211B17] font-medium`}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-rose-500 text-[11px] mt-1 flex items-center gap-1 font-medium">
-                    <AlertCircle className="w-3 h-3 flex-shrink-0" /> {errors.email}
-                  </p>
-                )}
-              </div>
-
-              {/* WhatsApp Number */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">WhatsApp Number</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={10}
-                  value={formData.whatsapp}
-                  onChange={(e) => handleInputChange('whatsapp', e.target.value)}
-                  placeholder="9825012345"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 3: Technical Requirements */}
-          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
-            <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
-                3
-              </span>
-              Machine & Equipment Technical Requirement
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* Product / Machine Title */}
-              <div className="md:col-span-8">
-                <label className="block text-[#544B45] font-semibold mb-1">Target Machine / Equipment Title</label>
-                <div className="relative">
-                  <Wrench className="w-4 h-4 text-[#70665F] absolute left-3 top-3" />
+                {/* Country */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">Country</label>
                   <input
                     type="text"
-                    value={formData.productName}
-                    onChange={(e) => handleInputChange('productName', e.target.value)}
-                    placeholder="e.g. 10 KL SS 316L Chemical Reactor Vessel with Limpet Jacket"
-                    className="w-full pl-9 pr-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-[#211B17]"
+                    value={formData.country}
+                    onChange={(e) => handleInputChange('country', e.target.value)}
+                    placeholder="India"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+                  />
+                </div>
+
+                {/* Pincode */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    value={formData.pincode}
+                    onChange={(e) => handleInputChange('pincode', e.target.value)}
+                    placeholder="e.g. 390010"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs font-mono text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+                  />
+                </div>
+
+                {/* WhatsApp Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">WhatsApp Number</label>
+                  <input
+                    type="text"
+                    value={formData.whatsapp}
+                    onChange={(e) => handleInputChange('whatsapp', e.target.value)}
+                    placeholder="+91 10-digit mobile"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs font-mono text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+                  />
+                </div>
+
+                {/* Alternate Mobile */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">Alternate Mobile</label>
+                  <input
+                    type="text"
+                    value={formData.altMobile}
+                    onChange={(e) => handleInputChange('altMobile', e.target.value)}
+                    placeholder="Office landline or alternate contact"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs font-mono text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
+                  />
+                </div>
+
+                {/* Industry / Sector */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#544B45] mb-1">Industry / Sector</label>
+                  <input
+                    type="text"
+                    value={formData.industry}
+                    onChange={(e) => handleInputChange('industry', e.target.value)}
+                    placeholder="e.g. Pharmaceutical / Chemical / FMCG"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EBE3DB] rounded-xl text-xs text-[#211B17] focus:ring-1 focus:ring-purple-600 focus:border-purple-600 outline-none transition"
                   />
                 </div>
               </div>
 
-              {/* Quantity */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Quantity</label>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="1"
-                  value={formData.quantity}
-                  onChange={(e) => handleInputChange('quantity', e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-mono text-[#211B17]"
-                />
-              </div>
-
-              {/* Machine Type */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Machine / Equipment Category</label>
-                <select
-                  value={formData.machineType}
-                  onChange={(e) => handleInputChange('machineType', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-semibold"
-                >
-                  <option value="Chemical Pressure Vessel / Reactor">Chemical Pressure Vessel / Reactor</option>
-                  <option value="Shell & Tube Heat Exchanger">Shell & Tube Heat Exchanger</option>
-                  <option value="Storage Tank / Silo">Storage Tank / Silo</option>
-                  <option value="Heavy Industrial Structure">Heavy Industrial Structure</option>
-                  <option value="Distillation Column / Tower">Distillation Column / Tower</option>
-                  <option value="Custom Process Skid">Custom Process Skid</option>
-                </select>
-              </div>
-
-              {/* Capacity / Dimensions */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Capacity / Dimensions</label>
-                <input
-                  type="text"
-                  value={formData.capacity}
-                  onChange={(e) => handleInputChange('capacity', e.target.value)}
-                  placeholder="e.g. 10,000 Litres / 150 Kg / 2000 mm Dia"
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-
-              {/* Target Delivery Date */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Target Delivery Date</label>
-                <input
-                  type="date"
-                  min={todayStr}
-                  value={formData.expectedDelivery}
-                  onChange={(e) => handleInputChange('expectedDelivery', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono"
-                />
-              </div>
-
-              {/* Estimated Budget */}
-              <div className="md:col-span-4">
-                <label className="block text-[#544B45] font-semibold mb-1">Estimated Budget (₹)</label>
-                <input
-                  type="number"
-                  min={0}
-                  placeholder="0"
-                  value={formData.budget}
-                  onChange={(e) => handleInputChange('budget', e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl font-bold text-emerald-600 font-mono"
-                />
-              </div>
-
-              {/* Technical Scope & Description */}
-              <div className="md:col-span-8">
-                <label className="block text-[#544B45] font-semibold mb-1">Technical Scope & Description</label>
-                <textarea
-                  rows={2}
-                  value={formData.requirementDescription}
-                  onChange={(e) => handleInputChange('requirementDescription', e.target.value)}
-                  placeholder="Pressure ratings, material of construction (SS304/SS316/Carbon Steel), operating parameters..."
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
+              {/* Contact Directory & Key Personnel subcard */}
+              <div className="border border-[#EBE3DB] rounded-xl p-4 bg-[#FCFAF8]">
+                <h4 className="text-xs font-bold text-[#544B45] mb-1">Contact Directory & Key Personnel</h4>
+                <p className="text-xs text-[#70665F] py-6 text-center">
+                  Initial contact person configured above. Add additional key stakeholders anytime after lead registration.
+                </p>
               </div>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* SECTION 4: Sales Assignment & Timeline */}
-          <div className="space-y-4 pt-4 border-t border-[#EBE3DB]">
-            <h3 className="font-bold text-sm text-[#544B45] flex items-center gap-2">
-              <span className="w-5 h-5 rounded-full bg-crm-brand-50 text-crm-brand-700 flex items-center justify-center text-[10px] font-bold border border-crm-brand-200">
-                4
-              </span>
-              Sales Assignment & Timeline
-            </h3>
+        {/* Bottom Action Bar */}
+        <div className="flex justify-end pt-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className={`px-6 py-2.5 bg-[#6D28D9] hover:bg-[#5B21B6] text-white rounded-xl font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer ${
+              isSubmitting ? 'opacity-60 cursor-not-allowed' : ''
+            }`}
+          >
+            <Save className="w-4 h-4" />
+            {isSubmitting ? 'Saving Lead...' : 'Save & Register Lead'}
+          </button>
+        </div>
+      </form>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              {/* Priority */}
-              <div className="md:col-span-3">
-                <label className="block text-[#544B45] font-semibold mb-1">Priority Level</label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => handleInputChange('priority', e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-bold"
-                >
-                  <option value="low">Low Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="high">High Priority</option>
-                  <option value="urgent">URGENT Fast-Track</option>
-                </select>
-              </div>
-
-              {/* Lead Source */}
-              <div className="md:col-span-3">
-                <label className="block text-[#544B45] font-semibold mb-1">Lead Source</label>
-                <select
-                  value={formData.source}
-                  onChange={(e) => handleInputChange('source', e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-semibold"
-                >
-                  <option value="direct_inward">Direct Inward / Call</option>
-                  <option value="exhibition">Exhibition / Trade Expo</option>
-                  <option value="website">Website / Digital</option>
-                  <option value="referral">Reference / Referral</option>
-                  <option value="email">Email Campaign</option>
-                  <option value="tender">Tender / GeM Portal</option>
-                </select>
-              </div>
-
-              {/* Assigned Sales Engineer */}
-              <div className="md:col-span-3">
-                <label className="block text-[#544B45] font-semibold mb-1">Assigned Sales Engineer</label>
-                <select
-                  value={formData.assignedSalesPersonId}
-                  onChange={(e) => handleInputChange('assignedSalesPersonId', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-medium"
-                >
-                  {allEmployees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name || (emp as any).employeeName || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.id}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Next Follow-up Date */}
-              <div className="md:col-span-3">
-                <label className="block text-[#544B45] font-semibold mb-1">Next Follow-up Date</label>
-                <input
-                  type="date"
-                  min={todayStr}
-                  value={formData.nextFollowUpDate}
-                  onChange={(e) => handleInputChange('nextFollowUpDate', e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17] font-mono"
-                />
-              </div>
-
-              {/* Remarks */}
-              <div className="md:col-span-12">
-                <label className="block text-[#544B45] font-semibold mb-1">Special Instructions / Remarks</label>
-                <input
-                  type="text"
-                  value={formData.remarks}
-                  onChange={(e) => handleInputChange('remarks', e.target.value)}
-                  placeholder="Key customer expectations, decision makers, project urgency..."
-                  className="w-full px-3.5 py-2.5 bg-[#FAF7F2] border border-[#EBE3DB] rounded-xl text-[#211B17]"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 flex justify-end gap-3 border-t border-[#EBE3DB]">
-            <Link
-              href="/crm/leads"
-              className="px-4 py-2 border border-[#EBE3DB] rounded-lg hover:bg-slate-50 font-semibold text-[#544B45] transition"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`px-6 py-2.5 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-xl font-bold shadow-md transition transform active:scale-95 flex items-center gap-2 ${
-                isSubmitting ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''
-              }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving Lead...
-                </>
-              ) : (
-                'Save & Register Lead'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Floating Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className="fixed bottom-6 right-6 w-10 h-10 rounded-full bg-[#6D28D9] hover:bg-[#5B21B6] text-white shadow-lg flex items-center justify-center transition cursor-pointer z-30"
+        title="Scroll to top"
+      >
+        <ArrowUp className="w-5 h-5" />
+      </button>
     </div>
   );
 }
