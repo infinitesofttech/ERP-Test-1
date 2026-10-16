@@ -505,18 +505,6 @@ export function Sidebar() {
                 <Compass className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Units of Measurement</span>}
               </Link>
-              <Link href="/store/warehouses" className={subNavItemClass('/store/warehouses')}>
-                <Building className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Warehouses Master</span>}
-              </Link>
-              <Link href="/store/locations" className={subNavItemClass('/store/locations')}>
-                <MapPin className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Store Locations / Bins</span>}
-              </Link>
-              <Link href="/store/opening-stock" className={subNavItemClass('/store/opening-stock')}>
-                <Sparkles className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Opening Stock Entry</span>}
-              </Link>
               <Link href="/store/grn" className={subNavItemClass('/store/grn')}>
                 <PackageCheck className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && (
@@ -527,14 +515,6 @@ export function Sidebar() {
                     </span>
                   </div>
                 )}
-              </Link>
-              <Link href="/store/qc-inspection" className={subNavItemClass('/store/qc-inspection')}>
-                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Quality Inspection</span>}
-              </Link>
-              <Link href="/store/stock" className={subNavItemClass('/store/stock')}>
-                <Box className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Stock Matrix (Usable)</span>}
               </Link>
               <Link href="/store/bom-verification" className={subNavItemClass('/store/bom-verification')}>
                 <FileSpreadsheet className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
@@ -547,10 +527,6 @@ export function Sidebar() {
                   </div>
                 )}
               </Link>
-              <Link href="/store/reservations" className={subNavItemClass('/store/reservations')}>
-                <Lock className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Stock Reservation</span>}
-              </Link>
               <Link href="/store/material-issue" className={subNavItemClass('/store/material-issue')}>
                 <Truck className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Material Issue</span>}
@@ -559,31 +535,14 @@ export function Sidebar() {
                 <CornerUpLeft className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Material Return</span>}
               </Link>
-              <Link href="/store/transfers" className={subNavItemClass('/store/transfers')}>
-                <Workflow className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Stock Transfer</span>}
-              </Link>
-              <Link href="/store/adjustments" className={subNavItemClass('/store/adjustments')}>
-                <RotateCcw className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Stock Adjustment</span>}
-              </Link>
               <Link href="/store/scrap" className={subNavItemClass('/store/scrap')}>
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Scrap & Rejection</span>}
-              </Link>
-              <Link href="/store/ledger" className={subNavItemClass('/store/ledger')}>
-                <History className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Stock Ledger</span>}
-              </Link>
-              <Link href="/store/stock-count" className={subNavItemClass('/store/stock-count')}>
-                <CheckSquare className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Physical Stock Count</span>}
               </Link>
               <Link href="/store/reorder" className={subNavItemClass('/store/reorder')}>
                 <Zap className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Low Stock / Reorder</span>}
               </Link>
-
             </div>
           )}
         </div>
