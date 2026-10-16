@@ -842,16 +842,16 @@ export default function ProjectDetailPage() {
                   {milestones.map((m) => (
                     <div key={m.id} className="bg-white p-3 rounded-lg border border-slate-200 dark:border-[#EBE3DB] space-y-1">
                       <div className="flex items-center justify-between">
-                        <strong className="text-xs text-slate-900 dark:text-[#211B17]">{m.title}</strong>
+                        <strong className="text-xs text-slate-900 dark:text-[#211B17]">{m.milestoneName}</strong>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          m.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-700'
+                          m.status === 'achieved' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-700'
                         }`}>
                           {m.status}
                         </span>
                       </div>
-                      <div className="text-[11px] text-[#70665F]">Target: <span className="font-mono font-bold text-slate-800 dark:text-[#211B17]">{formatDate(m.targetDate)}</span></div>
-                      {m.actualCompletionDate && (
-                        <div className="text-[11px] text-emerald-600">Completed: {formatDate(m.actualCompletionDate)}</div>
+                      <div className="text-[11px] text-[#70665F]">Target: <span className="font-mono font-bold text-slate-800 dark:text-[#211B17]">{formatDate(m.plannedDate)}</span></div>
+                      {m.actualDate && (
+                        <div className="text-[11px] text-emerald-600">Completed: {formatDate(m.actualDate)}</div>
                       )}
                     </div>
                   ))}
@@ -875,7 +875,7 @@ export default function ProjectDetailPage() {
                   <tbody className="divide-y divide-slate-200 dark:divide-[#EBE3DB]">
                     {tasks.map((t) => (
                       <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-[#FAF7F2]/60 transition">
-                        <td className="p-3 font-bold text-slate-900 dark:text-[#211B17]">{t.title}</td>
+                        <td className="p-3 font-bold text-slate-900 dark:text-[#211B17]">{t.taskName}</td>
                         <td className="p-3 font-mono text-[11px] uppercase text-[#70665F]">{t.department}</td>
                         <td className="p-3 font-medium text-slate-700 dark:text-[#544B45]">{t.assignedTo}</td>
                         <td className="p-3 font-mono text-[#70665F]">{formatDate(t.dueDate)}</td>
@@ -1374,7 +1374,6 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
