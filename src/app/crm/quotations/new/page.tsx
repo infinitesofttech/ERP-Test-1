@@ -291,7 +291,7 @@ function QuotationFormContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
-                Select Account / Lead <span className="text-rose-500">*</span>
+                Select Customer <span className="text-rose-500">*</span>
               </label>
               <select
                 value={customerId}
@@ -299,64 +299,20 @@ function QuotationFormContent() {
                   const newCustId = e.target.value;
                   setCustomerId(newCustId);
                   const foundCust = customers.find((c) => c.id === newCustId);
-                  const custLead = leads.find((l) => l.convertedCustomerId === newCustId || l.id === newCustId);
-                  const custEnq = enquiries.find((enq) => enq.customerId === newCustId || enq.id === newCustId);
-                  const resolvedName = foundCust?.companyName || custLead?.companyName || custEnq?.customerName || '';
-                  if (resolvedName) {
-                    setCompanyName(resolvedName);
-                  }
-                  if (custLead || custEnq) {
-                    const prodName = custLead?.productName || custEnq?.machineProduct;
-                    const desc = custLead?.requirementDescription || custEnq?.requirement || custEnq?.specification;
-                    const qty = Number(custLead?.quantity || custEnq?.quantity || 1);
-                    const rate = custLead?.budget ? Math.round(Number(custLead.budget) / (qty || 1)) : 100000;
-                    const tax = 18;
-                    const base = qty * rate;
-                    const amt = Math.round(base * (1 + tax / 100));
-
-                    if (prodName) {
-                      setItems([
-                        {
-                          id: 'item-1',
-                          productName: prodName,
-                          description: desc || 'Standard technical specifications',
-                          quantity: qty,
-                          unit: 'Set',
-                          rate,
-                          discountPercent: 0,
-                          taxPercent: tax,
-                          amount: amt,
-                        },
-                      ]);
-                      setScopeOfSupply(`Supply, fabrication, inspection and testing of ${prodName} as per specifications.`);
-                    }
-                    if (custLead?.capacity) {
-                      setTechnicalSpecs(`Capacity: ${custLead.capacity} (${custLead.machineType || 'Industrial'}). ${custLead.requirementDescription || ''}`);
-                    }
+                  if (foundCust) {
+                    setCompanyName(foundCust.companyName);
+                  } else {
+                    setCompanyName('');
                   }
                 }}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
               >
-                <option value="">-- Select Customer Account --</option>
+                <option value="">-- Select Customer --</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.companyName} ({c.customerCode || c.city || 'Customer'})
                   </option>
                 ))}
-                {leads
-                  .filter((l) => !customers.some((c) => c.companyName.toLowerCase() === l.companyName.toLowerCase()))
-                  .map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.companyName} (Lead: {l.contactPerson})
-                    </option>
-                  ))}
-                {matchedEnquiry &&
-                  !customers.some((c) => c.id === matchedEnquiry.customerId) &&
-                  !leads.some((l) => l.id === matchedEnquiry.customerId) && (
-                    <option value={matchedEnquiry.customerId || 'enq-matched'}>
-                      {matchedEnquiry.customerName} (Enquiry)
-                    </option>
-                  )}
               </select>
             </div>
             <div>
@@ -366,10 +322,10 @@ function QuotationFormContent() {
               <input
                 type="text"
                 required
+                readOnly
                 value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="e.g. abc@123"
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
+                placeholder="Auto-filled from selected customer"
+                className="w-full px-3 py-2 bg-slate-100 dark:bg-[#FAF7F2]/60 border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17] cursor-not-allowed select-none"
               />
             </div>
             <div>
@@ -387,13 +343,6 @@ function QuotationFormContent() {
           <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-[#EBE3DB]">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-sm text-slate-800 dark:text-[#544B45]">Equipment / Machine Line Items</h3>
-              <button
-                type="button"
-                onClick={addItem}
-                className="px-3 py-1.5 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" /> Add Line Item
-              </button>
             </div>
 
             <div className="space-y-3">
@@ -434,7 +383,16 @@ function QuotationFormContent() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-600 font-semibold mb-1">Item Technical Description</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-600 font-semibold">Item Technical Description</label>
+                      <button
+                        type="button"
+                        onClick={addItem}
+                        className="px-2.5 py-1 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-[#8B7355]" /> Add Item
+                      </button>
+                    </div>
                     <textarea
                       rows={2}
                       value={item.description}
