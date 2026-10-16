@@ -333,9 +333,6 @@ function QuotationFormContent() {
               Build formal machine quotation with line items, tax calculations, technical scope, and payment milestones.
             </p>
           </div>
-          <span className="px-3 py-1 bg-crm-brand- text-crm-brand- font-mono font-bold rounded-lg text-xs">
-            NEW REVISION: Rev-00
-          </span>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -436,27 +433,16 @@ function QuotationFormContent() {
               {items.map((item, idx) => (
                 <div key={item.id} className="p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] bg-slate-50/50 dark:bg-[#FAF7F2]/30 space-y-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                      <div className="sm:col-span-3">
-                        <label className="block text-slate-600 font-semibold mb-1">Machine / Item Name *</label>
-                        <input
-                          type="text"
-                          required
-                          value={item.productName}
-                          onChange={(e) => handleItemChange(idx, 'productName', e.target.value)}
-                          placeholder="e.g. 10 KL SS 316L Limpet Jacketed Reactor"
-                          className="w-full px-3 py-1.5 bg-white dark:bg-white border rounded-lg font-bold"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-600 font-semibold mb-1">Unit</label>
-                        <input
-                          type="text"
-                          value={item.unit}
-                          onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-white border rounded-lg font-mono"
-                        />
-                      </div>
+                    <div className="flex-1">
+                      <label className="block text-slate-600 font-semibold mb-1">Machine / Item Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={item.productName}
+                        onChange={(e) => handleItemChange(idx, 'productName', e.target.value)}
+                        placeholder="e.g. 10 KL SS 316L Limpet Jacketed Reactor"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-white border rounded-lg font-bold"
+                      />
                     </div>
 
                     {items.length > 1 && (
