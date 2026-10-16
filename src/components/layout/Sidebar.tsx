@@ -325,10 +325,6 @@ export function Sidebar() {
                   </div>
                 )}
               </Link>
-              <Link href="/projects/jobs" className={subNavItemClass('/projects/jobs')}>
-                <Cpu className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Jobs (360° View)</span>}
-              </Link>
               <Link href="/projects/planning" className={subNavItemClass('/projects/planning')}>
                 <Workflow className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Project Planning</span>}

@@ -46,7 +46,7 @@ export default function RoleMatrixPage() {
   const erpModulesAccess = [
     { name: 'ERP Foundation', route: '/users', superAdmin: true, plantDir: true, sales: false, design: false, purchase: false, store: false, prod: false, acc: false, hr: false, service: false },
     { name: 'CRM & Sales', route: '/crm/leads', superAdmin: true, plantDir: true, sales: true, design: false, purchase: false, store: false, prod: false, acc: true, hr: false, service: true },
-    { name: 'Project & Job 360°', route: '/projects/jobs', superAdmin: true, plantDir: true, sales: true, design: true, purchase: true, store: true, prod: true, acc: true, hr: true, service: true },
+    { name: 'Project & Job Management', route: '/projects/list', superAdmin: true, plantDir: true, sales: true, design: true, purchase: true, store: true, prod: true, acc: true, hr: true, service: true },
     { name: 'Design & BOM', route: '/designer/boms', superAdmin: true, plantDir: true, sales: false, design: true, purchase: true, store: true, prod: true, acc: false, hr: false, service: false },
     { name: 'Purchase & RFQ', route: '/purchase/pos', superAdmin: true, plantDir: true, sales: false, design: false, purchase: true, store: true, prod: true, acc: true, hr: false, service: false },
     { name: 'Store & Inventory', route: '/store/inventory', superAdmin: true, plantDir: true, sales: false, design: false, purchase: true, store: true, prod: true, acc: true, hr: false, service: false },
@@ -162,7 +162,7 @@ export default function RoleMatrixPage() {
               <option value="/store/inventory" className="bg-white">/store/inventory (Store & Warehouse)</option>
               <option value="/production/work-orders" className="bg-white">/production/work-orders (Production & Shop Floor)</option>
               <option value="/crm/leads" className="bg-white">/crm/leads (CRM & Sales)</option>
-              <option value="/projects/jobs" className="bg-white">/projects/jobs (Project & Job 360°)</option>
+              <option value="/projects/list" className="bg-white">/projects/list (Project & Job Management)</option>
               <option value="/maintenance/amc" className="bg-white">/maintenance/amc (Maintenance)</option>
               <option value="/users" className="bg-white">/users (ERP Foundation / System Admin)</option>
             </select>

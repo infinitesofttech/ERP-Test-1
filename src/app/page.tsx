@@ -249,8 +249,8 @@ export default function DashboardPage() {
             {/* Action Buttons */}
             <div className="flex items-center gap-1 border-l border-[#E7DED5] pl-2">
               <Link
-                href="/projects/jobs"
-                title="View All Project Jobs"
+                href="/projects/list"
+                title="View All Projects"
                 className="p-1.5 text-[#70665F] hover:text-[#211B17] hover:bg-[#FAF7F2] rounded-full border border-transparent hover:border-[#E7DED5] transition cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5" />
