@@ -334,22 +334,6 @@ export function Sidebar() {
                 {!sidebarCollapsed && <span>Tasks & Dependencies</span>}
               </Link>
 
-              <Link href="/projects/department-assignments" className={subNavItemClass('/projects/department-assignments')}>
-                <Users className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Dept Assignments</span>}
-              </Link>
-              <Link href="/projects/timeline" className={subNavItemClass('/projects/timeline')}>
-                <Clock className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Project Timeline</span>}
-              </Link>
-              <Link href="/projects/documents" className={subNavItemClass('/projects/documents')}>
-                <Folder className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Project Documents</span>}
-              </Link>
-              <Link href="/projects/cost" className={subNavItemClass('/projects/cost')}>
-                <DollarSign className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Project Cost</span>}
-              </Link>
 
 
             </div>

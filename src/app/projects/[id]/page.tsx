@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ArrowRight,
   User,
+  Users,
   AlertTriangle,
   Send,
   Plus,
@@ -32,6 +33,14 @@ import {
   Edit,
   Tag,
   Share2,
+  Upload,
+  X,
+  Search,
+  Lock,
+  Save,
+  Download,
+  Eye,
+  FileCheck,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -59,6 +68,14 @@ export default function ProjectDetailPage() {
     addProjectComment,
     openJobModal,
     jobs,
+    departmentAssignments,
+    assignDepartment,
+    availableEmployees,
+    employees,
+    updateProjectCost,
+    addProjectDocument,
+    can,
+    currentUser,
   } = useERP();
 
   const [activeTab, setActiveTab] = useState<
@@ -73,11 +90,44 @@ export default function ProjectDetailPage() {
     | 'accounts'
     | 'installation'
     | 'service'
-    | 'documents'
+    | 'assignments'
     | 'timeline'
+    | 'documents'
+    | 'cost'
   >('overview');
 
   const [newCommentText, setNewCommentText] = useState('');
+
+  // Department Assignment Modal & Form State
+  const allStaff = (availableEmployees && availableEmployees.length > 0 ? availableEmployees : employees) || [];
+  const defaultStaffName = allStaff[0]
+    ? allStaff[0].name || `${allStaff[0].firstName || ''} ${allStaff[0].lastName || ''}`.trim() || allStaff[0].username
+    : 'Dharmesh Joshi';
+
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignDept, setAssignDept] = useState('designer');
+  const [assignManager, setAssignManager] = useState(defaultStaffName);
+  const [assignEmployee, setAssignEmployee] = useState(defaultStaffName);
+  const [assignResponsibility, setAssignResponsibility] = useState('');
+  const [assignStartDate, setAssignStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [assignDueDate, setAssignDueDate] = useState('');
+  const [assignPriority, setAssignPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('high');
+
+  // Document Upload Modal State
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [docName, setDocName] = useState('');
+  const [docType, setDocType] = useState('Drawing');
+  const [docVersion, setDocVersion] = useState('v1.0');
+  const [docDepartment, setDocDepartment] = useState('Design');
+  const [docDesc, setDocDesc] = useState('');
+  const [docFileName, setDocFileName] = useState('');
+  const [docFileSize, setDocFileSize] = useState('2.4 MB');
+
+  // Cost Editing State
+  const [editingCostId, setEditingCostId] = useState<string | null>(null);
+  const [estCostVal, setEstCostVal] = useState<number>(0);
+  const [actCostVal, setActCostVal] = useState<number>(0);
+  const [costErrorMsg, setCostErrorMsg] = useState('');
 
   // Find Project by ID or Project Number
   const project = projectJobs.find(
@@ -164,6 +214,88 @@ export default function ProjectDetailPage() {
     });
     setNewCommentText('');
   };
+
+  const handleAssignSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignResponsibility.trim()) return;
+    assignDepartment({
+      projectId: project.id,
+      projectNumber: project.projectNumber || project.id,
+      jobNumber: project.jobNumber || project.projectNumber || project.id,
+      department: assignDept,
+      manager: assignManager || defaultStaffName,
+      assignedEmployee: assignEmployee || defaultStaffName,
+      responsibility: assignResponsibility.trim(),
+      startDate: assignStartDate,
+      dueDate: assignDueDate || project.deliveryDate || new Date().toISOString().split('T')[0],
+      status: 'in_progress',
+      priority: assignPriority,
+    });
+    setShowAssignModal(false);
+    setAssignResponsibility('');
+  };
+
+  const handleDocUpload = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docName.trim()) return;
+    const uploader = currentUser ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || 'Super Admin' : 'Super Admin';
+    addProjectDocument({
+      projectId: project.id,
+      jobNumber: project.jobNumber,
+      documentName: docName,
+      type: docType,
+      version: docVersion || 'v1.0',
+      uploadedBy: uploader,
+      department: docDepartment,
+      relatedRecord: project.projectNumber || 'Engineering Archive',
+      description: docDesc || 'Project engineering documentation',
+      fileSize: docFileSize || '2.5 MB',
+      fileUrl: docFileName ? `/uploads/projects/${docFileName}` : undefined,
+    });
+    setShowDocModal(false);
+    setDocName('');
+    setDocDesc('');
+    setDocFileName('');
+  };
+
+  const canEditCost = can ? (can('project', 'cost', 'edit') || currentUser?.roleName?.toLowerCase().includes('admin')) : true;
+
+  const handleStartCostEdit = (cost: any) => {
+    if (!canEditCost) {
+      setCostErrorMsg('Financial Permission Locked: Employees cannot alter financial cost records without manager approval.');
+      return;
+    }
+    setEditingCostId(cost.id);
+    setEstCostVal(cost.estimatedCost);
+    setActCostVal(cost.actualCost);
+    setCostErrorMsg('');
+  };
+
+  const handleSaveCostEdit = (costId: string) => {
+    try {
+      updateProjectCost(costId, {
+        estimatedCost: Number(estCostVal),
+        actualCost: Number(actCostVal),
+      });
+      setEditingCostId(null);
+    } catch (err: any) {
+      setCostErrorMsg(err.message || 'Unauthorized action');
+    }
+  };
+
+  const activeAssignments = (departmentAssignments || []).filter((da) => {
+    return (
+      da.projectId === project.id ||
+      da.projectId === project.projectNumber ||
+      da.projectNumber === project.projectNumber ||
+      da.projectNumber === project.id ||
+      (project.jobNumber && da.jobNumber === project.jobNumber)
+    );
+  });
+
+  const totalEstimated = costs.reduce((sum, c) => sum + c.estimatedCost, 0);
+  const totalActual = costs.reduce((sum, c) => sum + c.actualCost, 0);
+  const totalVariance = totalEstimated - totalActual;
 
   return (
     <div className="space-y-6 text-xs pb-12">
@@ -261,8 +393,10 @@ export default function ProjectDetailPage() {
             { id: 'accounts', label: 'Accounts', icon: DollarSign },
             { id: 'installation', label: 'Installation', icon: Building },
             { id: 'service', label: 'Service', icon: CheckCircle2 },
-            { id: 'documents', label: 'Documents', icon: Folder },
-            { id: 'timeline', label: 'Timeline', icon: ActivityIcon },
+            { id: 'assignments', label: 'Project Assignments', icon: Users },
+            { id: 'timeline', label: 'Project Timeline', icon: Clock },
+            { id: 'documents', label: 'Project Documents', icon: Folder },
+            { id: 'cost', label: 'Project Cost', icon: DollarSign },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -603,35 +737,77 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* TAB 12: DOCUMENTS */}
-        {activeTab === 'documents' && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-xs">Project Document Vault</h3>
+        {/* TAB 12: PROJECT ASSIGNMENTS */}
+        {activeTab === 'assignments' && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-sm flex items-center gap-2">
+                  <Users className="w-4 h-4 text-crm-brand-600" />
+                  Department Assignments & Resource Allocation
+                </h3>
+                <p className="text-[#70665F] text-[11px] mt-0.5">
+                  Allocate departmental leads and staff for this project to ensure accountability and deadlines.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="px-3.5 py-1.5 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm text-xs transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Assign Department</span>
+              </button>
+            </div>
+
+            {/* Assignments Table */}
             <div className="border border-slate-200 dark:border-[#EBE3DB] rounded-xl overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 dark:bg-white text-[#70665F] font-semibold border-b border-slate-200 dark:border-[#EBE3DB]">
                   <tr>
-                    <th className="p-3">Document Name</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3">Version</th>
-                    <th className="p-3">Uploaded By</th>
-                    <th className="p-3">Date</th>
+                    <th className="p-3">Department</th>
+                    <th className="p-3">Manager / Lead</th>
+                    <th className="p-3">Assigned Staff</th>
+                    <th className="p-3">Responsibility</th>
+                    <th className="p-3">Start Date</th>
+                    <th className="p-3">Due Date</th>
+                    <th className="p-3">Priority</th>
+                    <th className="p-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-[#EBE3DB]">
-                  {documents.length === 0 ? (
-                    <tr><td colSpan={5} className="p-4 text-center text-[#70665F]">No documents uploaded yet.</td></tr>
+                  {activeAssignments.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-6 text-center text-[#70665F]">
+                        No department assignments recorded for this project yet. Click &quot;Assign Department&quot; above to allocate.
+                      </td>
+                    </tr>
                   ) : (
-                    documents.map((doc) => (
-                      <tr key={doc.id}>
-                        <td className="p-3 font-bold text-crm-brand-600 flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-crm-brand-600" />
-                          <span>{doc.documentName}</span>
+                    activeAssignments.map((a) => (
+                      <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-[#FAF7F2]/60 transition">
+                        <td className="p-3 font-bold text-crm-brand-700 uppercase font-mono text-[11px]">
+                          {a.department}
                         </td>
-                        <td className="p-3">{doc.type}</td>
-                        <td className="p-3 font-mono text-crm-brand-600 font-bold">{doc.version}</td>
-                        <td className="p-3">{doc.uploadedBy}</td>
-                        <td className="p-3 font-mono">{formatDate(doc.uploadDate)}</td>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-[#211B17]">{a.manager}</td>
+                        <td className="p-3">
+                          <span className="font-bold text-slate-900 dark:text-[#211B17] block">{a.assignedEmployee}</span>
+                        </td>
+                        <td className="p-3 text-[#544B45] max-w-xs">{a.responsibility}</td>
+                        <td className="p-3 font-mono text-[#70665F]">{formatDate(a.startDate)}</td>
+                        <td className="p-3 font-mono text-[#70665F]">{formatDate(a.dueDate)}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                            a.priority === 'urgent' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                            a.priority === 'high' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-slate-100 text-[#70665F] border-slate-200'
+                          }`}>
+                            {a.priority}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-600 border border-emerald-200">
+                            {a.status}
+                          </span>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -641,10 +817,83 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {/* TAB 13: TIMELINE */}
+        {/* TAB 13: PROJECT TIMELINE */}
         {activeTab === 'timeline' && (
           <div className="space-y-6">
-            <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-xs">Project Activity Timeline & Internal Notes</h3>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-sm flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-500" />
+                  Project Timeline, Milestones & Activity
+                </h3>
+                <p className="text-[#70665F] text-[11px] mt-0.5">
+                  Track scheduled project phases, target deliverables, team audit logs, and internal notes.
+                </p>
+              </div>
+            </div>
+
+            {/* Milestones Schedule */}
+            {milestones.length > 0 && (
+              <div className="bg-slate-50 dark:bg-[#FAF7F2] p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] space-y-3">
+                <h4 className="font-bold text-slate-900 dark:text-[#211B17] text-xs uppercase tracking-wider text-[#70665F]">
+                  Target Milestones & Deadlines
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {milestones.map((m) => (
+                    <div key={m.id} className="bg-white p-3 rounded-lg border border-slate-200 dark:border-[#EBE3DB] space-y-1">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-xs text-slate-900 dark:text-[#211B17]">{m.title}</strong>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          m.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-700'
+                        }`}>
+                          {m.status}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#70665F]">Target: <span className="font-mono font-bold text-slate-800 dark:text-[#211B17]">{formatDate(m.targetDate)}</span></div>
+                      {m.actualCompletionDate && (
+                        <div className="text-[11px] text-emerald-600">Completed: {formatDate(m.actualCompletionDate)}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tasks & Stages Schedule */}
+            {tasks.length > 0 && (
+              <div className="border border-slate-200 dark:border-[#EBE3DB] rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-white text-[#70665F] font-semibold border-b border-slate-200 dark:border-[#EBE3DB]">
+                    <tr>
+                      <th className="p-3">Task / Stage</th>
+                      <th className="p-3">Department</th>
+                      <th className="p-3">Owner</th>
+                      <th className="p-3">Target Date</th>
+                      <th className="p-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 dark:divide-[#EBE3DB]">
+                    {tasks.map((t) => (
+                      <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-[#FAF7F2]/60 transition">
+                        <td className="p-3 font-bold text-slate-900 dark:text-[#211B17]">{t.title}</td>
+                        <td className="p-3 font-mono text-[11px] uppercase text-[#70665F]">{t.department}</td>
+                        <td className="p-3 font-medium text-slate-700 dark:text-[#544B45]">{t.assignedTo}</td>
+                        <td className="p-3 font-mono text-[#70665F]">{formatDate(t.dueDate)}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            t.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                            t.status === 'in_progress' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                            'bg-slate-100 text-[#70665F] border border-slate-200'
+                          }`}>
+                            {t.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Audit Log Chronology */}
             <div className="space-y-3 relative pl-6 border-l-2 border-slate-200 dark:border-[#EBE3DB]">
@@ -701,6 +950,430 @@ export default function ProjectDetailPage() {
             </div>
           </div>
         )}
+
+        {/* TAB 14: PROJECT DOCUMENTS */}
+        {activeTab === 'documents' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-sm flex items-center gap-2">
+                  <Folder className="w-4 h-4 text-crm-brand-600" />
+                  Project Document Vault
+                </h3>
+                <p className="text-[#70665F] text-[11px] mt-0.5">
+                  Secure repository for drawings, quality dossiers, test certificates, and customer correspondence.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDocModal(true)}
+                className="px-3.5 py-1.5 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-xl font-bold flex items-center gap-1.5 shadow-sm text-xs transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Upload Document</span>
+              </button>
+            </div>
+
+            <div className="border border-slate-200 dark:border-[#EBE3DB] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-white text-[#70665F] font-semibold border-b border-slate-200 dark:border-[#EBE3DB]">
+                  <tr>
+                    <th className="p-3">Document Name</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3">Version</th>
+                    <th className="p-3">Uploaded By</th>
+                    <th className="p-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-[#EBE3DB]">
+                  {documents.length === 0 ? (
+                    <tr><td colSpan={5} className="p-6 text-center text-[#70665F]">No documents uploaded for this project yet. Click &quot;Upload Document&quot; above.</td></tr>
+                  ) : (
+                    documents.map((doc) => (
+                      <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-[#FAF7F2]/60 transition">
+                        <td className="p-3 font-bold text-crm-brand-600 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-crm-brand-600" />
+                          <span>{doc.documentName}</span>
+                        </td>
+                        <td className="p-3">{doc.type}</td>
+                        <td className="p-3 font-mono text-crm-brand-600 font-bold">{doc.version}</td>
+                        <td className="p-3">{doc.uploadedBy}</td>
+                        <td className="p-3 font-mono">{formatDate(doc.uploadDate)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 15: PROJECT COST */}
+        {activeTab === 'cost' && (
+          <div className="space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-[#211B17] text-sm flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-emerald-600" />
+                  Project Financial Cost Tracking (Budget vs Actual)
+                </h3>
+                <p className="text-[#70665F] text-[11px] mt-0.5">
+                  Track manufacturing expense breakdown across raw material, machining, fabrication, and overheads.
+                </p>
+              </div>
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-slate-50 dark:bg-white p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] shadow-sm">
+                <span className="text-[#70665F] font-bold block mb-1">Total Order Value</span>
+                <span className="text-lg font-black text-slate-900 dark:text-[#211B17] font-mono">{formatCurrency(project?.orderValue || 0)}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-white p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] shadow-sm">
+                <span className="text-[#70665F] font-bold block mb-1">Total Estimated Cost</span>
+                <span className="text-lg font-black text-crm-brand-700 font-mono">{formatCurrency(totalEstimated)}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-white p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] shadow-sm">
+                <span className="text-[#70665F] font-bold block mb-1">Total Actual Cost</span>
+                <span className="text-lg font-black text-slate-900 dark:text-[#211B17] font-mono">{formatCurrency(totalActual)}</span>
+              </div>
+              <div className="bg-slate-50 dark:bg-white p-4 rounded-xl border border-slate-200 dark:border-[#EBE3DB] shadow-sm">
+                <span className="text-[#70665F] font-bold block mb-1">Cost Variance</span>
+                <span className={`text-lg font-black font-mono ${totalVariance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {formatCurrency(totalVariance)}
+                </span>
+                <span className="text-[10px] text-[#70665F] block mt-0.5">
+                  {totalVariance >= 0 ? 'Within Allocated Budget' : 'Cost Overrun Alert'}
+                </span>
+              </div>
+            </div>
+
+            {costErrorMsg && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                <span>{costErrorMsg}</span>
+              </div>
+            )}
+
+            {/* Cost Breakdown Table */}
+            <div className="border border-slate-200 dark:border-[#EBE3DB] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-white text-[#70665F] font-semibold border-b border-slate-200 dark:border-[#EBE3DB]">
+                  <tr>
+                    <th className="p-3">Cost Category</th>
+                    <th className="p-3 text-right">Estimated Cost (₹)</th>
+                    <th className="p-3 text-right">Actual Cost (₹)</th>
+                    <th className="p-3 text-right">Variance (₹)</th>
+                    <th className="p-3 text-center">Status</th>
+                    <th className="p-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-[#EBE3DB]">
+                  {costs.length === 0 ? (
+                    <tr><td colSpan={6} className="p-6 text-center text-[#70665F]">No cost breakdown records initialized for this project.</td></tr>
+                  ) : (
+                    costs.map((c) => {
+                      const isEditing = editingCostId === c.id;
+                      const variance = c.estimatedCost - c.actualCost;
+                      return (
+                        <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-[#FAF7F2]/60 transition">
+                          <td className="p-3 font-bold text-slate-900 dark:text-[#211B17]">{c.category}</td>
+                          <td className="p-3 text-right font-mono">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                value={estCostVal}
+                                onChange={(e) => setEstCostVal(Number(e.target.value))}
+                                className="w-28 px-2 py-1 border border-crm-brand-500 rounded text-right font-mono bg-white"
+                              />
+                            ) : (
+                              formatCurrency(c.estimatedCost)
+                            )}
+                          </td>
+                          <td className="p-3 text-right font-mono">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                value={actCostVal}
+                                onChange={(e) => setActCostVal(Number(e.target.value))}
+                                className="w-28 px-2 py-1 border border-crm-brand-500 rounded text-right font-mono bg-white"
+                              />
+                            ) : (
+                              formatCurrency(c.actualCost)
+                            )}
+                          </td>
+                          <td className={`p-3 text-right font-mono font-bold ${variance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {formatCurrency(variance)}
+                          </td>
+                          <td className="p-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              variance >= 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-rose-50 text-rose-600 border border-rose-200'
+                            }`}>
+                              {variance >= 0 ? 'Within Budget' : 'Over Budget'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-center">
+                            {isEditing ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => handleSaveCostEdit(c.id)}
+                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[10px] flex items-center gap-1"
+                                >
+                                  <Save className="w-3 h-3" /> Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingCostId(null)}
+                                  className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-[10px]"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleStartCostEdit(c)}
+                                className="px-2.5 py-1 bg-slate-100 dark:bg-[#FAF7F2] hover:bg-crm-brand-50 hover:text-crm-brand-700 rounded font-bold text-[10px] border border-slate-200 dark:border-[#EBE3DB] transition"
+                              >
+                                Edit
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: ASSIGN DEPARTMENT */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-[#EBE3DB] p-6 max-w-lg w-full space-y-4 shadow-xl">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-[#EBE3DB] pb-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-[#211B17] flex items-center gap-2">
+                <Users className="w-4 h-4 text-crm-brand-600" /> Assign Department for {project.jobNumber}
+              </h3>
+              <button onClick={() => setShowAssignModal(false)} className="text-[#70665F] hover:text-slate-900">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAssignSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#70665F] font-semibold mb-1">Department</label>
+                <select
+                  value={assignDept}
+                  onChange={(e) => setAssignDept(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                >
+                  <option value="designer">Designer & Engineering</option>
+                  <option value="purchase">Purchase & Procurement</option>
+                  <option value="store">Store & Warehouse</option>
+                  <option value="production">Production & Fabrication</option>
+                  <option value="quality">Quality & Inspection (QC)</option>
+                  <option value="dispatch">Logistics & Dispatch</option>
+                  <option value="accounts">Accounts & Billing</option>
+                  <option value="service">Service & Commissioning</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Department Lead / Manager</label>
+                  <select
+                    value={assignManager}
+                    onChange={(e) => setAssignManager(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  >
+                    {allStaff.map((emp: any, i: number) => {
+                      const val = emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username;
+                      return <option key={i} value={val}>{val}</option>;
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Assigned Personnel</label>
+                  <select
+                    value={assignEmployee}
+                    onChange={(e) => setAssignEmployee(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  >
+                    {allStaff.map((emp: any, i: number) => {
+                      const val = emp.name || `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || emp.username;
+                      return <option key={i} value={val}>{val}</option>;
+                    })}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#70665F] font-semibold mb-1">Core Responsibility & Deliverable</label>
+                <textarea
+                  value={assignResponsibility}
+                  onChange={(e) => setAssignResponsibility(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Design 3D CAD models and release manufacturing BOM..."
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold resize-none"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={assignStartDate}
+                    onChange={(e) => setAssignStartDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Target Due Date</label>
+                  <input
+                    type="date"
+                    value={assignDueDate}
+                    onChange={(e) => setAssignDueDate(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Priority</label>
+                  <select
+                    value={assignPriority}
+                    onChange={(e) => setAssignPriority(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[#EBE3DB]">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignModal(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-xl font-bold flex items-center gap-1.5"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Allocate Resource
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: UPLOAD DOCUMENT */}
+      {showDocModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-[#EBE3DB] p-6 max-w-lg w-full space-y-4 shadow-xl">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-[#EBE3DB] pb-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-[#211B17] flex items-center gap-2">
+                <Folder className="w-4 h-4 text-crm-brand-600" /> Upload Project Document
+              </h3>
+              <button onClick={() => setShowDocModal(false)} className="text-[#70665F] hover:text-slate-900">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleDocUpload} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-[#70665F] font-semibold mb-1">Document Title / File Name *</label>
+                <input
+                  type="text"
+                  value={docName}
+                  onChange={(e) => setDocName(e.target.value)}
+                  placeholder="e.g. Approved GA Drawing Rev-02"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Doc Type</label>
+                  <select
+                    value={docType}
+                    onChange={(e) => setDocType(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  >
+                    <option value="Drawing">Drawing</option>
+                    <option value="Quality Dossier">Quality Dossier</option>
+                    <option value="BOM Specification">BOM Spec</option>
+                    <option value="Purchase Order">Purchase Order</option>
+                    <option value="Test Certificate">Test Certificate</option>
+                    <option value="Inspection Report">Inspection Report</option>
+                    <option value="Dispatch Pass">Dispatch Pass</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Version</label>
+                  <input
+                    type="text"
+                    value={docVersion}
+                    onChange={(e) => setDocVersion(e.target.value)}
+                    placeholder="v1.0"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[#70665F] font-semibold mb-1">Department</label>
+                  <select
+                    value={docDepartment}
+                    onChange={(e) => setDocDepartment(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold"
+                  >
+                    <option value="Design">Design</option>
+                    <option value="Purchase">Purchase</option>
+                    <option value="Store">Store</option>
+                    <option value="Production">Production</option>
+                    <option value="Quality">Quality</option>
+                    <option value="Accounts">Accounts</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[#70665F] font-semibold mb-1">Description / Notes</label>
+                <textarea
+                  value={docDesc}
+                  onChange={(e) => setDocDesc(e.target.value)}
+                  rows={2}
+                  placeholder="Additional notes about this version..."
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-white border border-slate-200 dark:border-[#EBE3DB] rounded-xl font-semibold resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-[#EBE3DB]">
+                <button
+                  type="button"
+                  onClick={() => setShowDocModal(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-crm-brand-700 hover:bg-crm-brand-800 text-white rounded-xl font-bold flex items-center gap-1.5"
+                >
+                  <Upload className="w-3.5 h-3.5" /> Upload to Vault
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );
