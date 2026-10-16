@@ -6471,7 +6471,20 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     api.crm.quotations.create(newQuo).then((res) => {
       if (res && (res.id || res.quotationNumber)) {
         setQuotations((prev) => {
-          const updated = prev.map((q) => (q.id === quoNo ? { ...q, ...res, id: res.id || quoNo, quotationNumber: res.quotationNumber || quoNo } : q));
+          const updated = prev.map((q) => {
+            if (q.id !== quoNo) return q;
+            const mergedRevs = (res.revisions && Array.isArray(res.revisions) && res.revisions.length > 0)
+              ? res.revisions
+              : q.revisions;
+            return {
+              ...q,
+              ...res,
+              id: res.id || quoNo,
+              quotationNumber: res.quotationNumber || quoNo,
+              revisions: mergedRevs,
+              latestSummary: (res.latestSummary && Number(res.latestSummary.grandTotal) > 0) ? res.latestSummary : q.latestSummary,
+            };
+          });
           if (typeof window !== 'undefined') {
             try { localStorage.setItem('UMA_ERP_quotations', JSON.stringify(updated)); } catch (_) {}
           }

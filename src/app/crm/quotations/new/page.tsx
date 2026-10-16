@@ -215,14 +215,15 @@ function QuotationFormContent() {
   };
 
   const addItem = () => {
-    setItems([
-      ...items,
+    setItems((prev) => [
+      ...prev,
       {
-        id: `item-${Date.now()}`,
+        id: `item-${Date.now()}-${prev.length + 1}`,
         productName: '',
-        description: '',
+        description: 'Standard technical specifications',
+        descriptionLines: ['Standard technical specifications'],
         quantity: 1,
-        unit: 'Unit',
+        unit: 'Set',
         rate: 100000,
         discountPercent: 0,
         taxPercent: 18,
@@ -289,14 +290,14 @@ function QuotationFormContent() {
       latestSummary: {
         grandTotal,
         status: 'draft',
-        machineProduct: items[0]?.productName || 'Custom Manufacturing Machine',
+        machineProduct: items.map((it) => it.productName.trim()).filter(Boolean).join(', ') || 'Custom Manufacturing Machine',
       },
       revisions: [
         {
           revisionNumber: 'Rev-00',
           date,
           preparedBy: `${currentUser.firstName} ${currentUser.lastName}`,
-          items: items.map((it) => {
+          items: items.map((it, itIdx) => {
             const rawLines = (it.descriptionLines && it.descriptionLines.length > 0
               ? it.descriptionLines
               : it.description
@@ -308,11 +309,15 @@ function QuotationFormContent() {
 
             return {
               ...it,
+              id: it.id || `item-${Date.now()}-${itIdx + 1}`,
+              productName: it.productName.trim() || `Equipment / Machine #${itIdx + 1}`,
               description: lines.join('\n'),
               descriptionLines: lines,
               quantity: Number(it.quantity) || 1,
               rate: Number(it.rate) || 0,
               discountPercent: Number(it.discountPercent) || 0,
+              taxPercent: Number(it.taxPercent) || 18,
+              unit: it.unit || 'Set',
             };
           }),
           subTotal: Math.round(subTotal),
@@ -380,20 +385,22 @@ function QuotationFormContent() {
                     const amt = Math.round(base * (1 + tax / 100));
 
                     if (prodName) {
-                      setItems([
-                        {
-                          id: 'item-1',
+                      setItems((prevItems) => {
+                        const firstItem: QuotationItem = {
+                          id: prevItems[0]?.id || 'item-1',
                           productName: prodName,
                           description: desc || 'Standard technical specifications',
                           descriptionLines: desc ? [desc] : ['Standard technical specifications'],
                           quantity: qty,
-                          unit: 'Set',
+                          unit: prevItems[0]?.unit || 'Set',
                           rate,
                           discountPercent: 0,
                           taxPercent: tax,
                           amount: amt,
-                        },
-                      ]);
+                        };
+                        const otherItems = prevItems.slice(1);
+                        return [firstItem, ...otherItems];
+                      });
                       setScopeOfSupply(`Supply, fabrication, inspection and testing of ${prodName} as per specifications.`);
                     }
                     if (foundLead.capacity) {
