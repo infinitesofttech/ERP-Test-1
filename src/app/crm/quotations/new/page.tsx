@@ -47,6 +47,9 @@ function QuotationFormContent() {
   const initialCustomerId =
     prefillCustId ||
     matchedEnquiry?.customerId ||
+    matchedLead?.convertedCustomerId ||
+    leadMatchedCustomer?.id ||
+    '';
   const initCompanyName =
     matchedEnquiry?.customerName ||
     matchedLead?.companyName ||
@@ -180,26 +183,26 @@ function QuotationFormContent() {
 
     const resolvedCustomerName =
       companyName.trim() ||
-      cust?.companyName ||
+      (cust as any)?.companyName ||
       (cust as any)?.customerName ||
       matchedEnquiry?.customerName ||
       matchedLead?.companyName ||
       'Customer';
 
     const resolvedContactPerson =
-      cust?.contactPerson ||
+      (cust as any)?.contactPerson ||
       (cust as any)?.contact_person ||
       matchedLead?.contactPerson ||
       'Purchase Head';
 
     const resolvedContactEmail =
-      cust?.email ||
+      (cust as any)?.email ||
       (cust as any)?.contact_email ||
       matchedLead?.email ||
       '';
 
     const resolvedContactMobile =
-      cust?.mobile ||
+      (cust as any)?.mobile ||
       (cust as any)?.phone ||
       matchedLead?.mobile ||
       '';
