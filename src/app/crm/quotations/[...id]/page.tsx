@@ -305,10 +305,33 @@ export default function QuotationDetailPage() {
                 <tr key={idx}>
                   <td className="p-2 border text-center font-mono">{idx + 1}</td>
                   <td className="p-2 border">
-                    <strong className="block text-slate-900 dark:text-[#211B17]">{item.productName}</strong>
-                    <span className="text-[#70665F] text-[10px]">{item.description}</span>
+                    <strong className="block text-slate-900 dark:text-[#211B17] mb-1">{item.productName}</strong>
+                    {(() => {
+                      const lines = (
+                        item.descriptionLines && item.descriptionLines.length > 0
+                          ? item.descriptionLines
+                          : item.description
+                          ? item.description.split('\n')
+                          : []
+                      ).map((l) => l.trim()).filter(Boolean);
+
+                      if (lines.length === 0) return null;
+
+                      return (
+                        <div className="mt-1 space-y-1">
+                          {lines.map((line, lIdx) => (
+                            <div key={lIdx} className="text-[#70665F] text-[10px] flex items-start gap-1.5">
+                              <span className="font-mono font-bold text-slate-600 dark:text-[#70665F] shrink-0">
+                                {lIdx + 1}.
+                              </span>
+                              <span className="leading-tight">{line}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </td>
-                  <td className="p-2 border text-center font-mono font-bold">{item.quantity} {item.unit}</td>
+                  <td className="p-2 border text-center font-mono font-bold">{item.quantity} {item.unit || ''}</td>
                   <td className="p-2 border text-right font-mono">{formatCurrency(item.rate)}</td>
                   <td className="p-2 border text-right font-mono">{item.taxPercent}%</td>
                   <td className="p-2 border text-right font-mono font-bold text-slate-900 dark:text-[#211B17]">
@@ -336,22 +359,32 @@ export default function QuotationDetailPage() {
           </table>
         </div>
 
-        {/* Commercial Terms */}
+        {/* Commercial Terms & Conditions */}
         <div className="space-y-3 pt-3 border-t border-slate-200 dark:border-[#EBE3DB] text-[11px]">
-          <h3 className="font-bold text-sm text-slate-800 dark:text-[#544B45]">Commercial Terms & Scope</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="p-3 bg-slate-50 dark:bg-[#FAF7F2]/40 rounded-xl border">
-              <strong className="block mb-1 text-slate-800 dark:text-[#544B45]">Technical Scope & Codes:</strong>
-              <p className="text-slate-600 dark:text-[#70665F]">{currentRev.technicalSpecs}</p>
-              <strong className="block mt-2 mb-1 text-slate-800 dark:text-[#544B45]">Scope of Supply:</strong>
-              <p className="text-slate-600 dark:text-[#70665F]">{currentRev.scopeOfSupply}</p>
-            </div>
-            <div className="p-3 bg-slate-50 dark:bg-[#FAF7F2]/40 rounded-xl border">
-              <strong className="block mb-1 text-slate-800 dark:text-[#544B45]">Payment Terms:</strong>
-              <p className="text-slate-600 dark:text-[#70665F]">{currentRev.paymentTerms}</p>
-              <strong className="block mt-2 mb-1 text-slate-800 dark:text-[#544B45]">Delivery & Warranty:</strong>
-              <p className="text-slate-600 dark:text-[#70665F]">Delivery: {currentRev.deliveryTime} • Warranty: {currentRev.warranty}</p>
-            </div>
+          <h3 className="font-bold text-sm text-slate-800 dark:text-[#544B45]">Terms & Conditions</h3>
+          <div className="p-4 bg-slate-50 dark:bg-[#FAF7F2]/40 rounded-xl border border-slate-200 dark:border-[#EBE3DB] space-y-2">
+            {(() => {
+              const terms = (currentRev.termsAndConditions || '')
+                .split('\n')
+                .map((t) => t.trim())
+                .filter(Boolean);
+
+              const displayTerms =
+                terms.length > 0
+                  ? terms
+                  : ['Prices Ex-Works Makarpura, Vadodara. Freight extra at actuals.'];
+
+              return displayTerms.map((term, tIdx) => (
+                <div key={tIdx} className="flex items-start gap-2">
+                  <span className="font-mono font-bold text-slate-600 dark:text-[#70665F] w-5 text-right shrink-0">
+                    {tIdx + 1}.
+                  </span>
+                  <span className="text-slate-800 dark:text-[#211B17] font-medium leading-relaxed">
+                    {term}
+                  </span>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
