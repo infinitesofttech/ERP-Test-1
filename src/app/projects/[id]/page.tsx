@@ -404,7 +404,7 @@ export default function ProjectDetailPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition ${
+                className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition text-[11px] sm:text-xs whitespace-nowrap ${
                   isActive
                     ? 'bg-crm-brand-700 text-white shadow-md shadow-crm-brand-700/30'
                     : 'text-slate-600 dark:text-[#70665F] hover:bg-slate-100 dark:hover:bg-[#FAF7F2] hover:text-slate-900 dark:hover:text-[#211B17]'
