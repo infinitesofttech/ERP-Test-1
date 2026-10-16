@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useERP } from '../../../context/ERPContext';
@@ -23,6 +23,7 @@ import {
   Folder,
   Activity as ActivityIcon,
   ChevronLeft,
+  ChevronRight,
   ArrowRight,
   User,
   Users,
@@ -297,6 +298,109 @@ export default function ProjectDetailPage() {
   const totalActual = costs.reduce((sum, c) => sum + c.actualCost, 0);
   const totalVariance = totalEstimated - totalActual;
 
+  // Swipeable / Draggable Tabs Slider State & Handlers
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const isDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const [isDraggingState, setIsDraggingState] = useState(false);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    updateScrollButtons();
+    const handleResize = () => updateScrollButtons();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [updateScrollButtons]);
+
+  // Horizontal wheel scroll
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        const { scrollLeft, scrollWidth, clientWidth } = el;
+        const maxScroll = scrollWidth - clientWidth;
+        if (maxScroll > 0) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+          updateScrollButtons();
+        }
+      }
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [updateScrollButtons]);
+
+  // Ensure active tab is scrolled into view on change
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const activeBtn = el.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement;
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      setTimeout(updateScrollButtons, 350);
+    }
+  }, [activeTab, updateScrollButtons]);
+
+  // Mouse drag / swipe handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    isDownRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.pageX - el.offsetLeft;
+    scrollLeftRef.current = el.scrollLeft;
+    setIsDraggingState(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDownRef.current) return;
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 5) {
+      hasDraggedRef.current = true;
+    }
+    el.scrollLeft = scrollLeftRef.current - walk;
+    updateScrollButtons();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (!isDownRef.current) return;
+    isDownRef.current = false;
+    setIsDraggingState(false);
+    setTimeout(() => {
+      hasDraggedRef.current = false;
+    }, 60);
+  };
+
+  const handleTabClick = (tabId: any) => {
+    if (hasDraggedRef.current) return;
+    setActiveTab(tabId);
+  };
+
+  const scrollTabs = (offset: number) => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: offset, behavior: 'smooth' });
+    setTimeout(updateScrollButtons, 320);
+  };
+
   return (
     <div className="space-y-6 text-xs pb-12">
       {/* Top Header Navigation */}
@@ -378,44 +482,85 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {/* 13 Tab Navigation */}
-      <div className="bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-[#EBE3DB] shadow-md p-1.5 overflow-x-auto scrollbar-thin print:hidden">
-        <div className="flex items-center gap-1 min-w-max text-xs font-bold">
-          {[
-            { id: 'overview', label: 'Overview', icon: Briefcase },
-            { id: 'crm', label: 'CRM', icon: FileText },
-            { id: 'design', label: 'Design', icon: Cpu },
-            { id: 'purchase', label: 'Purchase', icon: ShoppingCart },
-            { id: 'store', label: 'Store', icon: Folder },
-            { id: 'production', label: 'Production', icon: Wrench },
-            { id: 'qc', label: 'QC', icon: ShieldCheck },
-            { id: 'dispatch', label: 'Dispatch', icon: Truck },
-            { id: 'accounts', label: 'Accounts', icon: DollarSign },
-            { id: 'installation', label: 'Installation', icon: Building },
-            { id: 'service', label: 'Service', icon: CheckCircle2 },
-            { id: 'assignments', label: 'Project Assignments', icon: Users },
-            { id: 'timeline', label: 'Project Timeline', icon: Clock },
-            { id: 'documents', label: 'Project Documents', icon: Folder },
-            { id: 'cost', label: 'Project Cost', icon: DollarSign },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition text-[11px] sm:text-xs whitespace-nowrap ${
-                  isActive
-                    ? 'bg-crm-brand-700 text-white shadow-md shadow-crm-brand-700/30'
-                    : 'text-slate-600 dark:text-[#70665F] hover:bg-slate-100 dark:hover:bg-[#FAF7F2] hover:text-slate-900 dark:hover:text-[#211B17]'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+      {/* Swipeable / Draggable Tab Navigation Bar */}
+      <div className="relative group bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-[#EBE3DB] shadow-md p-1.5 flex items-center print:hidden">
+        {/* Left Scroll Arrow */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scrollTabs(-240)}
+            className="absolute left-1 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
+            title="Slide Left"
+            aria-label="Slide Left"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Scrollable Container with Cursor Drag to Swipe */}
+        <div
+          ref={tabsContainerRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUpOrLeave}
+          onMouseLeave={handleMouseUpOrLeave}
+          onScroll={updateScrollButtons}
+          className={`flex items-center gap-1 min-w-0 flex-1 overflow-x-auto scroll-smooth select-none px-1 py-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden ${
+            isDraggingState ? 'cursor-grabbing' : 'cursor-grab'
+          }`}
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div className="flex items-center gap-1 min-w-max text-xs font-bold">
+            {[
+              { id: 'overview', label: 'Overview', icon: Briefcase },
+              { id: 'crm', label: 'CRM', icon: FileText },
+              { id: 'design', label: 'Design', icon: Cpu },
+              { id: 'purchase', label: 'Purchase', icon: ShoppingCart },
+              { id: 'store', label: 'Store', icon: Folder },
+              { id: 'production', label: 'Production', icon: Wrench },
+              { id: 'qc', label: 'QC', icon: ShieldCheck },
+              { id: 'dispatch', label: 'Dispatch', icon: Truck },
+              { id: 'accounts', label: 'Accounts', icon: DollarSign },
+              { id: 'installation', label: 'Installation', icon: Building },
+              { id: 'service', label: 'Service', icon: CheckCircle2 },
+              { id: 'assignments', label: 'Project Assignments', icon: Users },
+              { id: 'timeline', label: 'Project Timeline', icon: Clock },
+              { id: 'documents', label: 'Project Documents', icon: Folder },
+              { id: 'cost', label: 'Project Cost', icon: DollarSign },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  data-tab-id={tab.id}
+                  onClick={() => handleTabClick(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition text-xs whitespace-nowrap select-none ${
+                    isActive
+                      ? 'bg-crm-brand-700 text-white shadow-md shadow-crm-brand-700/30'
+                      : 'text-slate-600 dark:text-[#70665F] hover:bg-slate-100 dark:hover:bg-[#FAF7F2] hover:text-slate-900 dark:hover:text-[#211B17]'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 pointer-events-none" />
+                  <span className="pointer-events-none">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Right Scroll Arrow */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scrollTabs(240)}
+            className="absolute right-1 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
+            title="Slide Right"
+            aria-label="Slide Right"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Tab Content Containers */}
