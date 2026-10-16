@@ -436,61 +436,21 @@ export function Sidebar() {
                 <Building className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Supplier Master</span>}
               </Link>
-              <Link href="/purchase/supplier-contacts" className={subNavItemClass('/purchase/supplier-contacts')}>
-                <Users className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Supplier Contacts</span>}
-              </Link>
-              <Link href="/purchase/rfq" className={subNavItemClass('/purchase/rfq')}>
-                <ClipboardList className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>RFQ (Request for Quotation)</span>}
-              </Link>
-              <Link href="/purchase/quotations" className={subNavItemClass('/purchase/quotations')}>
-                <FileCheck2 className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Supplier Quotations</span>}
-              </Link>
-              <Link href="/purchase/quotation-comparison" className={subNavItemClass('/purchase/quotation-comparison')}>
-                <FileSpreadsheet className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Quotation Comparison</span>}
-              </Link>
-              <Link href="/purchase/quotation-verify" className={subNavItemClass('/purchase/quotation-verify')}>
-                <Award className="w-3.5 h-3.5 flex-shrink-0 text-amber-600 group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && (
-                  <div className="flex items-center justify-between w-full">
-                    <span>Quotation Verify</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-mono text-[9px] font-bold border border-emerald-300">
-                      L1 Compare
-                    </span>
-                  </div>
-                )}
-              </Link>
               <Link href="/purchase/po" className={subNavItemClass('/purchase/po')}>
                 <ShoppingCart className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && (
                   <div className="flex items-center justify-between w-full">
-                    <span>Purchase Orders</span>
+                    <span>Purchase Orders & Approvals</span>
                     <span className="px-1.5 py-0.2 rounded-full bg-[#EFE8DF] text-crm-brand-700 font-mono text-[9px] font-bold border border-[#E5DCD3]">
                       {purchaseOrders.length}
                     </span>
                   </div>
                 )}
               </Link>
-              <Link href="/purchase/po-approval" className={subNavItemClass('/purchase/po-approval')}>
-                <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>PO Approval</span>}
-              </Link>
-              <Link href="/purchase/followup" className={subNavItemClass('/purchase/followup')}>
-                <Truck className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Purchase Follow-up</span>}
-              </Link>
-              <Link href="/purchase/pending" className={subNavItemClass('/purchase/pending')}>
-                <Clock className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
-                {!sidebarCollapsed && <span>Pending / Overdue</span>}
-              </Link>
               <Link href="/purchase/returns" className={subNavItemClass('/purchase/returns')}>
                 <CornerUpLeft className="w-3.5 h-3.5 flex-shrink-0 text-[#8D7B70] group-hover:text-[#3E2723] transition-colors" />
                 {!sidebarCollapsed && <span>Purchase Returns</span>}
               </Link>
-
             </div>
           )}
         </div>
