@@ -130,6 +130,23 @@ function QuotationFormContent() {
   const [deliveryTime, setDeliveryTime] = useState(matchedLead?.expectedDelivery ? `By ${matchedLead.expectedDelivery}` : '8 to 10 Weeks from approved GA drawing.');
   const [warranty, setWarranty] = useState('18 Months from dispatch or 12 Months from commissioning.');
   const [termsAndConditions, setTermsAndConditions] = useState('Prices Ex-Works Makarpura, Vadodara. Freight extra at actuals.');
+  const [termsList, setTermsList] = useState<string[]>([
+    'Prices Ex-Works Makarpura, Vadodara. Freight extra at actuals.',
+  ]);
+
+  const addTerm = () => {
+    setTermsList([...termsList, '']);
+  };
+
+  const removeTerm = (idx: number) => {
+    setTermsList(termsList.filter((_, i) => i !== idx));
+  };
+
+  const handleTermChange = (idx: number, value: string) => {
+    const updated = [...termsList];
+    updated[idx] = value;
+    setTermsList(updated);
+  };
 
   const handleItemChange = (idx: number, field: keyof QuotationItem, value: any) => {
     const updated = [...items];
@@ -238,7 +255,7 @@ function QuotationFormContent() {
           paymentTerms,
           deliveryTime,
           warranty,
-          termsAndConditions,
+          termsAndConditions: termsList.filter((t) => t.trim()).join('\n') || 'Prices Ex-Works Makarpura, Vadodara. Freight extra at actuals.',
           status: 'draft',
         },
       ],
@@ -271,7 +288,7 @@ function QuotationFormContent() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* HEADER METADATA */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
                 Select Account / Lead <span className="text-rose-500">*</span>
@@ -361,15 +378,6 @@ function QuotationFormContent() {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">Valid Until</label>
-              <input
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg"
               />
             </div>
@@ -506,68 +514,44 @@ function QuotationFormContent() {
             </div>
           </div>
 
-          {/* COMMERCIAL TERMS & SPECS */}
+          {/* TERMS & CONDITIONS */}
           <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-[#EBE3DB]">
-            <h3 className="font-bold text-sm text-slate-800 dark:text-[#544B45]">Technical Scope & Commercial Terms</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Technical Specifications</label>
-                <textarea
-                  rows={2}
-                  value={technicalSpecs}
-                  onChange={(e) => setTechnicalSpecs(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Scope of Supply</label>
-                <textarea
-                  rows={2}
-                  value={scopeOfSupply}
-                  onChange={(e) => setScopeOfSupply(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-                />
-              </div>
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm text-slate-800 dark:text-[#544B45]">Terms & Conditions</h3>
+              <button
+                type="button"
+                onClick={addTerm}
+                className="px-3 py-1.5 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add New
+              </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Payment Terms</label>
-                <input
-                  type="text"
-                  value={paymentTerms}
-                  onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Delivery Schedule</label>
-                <input
-                  type="text"
-                  value={deliveryTime}
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Warranty Period</label>
-                <input
-                  type="text"
-                  value={warranty}
-                  onChange={(e) => setWarranty(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-slate-700 font-semibold mb-1">Terms & Conditions</label>
-              <textarea
-                rows={2}
-                value={termsAndConditions}
-                onChange={(e) => setTermsAndConditions(e.target.value)}
-                className="w-full px-3 py-1.5 bg-slate-50 dark:bg-[#FAF7F2] border rounded-lg"
-              />
+            <div className="space-y-2.5">
+              {termsList.map((term, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold text-[#70665F] w-6 flex-shrink-0 text-center">
+                    {idx + 1}.
+                  </span>
+                  <input
+                    type="text"
+                    value={term}
+                    onChange={(e) => handleTermChange(idx, e.target.value)}
+                    placeholder="Enter term or condition..."
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg text-xs font-medium text-slate-900 dark:text-[#211B17] outline-none focus:bg-white focus:border-blue-600"
+                  />
+                  {termsList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeTerm(idx)}
+                      title="Remove condition"
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
