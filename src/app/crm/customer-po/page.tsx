@@ -44,7 +44,6 @@ export default function CustomerPOPage() {
   const [newPoAmount, setNewPoAmount] = useState<number | string>('');
   const [newPoDate, setNewPoDate] = useState(new Date().toISOString().split('T')[0]);
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
-  const [newPaymentTerms, setNewPaymentTerms] = useState('30 Days Credit');
   const [newRemarks, setNewRemarks] = useState('');
 
   // Edit form state
@@ -62,7 +61,6 @@ export default function CustomerPOPage() {
     setNewPoAmount('');
     setNewPoDate(new Date().toISOString().split('T')[0]);
     setNewDeliveryDate('');
-    setNewPaymentTerms('30 Days Credit');
     setNewRemarks('');
   };
 
@@ -80,9 +78,6 @@ export default function CustomerPOPage() {
       const grandTotal = matchedQuo.latestSummary?.grandTotal || latestRev?.grandTotal || 0;
       if (grandTotal) {
         setNewPoAmount(grandTotal);
-      }
-      if (latestRev?.paymentTerms) {
-        setNewPaymentTerms(latestRev.paymentTerms);
       }
       if (!newPoNumber) {
         const cleanName = (matchedQuo.customerName || 'CUST').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
@@ -105,6 +100,7 @@ export default function CustomerPOPage() {
 
     const matchedQuo = quotations.find((q) => q.id === newQuotationId || q.quotationNumber === newQuotationId);
     const matchedCust = customers?.find((c) => c.companyName?.toLowerCase() === newCustomerName.trim().toLowerCase());
+    const matchedPaymentTerms = matchedQuo?.revisions?.[matchedQuo.revisions.length - 1]?.paymentTerms || '30 Days Credit';
 
     const created = addCustomerPO({
       poNumber: newPoNumber.trim(),
@@ -116,7 +112,7 @@ export default function CustomerPOPage() {
         ? `${matchedQuo.quotationNumber} (${matchedQuo.revisions?.slice(-1)[0]?.revisionNumber || 'Rev-00'})`
         : (newQuotationId ? newQuotationId : 'Direct PO'),
       poAmount: Number(newPoAmount) || 0,
-      paymentTerms: newPaymentTerms.trim() || '30 Days Credit',
+      paymentTerms: matchedPaymentTerms,
       deliveryDate: newDeliveryDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       status: 'received',
       remarks: newRemarks.trim() || 'Direct Customer PO received and verified.',
@@ -617,18 +613,6 @@ export default function CustomerPOPage() {
                     className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#E7DED5] rounded-xl font-mono text-[#211B17]"
                   />
                 </div>
-              </div>
-
-              {/* Payment Terms */}
-              <div>
-                <label className="block text-[#544B45] font-semibold mb-1">Payment Terms</label>
-                <input
-                  type="text"
-                  value={newPaymentTerms}
-                  onChange={(e) => setNewPaymentTerms(e.target.value)}
-                  placeholder="e.g. 30 Days Credit / 50% Advance"
-                  className="w-full px-3 py-2 bg-[#FAF7F2] border border-[#E7DED5] rounded-xl text-xs text-[#211B17] outline-none focus:bg-white focus:border-blue-600"
-                />
               </div>
 
               {/* Remarks */}
