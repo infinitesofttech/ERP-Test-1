@@ -8625,7 +8625,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       type: 'warning',
       department: 'project',
       priority: 'high',
-      linkUrl: `/designer/approval?job=${desJob.jobNumber}`,
+      linkUrl: `/designer/jobs?job=${desJob.jobNumber}`,
     });
 
     api.designer.jobs.revokeRelease(desJob.id, { revokedBy, remarks: `Release revoked by ${revokedBy}` }).catch((err) =>

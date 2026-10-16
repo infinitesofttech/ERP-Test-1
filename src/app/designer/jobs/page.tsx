@@ -557,22 +557,22 @@ export default function DesignJobsPage() {
                   </Link>
 
                   {isJobApproved(j) ? (
-                    <Link
-                      href={`/designer/approval?job=${j.jobNumber}`}
-                      className="px-2.5 py-1.5 rounded-xl bg-[#DCFCE7] hover:bg-[#BBF7D0] text-[#15803D] border border-[#BBF7D0] text-xs font-bold transition flex items-center gap-1 shadow-xs"
+                    <span
+                      className="px-2.5 py-1.5 rounded-xl bg-[#DCFCE7] text-[#15803D] border border-[#BBF7D0] text-xs font-bold flex items-center gap-1 shadow-xs"
                       title="Design Job is Released & Approved to Production"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#169B62]" />
                       <span>Approved</span>
-                    </Link>
+                    </span>
                   ) : (
-                    <Link
-                      href={`/designer/approval?job=${j.jobNumber}`}
-                      className="px-3 py-1.5 rounded-xl bg-crm-brand-700 hover:bg-crm-brand-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs"
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDrawer(j)}
+                      className="px-3 py-1.5 rounded-xl bg-crm-brand-700 hover:bg-crm-brand-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
                     >
-                      <span>Approval</span>
+                      <span>Details</span>
                       <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1209,12 +1209,13 @@ export default function DesignJobsPage() {
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#EBE3DB]">
-              <Link
-                href={`/designer/approval?job=${selectedJob.jobNumber}`}
-                className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-amber-800 font-bold border border-[#EBE3DB]"
+              <button
+                type="button"
+                onClick={() => setSelectedJob(null)}
+                className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#70665F] font-bold border border-[#EBE3DB] cursor-pointer"
               >
-                Approval & Release
-              </Link>
+                Close
+              </button>
               <Link
                 href={`/designer/bom?job=${selectedJob.jobNumber}`}
                 className="px-4 py-2 rounded-xl bg-crm-brand-700 hover:bg-crm-brand-800 text-white font-bold"

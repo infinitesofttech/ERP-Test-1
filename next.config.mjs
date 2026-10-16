@@ -8,6 +8,11 @@ const nextConfig = {
         destination: '/projects/list',
         permanent: false,
       },
+      {
+        source: '/designer/approval',
+        destination: '/designer/jobs',
+        permanent: false,
+      },
     ];
   },
 };
