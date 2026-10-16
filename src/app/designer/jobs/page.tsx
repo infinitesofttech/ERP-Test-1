@@ -567,7 +567,7 @@ export default function DesignJobsPage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => handleOpenDrawer(j)}
+                      onClick={() => setSelectedJob(j)}
                       className="px-3 py-1.5 rounded-xl bg-crm-brand-700 hover:bg-crm-brand-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-xs cursor-pointer"
                     >
                       <span>Details</span>
