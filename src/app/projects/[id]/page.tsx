@@ -312,17 +312,65 @@ export default function ProjectDetailPage() {
     const el = tabsContainerRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 6);
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
   }, []);
 
   useEffect(() => {
     const el = tabsContainerRef.current;
     if (!el) return;
     updateScrollButtons();
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        updateScrollButtons();
+      });
+      observer.observe(el);
+      if (el.firstElementChild) {
+        observer.observe(el.firstElementChild);
+      }
+    }
+
     const handleResize = () => updateScrollButtons();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      if (observer) observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [updateScrollButtons]);
+
+  // Global mouse event listeners for seamless drag anywhere on screen
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isDownRef.current) return;
+      const el = tabsContainerRef.current;
+      if (!el) return;
+      e.preventDefault();
+      const x = e.pageX - el.offsetLeft;
+      const walk = (x - startXRef.current) * 1.3;
+      if (Math.abs(walk) > 4) {
+        hasDraggedRef.current = true;
+      }
+      el.scrollLeft = scrollLeftRef.current - walk;
+      updateScrollButtons();
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (!isDownRef.current) return;
+      isDownRef.current = false;
+      setIsDraggingState(false);
+      setTimeout(() => {
+        hasDraggedRef.current = false;
+      }, 70);
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
   }, [updateScrollButtons]);
 
   // Horizontal wheel scroll
@@ -364,29 +412,6 @@ export default function ProjectDetailPage() {
     startXRef.current = e.pageX - el.offsetLeft;
     scrollLeftRef.current = el.scrollLeft;
     setIsDraggingState(true);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDownRef.current) return;
-    const el = tabsContainerRef.current;
-    if (!el) return;
-    e.preventDefault();
-    const x = e.pageX - el.offsetLeft;
-    const walk = x - startXRef.current;
-    if (Math.abs(walk) > 5) {
-      hasDraggedRef.current = true;
-    }
-    el.scrollLeft = scrollLeftRef.current - walk;
-    updateScrollButtons();
-  };
-
-  const handleMouseUpOrLeave = () => {
-    if (!isDownRef.current) return;
-    isDownRef.current = false;
-    setIsDraggingState(false);
-    setTimeout(() => {
-      hasDraggedRef.current = false;
-    }, 60);
   };
 
   const handleTabClick = (tabId: any) => {
@@ -484,16 +509,21 @@ export default function ProjectDetailPage() {
 
       {/* Swipeable / Draggable Tab Navigation Bar */}
       <div className="relative group bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-[#EBE3DB] shadow-md p-1.5 flex items-center print:hidden">
+        {/* Left Gradient Fade */}
+        {canScrollLeft && (
+          <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-white dark:from-[#0B1120] to-transparent pointer-events-none z-10 rounded-l-2xl" />
+        )}
+
         {/* Left Scroll Arrow */}
         {canScrollLeft && (
           <button
             type="button"
             onClick={() => scrollTabs(-240)}
-            className="absolute left-1 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
+            className="absolute left-1.5 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
             title="Slide Left"
             aria-label="Slide Left"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
 
@@ -501,9 +531,6 @@ export default function ProjectDetailPage() {
         <div
           ref={tabsContainerRef}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUpOrLeave}
-          onMouseLeave={handleMouseUpOrLeave}
           onScroll={updateScrollButtons}
           className={`flex items-center gap-1 min-w-0 flex-1 overflow-x-auto scroll-smooth select-none px-1 py-0.5 no-scrollbar [&::-webkit-scrollbar]:hidden ${
             isDraggingState ? 'cursor-grabbing' : 'cursor-grab'
@@ -549,16 +576,21 @@ export default function ProjectDetailPage() {
           </div>
         </div>
 
+        {/* Right Gradient Fade */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white dark:from-[#0B1120] to-transparent pointer-events-none z-10 rounded-r-2xl" />
+        )}
+
         {/* Right Scroll Arrow */}
         {canScrollRight && (
           <button
             type="button"
             onClick={() => scrollTabs(240)}
-            className="absolute right-1 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
+            className="absolute right-1.5 z-20 p-1.5 rounded-xl bg-white/95 dark:bg-[#1E293B]/95 text-slate-700 dark:text-[#FAF7F2] shadow-lg hover:bg-crm-brand-50 hover:text-crm-brand-700 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition flex items-center justify-center cursor-pointer backdrop-blur-sm"
             title="Slide Right"
             aria-label="Slide Right"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
       </div>
