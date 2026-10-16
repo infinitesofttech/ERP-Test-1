@@ -157,10 +157,6 @@ export default function QuotationDetailPage() {
               <span className="font-mono font-bold text-base bg-crm-brand-700 text-white px-2.5 py-0.5 rounded-lg">
                 {quotation.quotationNumber}
               </span>
-              <span className="px-2.5 py-0.5 rounded-lg bg-crm-brand- text-crm-brand- font-mono font-bold">
-                {currentRev.revisionNumber}
-              </span>
-              <StatusBadge status={currentRev.status as any} />
             </div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-[#211B17] mt-1">{quotation.customerName}</h1>
             <p className="text-[#70665F]">Contact: {quotation.contactPerson} • {quotation.contactMobile}</p>
@@ -174,34 +170,7 @@ export default function QuotationDetailPage() {
         </div>
 
         {/* Action Controls Strip */}
-        <div className="pt-3 border-t border-slate-100 dark:border-[#EBE3DB] flex flex-wrap items-center justify-between gap-3">
-          {/* Revision Selector */}
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-600 dark:text-[#70665F]">View Revision:</span>
-            <div className="flex items-center gap-1">
-              {quotation.revisions.map((rev) => (
-                <button
-                  key={rev.revisionNumber}
-                  onClick={() => setSelectedRevNum(rev.revisionNumber)}
-                  className={`px-2.5 py-1 rounded-lg font-mono font-bold text-xs transition ${
-                    selectedRevNum === rev.revisionNumber
-                      ? 'bg-[#3E2723] text-white shadow-xs'
-                      : 'bg-[#FAF7F2] border border-[#E7DED5] text-[#70665F] hover:bg-[#F3ECE4]'
-                  }`}
-                >
-                  {rev.revisionNumber}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleCreateNextRevision}
-              className="px-2.5 py-1 bg-[#FAF0E6] text-[#75401F] hover:bg-[#F3ECE4] rounded-lg font-bold text-xs flex items-center gap-1 border border-[#E7DED5] transition cursor-pointer"
-            >
-              <Plus className="w-3 h-3" />
-              <span>Create Next Rev</span>
-            </button>
-          </div>
-
+        <div className="pt-3 border-t border-slate-100 dark:border-[#EBE3DB] flex flex-wrap items-center justify-end gap-3">
           {/* Workflow Status Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
             {currentRev.status === 'draft' && (
@@ -266,7 +235,6 @@ export default function QuotationDetailPage() {
           </div>
           <div className="text-right">
             <span className="text-sm font-bold font-mono text-crm-brand-700 block">{quotation.quotationNumber}</span>
-            <span className="font-mono text-crm-brand-800 font-bold">{currentRev.revisionNumber}</span>
             <span className="text-[#70665F] text-[11px] block mt-0.5">Date: {formatDate(currentRev.date)}</span>
           </div>
         </div>
