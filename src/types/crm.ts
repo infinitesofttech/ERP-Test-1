@@ -325,6 +325,7 @@ export interface QuotationItem {
   id: string;
   productName: string;
   description: string;
+  descriptionLines?: string[];
   quantity: number;
   unit: string;
   rate: number;

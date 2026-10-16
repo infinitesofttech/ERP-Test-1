@@ -57,27 +57,32 @@ function QuotationFormContent() {
     customers.find((c) => c.id === initialCustomerId)?.companyName ||
     '';
 
+  const initialLeadId =
+    matchedLead?.id ||
+    prefillLeadId ||
+    '';
+  const initContactPerson =
+    matchedLead?.contactPerson ||
+    leadMatchedCustomer?.contactPerson ||
+    '';
+
+  const [leadId, setLeadId] = useState(initialLeadId);
   const [customerId, setCustomerId] = useState(initialCustomerId);
   const [companyName, setCompanyName] = useState(initCompanyName);
+  const [contactPerson, setContactPerson] = useState(initContactPerson);
 
   React.useEffect(() => {
-    const targetId =
-      prefillCustId ||
-      matchedEnquiry?.customerId ||
-      matchedLead?.convertedCustomerId ||
-      leadMatchedCustomer?.id;
-    if (targetId && targetId !== customerId) {
-      setCustomerId(targetId);
+    const targetLead = leads.find((l) =>
+      (prefillLeadId && (l.id === prefillLeadId || l.leadNo === prefillLeadId)) ||
+      (leadId && (l.id === leadId || l.leadNo === leadId))
+    );
+    if (targetLead) {
+      if (!leadId) setLeadId(targetLead.id);
+      if (targetLead.contactPerson && !contactPerson) setContactPerson(targetLead.contactPerson);
+      if (targetLead.companyName && !companyName) setCompanyName(targetLead.companyName);
+      if (targetLead.convertedCustomerId) setCustomerId(targetLead.convertedCustomerId);
     }
-    const resolvedName =
-      matchedEnquiry?.customerName ||
-      matchedLead?.companyName ||
-      leadMatchedCustomer?.companyName ||
-      customers.find((c) => c.id === targetId)?.companyName;
-    if (resolvedName && !companyName) {
-      setCompanyName(resolvedName);
-    }
-  }, [prefillCustId, matchedEnquiry, matchedLead, leadMatchedCustomer]);
+  }, [prefillLeadId, leads]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [validUntil, setValidUntil] = useState('2026-10-30');
 
@@ -105,6 +110,7 @@ function QuotationFormContent() {
       id: 'item-1',
       productName: initProductName,
       description: initDesc,
+      descriptionLines: initDesc ? [initDesc] : ['Standard technical specifications'],
       quantity: initQty,
       unit: 'Set',
       rate: initRate,
@@ -165,6 +171,49 @@ function QuotationFormContent() {
     setItems(updated);
   };
 
+  const addDescriptionLine = (itemIdx: number) => {
+    const updated = [...items];
+    const currentLines =
+      updated[itemIdx].descriptionLines && updated[itemIdx].descriptionLines!.length > 0
+        ? [...updated[itemIdx].descriptionLines!]
+        : updated[itemIdx].description
+        ? updated[itemIdx].description.split('\n')
+        : [''];
+    const newLines = [...currentLines, ''];
+    updated[itemIdx].descriptionLines = newLines;
+    updated[itemIdx].description = newLines.join('\n');
+    setItems(updated);
+  };
+
+  const handleDescriptionLineChange = (itemIdx: number, lineIdx: number, val: string) => {
+    const updated = [...items];
+    const currentLines =
+      updated[itemIdx].descriptionLines && updated[itemIdx].descriptionLines!.length > 0
+        ? [...updated[itemIdx].descriptionLines!]
+        : updated[itemIdx].description
+        ? updated[itemIdx].description.split('\n')
+        : [''];
+    currentLines[lineIdx] = val;
+    updated[itemIdx].descriptionLines = currentLines;
+    updated[itemIdx].description = currentLines.join('\n');
+    setItems(updated);
+  };
+
+  const removeDescriptionLine = (itemIdx: number, lineIdx: number) => {
+    const updated = [...items];
+    const currentLines =
+      updated[itemIdx].descriptionLines && updated[itemIdx].descriptionLines!.length > 0
+        ? [...updated[itemIdx].descriptionLines!]
+        : updated[itemIdx].description
+        ? updated[itemIdx].description.split('\n')
+        : [''];
+    const newLines = currentLines.filter((_, i) => i !== lineIdx);
+    const finalLines = newLines.length > 0 ? newLines : [''];
+    updated[itemIdx].descriptionLines = finalLines;
+    updated[itemIdx].description = finalLines.join('\n');
+    setItems(updated);
+  };
+
   const addItem = () => {
     setItems([
       ...items,
@@ -198,30 +247,33 @@ function QuotationFormContent() {
       leads.find((l) => l.id === customerId || l.convertedCustomerId === customerId) ||
       enquiries.find((enq) => enq.customerId === customerId || enq.id === customerId);
 
+    const activeLead = leads.find((l) => l.id === leadId || l.leadNo === leadId) || matchedLead;
+
     const resolvedCustomerName =
       companyName.trim() ||
+      activeLead?.companyName ||
       (cust as any)?.companyName ||
       (cust as any)?.customerName ||
       matchedEnquiry?.customerName ||
-      matchedLead?.companyName ||
       'Customer';
 
     const resolvedContactPerson =
+      contactPerson.trim() ||
+      activeLead?.contactPerson ||
       (cust as any)?.contactPerson ||
       (cust as any)?.contact_person ||
-      matchedLead?.contactPerson ||
       'Purchase Head';
 
     const resolvedContactEmail =
+      activeLead?.email ||
       (cust as any)?.email ||
       (cust as any)?.contact_email ||
-      matchedLead?.email ||
       '';
 
     const resolvedContactMobile =
+      activeLead?.mobile ||
       (cust as any)?.mobile ||
       (cust as any)?.phone ||
-      matchedLead?.mobile ||
       '';
 
     const created = addQuotation({
@@ -291,41 +343,76 @@ function QuotationFormContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
-                Select Customer <span className="text-rose-500">*</span>
+                Select Lead <span className="text-rose-500">*</span>
               </label>
               <select
-                value={customerId}
+                value={leadId}
                 onChange={(e) => {
-                  const newCustId = e.target.value;
-                  setCustomerId(newCustId);
-                  const foundCust = customers.find((c) => c.id === newCustId);
-                  if (foundCust) {
-                    setCompanyName(foundCust.companyName);
+                  const newLeadId = e.target.value;
+                  setLeadId(newLeadId);
+                  const foundLead = leads.find((l) => l.id === newLeadId || l.leadNo === newLeadId);
+                  if (foundLead) {
+                    setContactPerson(foundLead.contactPerson || '');
+                    setCompanyName(foundLead.companyName || '');
+                    setCustomerId(foundLead.convertedCustomerId || foundLead.id);
+
+                    const prodName = foundLead.productName;
+                    const desc = foundLead.requirementDescription;
+                    const qty = Number(foundLead.quantity || 1);
+                    const rate = foundLead.budget ? Math.round(Number(foundLead.budget) / (qty || 1)) : 100000;
+                    const tax = 18;
+                    const base = qty * rate;
+                    const amt = Math.round(base * (1 + tax / 100));
+
+                    if (prodName) {
+                      setItems([
+                        {
+                          id: 'item-1',
+                          productName: prodName,
+                          description: desc || 'Standard technical specifications',
+                          descriptionLines: desc ? [desc] : ['Standard technical specifications'],
+                          quantity: qty,
+                          unit: 'Set',
+                          rate,
+                          discountPercent: 0,
+                          taxPercent: tax,
+                          amount: amt,
+                        },
+                      ]);
+                      setScopeOfSupply(`Supply, fabrication, inspection and testing of ${prodName} as per specifications.`);
+                    }
+                    if (foundLead.capacity) {
+                      setTechnicalSpecs(`Capacity: ${foundLead.capacity} (${foundLead.machineType || 'Industrial'}). ${foundLead.requirementDescription || ''}`);
+                    }
+                    if (foundLead.expectedDelivery) {
+                      setDeliveryTime(`By ${foundLead.expectedDelivery}`);
+                    }
                   } else {
+                    setContactPerson('');
                     setCompanyName('');
                   }
                 }}
                 className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
               >
-                <option value="">-- Select Customer --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.companyName} ({c.customerCode || c.city || 'Customer'})
+                <option value="">-- Select Lead --</option>
+                {leads.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.companyName} {l.contactPerson ? `(${l.contactPerson})` : `(${l.leadNo})`}
                   </option>
                 ))}
               </select>
             </div>
             <div>
               <label className="block text-slate-700 dark:text-[#544B45] font-semibold mb-1">
-                Customer / Company Name <span className="text-rose-500">*</span>
+                Person Name (Contact Person) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                readOnly
-                value={companyName}
-                placeholder="Auto-filled from selected customer"
-                className="w-full px-3 py-2 bg-slate-100 dark:bg-[#FAF7F2]/60 border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17] cursor-not-allowed select-none"
+                value={contactPerson}
+                onChange={(e) => setContactPerson(e.target.value)}
+                placeholder="Auto-filled from selected lead"
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-[#FAF7F2] border border-[#E7DED5] rounded-lg font-bold text-slate-900 dark:text-[#211B17]"
               />
             </div>
             <div>
@@ -372,34 +459,58 @@ function QuotationFormContent() {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      disabled={items.length <= 1}
-                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg disabled:opacity-30 mt-6"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(idx)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg mt-6 transition cursor-pointer"
+                        title="Remove machine item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-slate-600 font-semibold">Item Technical Description</label>
                       <button
                         type="button"
-                        onClick={addItem}
+                        onClick={() => addDescriptionLine(idx)}
                         className="px-2.5 py-1 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                       >
                         <Plus className="w-3.5 h-3.5 text-[#8B7355]" /> Add Item
                       </button>
                     </div>
-                    <textarea
-                      rows={2}
-                      value={item.description}
-                      onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
-                      placeholder="Shell thk, dish ends, agitator drive, motor rating..."
-                      className="w-full px-3 py-1.5 bg-white dark:bg-white border rounded-lg"
-                    />
+
+                    <div className="space-y-2">
+                      {(item.descriptionLines && item.descriptionLines.length > 0
+                        ? item.descriptionLines
+                        : item.description
+                        ? item.description.split('\n')
+                        : ['']
+                      ).map((line, lineIdx, allLines) => (
+                        <div key={lineIdx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={line}
+                            onChange={(e) => handleDescriptionLineChange(idx, lineIdx, e.target.value)}
+                            placeholder="Shell thk, dish ends, agitator drive, motor rating..."
+                            className="flex-1 px-3 py-1.5 bg-white dark:bg-white border border-[#E7DED5] rounded-lg text-xs font-medium"
+                          />
+                          {allLines.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeDescriptionLine(idx, lineIdx)}
+                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              title="Remove line"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-[11px]">
