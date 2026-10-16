@@ -456,13 +456,15 @@ function QuotationFormContent() {
                         <label className="block text-slate-600 font-semibold">
                           Machine / Item Name * {items.length > 1 ? `(#${idx + 1})` : ''}
                         </label>
-                        <button
-                          type="button"
-                          onClick={addItem}
-                          className="px-2.5 py-1 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-                        >
-                          <Plus className="w-3.5 h-3.5 text-[#8B7355]" /> Add Machine
-                        </button>
+                        {idx === 0 && (
+                          <button
+                            type="button"
+                            onClick={addItem}
+                            className="px-2.5 py-1 bg-[#FAF7F2] text-[#3E2723] hover:bg-[#F2ECE4] border border-[#E7DED5] rounded-md font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-[#8B7355]" /> Add Machine
+                          </button>
+                        )}
                       </div>
                       <input
                         type="text"
